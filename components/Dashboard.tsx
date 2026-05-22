@@ -16,7 +16,7 @@ import DashasDrawer from '@/components/modals/DashasDrawer';
 import SynastryDrawer from '@/components/modals/SynastryDrawer';
 import InterpretationPanel from '@/components/interpret/InterpretationPanel';
 import ModeSelector from '@/components/interpret/ModeSelector';
-import BirthTheme from '@/components/BirthTheme';
+import BirthAtmosphere from '@/components/BirthAtmosphere';
 import { SIGN_GLYPH } from '@/components/charts/glyphs';
 import type { ResolvedBirth, NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
@@ -125,7 +125,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex-1 px-4 py-6 max-w-5xl w-full mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {chart && <BirthTheme chart={chart} />}
+      {/* ── Birth Atmosphere card ── */}
+      {chart && <BirthAtmosphere chart={chart} />}
 
       {/* ── Birth Data section ── */}
       <section style={section}>
