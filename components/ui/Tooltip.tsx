@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface TooltipProps {
   text: string;
@@ -10,25 +10,44 @@ interface TooltipProps {
 }
 
 export default function Tooltip({ text, children, width = 270, align = 'left' }: TooltipProps) {
-  const [visible, setVisible] = useState(false);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
-  const alignStyle: React.CSSProperties =
-    align === 'right'  ? { right: 0, left: 'auto' } :
-    align === 'center' ? { left: '50%', transform: 'translateX(-50%)' } :
-                         { left: 0 };
+  function show() {
+    if (ref.current) setAnchor(ref.current.getBoundingClientRect());
+  }
+
+  function hide() {
+    setAnchor(null);
+  }
+
+  // Compute fixed position so the tooltip escapes any overflow:auto parent.
+  let left = 0;
+  if (anchor) {
+    if (align === 'right')       left = anchor.right - width;
+    else if (align === 'center') left = anchor.left + anchor.width / 2 - width / 2;
+    else                         left = anchor.left;
+    // Clamp to viewport
+    if (typeof window !== 'undefined') {
+      left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+    }
+  }
 
   return (
     <span
+      ref={ref}
       style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', cursor: 'help' }}
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
+      onMouseEnter={show}
+      onMouseLeave={hide}
     >
       <span style={{ borderBottom: '1px dotted currentColor' }}>{children}</span>
-      {visible && (
+
+      {anchor && (
         <div style={{
-          position: 'absolute',
-          bottom: 'calc(100% + 8px)',
-          ...alignStyle,
+          position: 'fixed',
+          top: anchor.top - 8,
+          left,
+          transform: 'translateY(-100%)',
           width,
           background: 'var(--bg-raised)',
           border: '1px solid var(--accent)',
@@ -37,7 +56,7 @@ export default function Tooltip({ text, children, width = 270, align = 'left' }:
           fontSize: 11,
           color: 'var(--fg)',
           lineHeight: 1.7,
-          zIndex: 300,
+          zIndex: 9999,
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
           pointerEvents: 'none',
           whiteSpace: 'normal',
