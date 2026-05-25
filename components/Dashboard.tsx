@@ -16,6 +16,7 @@ import DashasDrawer from '@/components/modals/DashasDrawer';
 import SynastryDrawer from '@/components/modals/SynastryDrawer';
 import InterpretationPanel from '@/components/interpret/InterpretationPanel';
 import ModeSelector from '@/components/interpret/ModeSelector';
+import ChartSnapshot from '@/components/interpret/ChartSnapshot';
 import BirthAtmosphere from '@/components/BirthAtmosphere';
 import { SIGN_GLYPH } from '@/components/charts/glyphs';
 import type { ResolvedBirth, NatalChart } from '@/lib/astro/types';
@@ -250,6 +251,9 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
+      {/* ── Chart Snapshot (free teaser) ── */}
+      {chart && <ChartSnapshot chart={chart} />}
 
       {/* ── Reading Style ── */}
       {chart && (

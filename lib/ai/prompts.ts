@@ -5,7 +5,7 @@ import type { SynastryAspect } from '@/lib/astro/synastry';
 import { analyzeChart, formatChartAnalysis, bodyContext, houseContext, aspectContext } from './chartAnalysis';
 
 export type InterpretSection = {
-  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry';
+  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot';
   label: string;
   prompt: string;
 };
@@ -420,4 +420,94 @@ function ordSuffix(n: number): string {
   if (n === 2) return 'nd';
   if (n === 3) return 'rd';
   return 'th';
+}
+
+// ── Chart Snapshot (free teaser) ──────────────────────────────────────────────
+
+export function buildSnapshotSystemPrompt(): string {
+  return `You are an insightful astrologer writing a free chart snapshot — a warm, specific 120–180 word overview meant to give someone an immediate sense of their chart's dominant signature: enough to feel genuinely seen, enough to want to explore more.
+
+Write for someone who may be new to astrology. Plain language. If you use an astrological term, briefly translate it in the same sentence. Warm, soulful, and intelligent — like a perceptive friend who understands charts deeply. Psychologically specific: avoid generic horoscope language. The reader should feel "you are describing me," not "this could apply to anyone."
+
+FORMAT:
+A thematic title on its own line — 3 to 6 words, no punctuation, no planet or sign names in the title. Then a blank line. Then a single paragraph of 120–180 words.
+
+CONTENT REQUIREMENTS (weave naturally — do not list, do not enumerate):
+1. Dominant elemental tone — translate into how this feels to live (not just a label)
+2. Dominant modality — translate into behavioral or relational style
+3. Main archetypal signature — the 1-2 convergent themes with the highest score
+4. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
+5. Final sentence: open a curiosity gap — hint that the full reading reveals how these patterns shape specific areas of life, without naming them all
+
+Do not mention every placement. Focus on 2–3 convergent patterns. Never use fatalistic language. Never say "this placement means…" — describe lived experience instead. Always complete the paragraph before stopping.`;
+}
+
+export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
+  const analysis = analyzeChart(chart);
+
+  // Determine element framing (dominant if ≥40%, balanced otherwise)
+  const elPct   = analysis.elementBalance;
+  const elDom   = analysis.dominantElement;
+  const elWeak  = analysis.weakestElement;
+  const isDomEl = elPct[elDom].percent >= 40;
+  const isWeakEl = elPct[elWeak].percent <= 12;
+
+  // Determine modality framing (dominant if ≥45%, balanced otherwise)
+  const modPct  = analysis.modalityBalance;
+  const modDom  = analysis.dominantModality;
+  const isDomMod = modPct[modDom].percent >= 45;
+
+  // Element description lines for the prompt
+  const elementLine = isDomEl
+    ? `Dominant element: ${elDom.toUpperCase()} (${elPct[elDom].percent}%)${isWeakEl ? ` — notably weak: ${elWeak.toUpperCase()} (${elPct[elWeak].percent}%)` : ''}`
+    : `Element balance: relatively even — Fire ${elPct.fire.percent}% · Earth ${elPct.earth.percent}% · Air ${elPct.air.percent}% · Water ${elPct.water.percent}%`;
+
+  // Modality description lines
+  const modalityLine = isDomMod
+    ? `Dominant modality: ${modDom.toUpperCase()} (${modPct[modDom].percent}%)`
+    : `Modality balance: relatively even — Cardinal ${modPct.cardinal.percent}% · Fixed ${modPct.fixed.percent}% · Mutable ${modPct.mutable.percent}%`;
+
+  // Top 3 convergent themes
+  const topThemes = analysis.dominantThemes.slice(0, 3)
+    .map((t, i) => `${i + 1}. ${t.label} (score ${t.weight}) — convergence: ${t.indicators.slice(0, 3).join(', ')}`)
+    .join('\n');
+
+  // Key chart facts (Sun/Moon/ASC + chart ruler)
+  const sun  = chart.western.bodies.sun;
+  const moon = chart.western.bodies.moon;
+  const asc  = chart.western.bodies.asc;
+  const coreLine = [
+    sun  ? `Sun in ${sun.sign} H${sun.house}`   : '',
+    moon ? `Moon in ${moon.sign} H${moon.house}` : '',
+    asc  ? `${asc.sign} rising`                  : '',
+    analysis.chartRuler ? `Chart ruler: ${analysis.chartRuler.label} in ${analysis.chartRuler.sign} H${analysis.chartRuler.house}` : '',
+  ].filter(Boolean).join(' · ');
+
+  const stelliumLine = analysis.stelliums.length
+    ? `Stelliums: ${analysis.stelliums.map(s => `${s.label} (${s.planets.join(', ')})`).join('; ')}`
+    : '';
+
+  const configLine = analysis.configurations.length
+    ? `Major configurations: ${analysis.configurations.map(c => c.type).join(', ')}`
+    : '';
+
+  const prompt = `SNAPSHOT REQUEST
+
+Key chart signature: ${coreLine}
+${stelliumLine ? stelliumLine + '\n' : ''}${configLine ? configLine + '\n' : ''}
+${elementLine}
+${modalityLine}
+Sun-Moon relationship: ${Math.round(analysis.sunMoonRelationship.angle)}° apart — ${analysis.sunMoonRelationship.phaseDescription}
+Chart shape: ${analysis.chartShape.split(' — ')[0]}
+
+TOP CONVERGENT THEMES (highest-scoring archetypal patterns across the whole chart):
+${topThemes}
+
+Write the snapshot now. Title first (3–6 words, no punctuation), blank line, then a single 120–180 word paragraph. Use plain language. No bullet points. No jargon without translation. End the paragraph on a complete sentence.`;
+
+  return {
+    type: 'snapshot',
+    label: 'Your Chart at a Glance',
+    prompt,
+  };
 }
