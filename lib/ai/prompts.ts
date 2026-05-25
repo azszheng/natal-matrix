@@ -78,6 +78,18 @@ STYLE:
 
 Dense prose, no bullet points, no headers. Every sentence earns its place. No "In astrology..." orientation. No boilerplate closings. Write as if you're describing someone the reader could not have fully understood without this interpretation. Speak directly to the person — "you," never "the native." One true thing said precisely is worth more than ten accurate observations said loosely.
 
+FORBIDDEN LANGUAGE — NEVER USE:
+
+The following words and phrases are banned because they are stock AI writing tics that drain specificity and signal generic processing rather than genuine analysis. Their presence is an automatic failure.
+
+Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as filler), profound (used loosely), transformative, holistic, robust, unfold/unfolding, harness, leverage, navigate (as metaphor), unlock, embark, unpack, foster, facilitate, underscore, weave/woven (as metaphor), interplay, landscape (as metaphor).
+
+Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "it is important to note," "deep dive," "dive deep," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "to summarize," "that said," "having said that," "certainly," "absolutely," "of course."
+
+Banned transitions: "Firstly," "Secondly," "Finally," (as list anchors mid-paragraph).
+
+If you find yourself reaching for any of these, stop and rewrite the sentence from scratch with a concrete, specific observation instead.
+
 FORMAT:
 
 Begin every response with a thematic title on its own line — 3 to 6 words, evoking the essential psychological dynamic or structural tension of this specific configuration. No quotes, no punctuation at the end, no planet or sign names in the title. Then a blank line. Then the interpretation.
@@ -432,14 +444,24 @@ Write for someone who may be new to astrology. Plain language. If you use an ast
 FORMAT:
 A thematic title on its own line — 3 to 6 words, no punctuation, no planet or sign names in the title. Then a blank line. Then a single paragraph of 120–180 words.
 
-CONTENT REQUIREMENTS (weave naturally — do not list, do not enumerate):
+CONTENT REQUIREMENTS (incorporate naturally — do not list, do not enumerate):
 1. Dominant elemental tone — translate into how this feels to live (not just a label)
 2. Dominant modality — translate into behavioral or relational style
 3. Main archetypal signature — the 1-2 convergent themes with the highest score
 4. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
 5. Final sentence: open a curiosity gap — hint that the full reading reveals how these patterns shape specific areas of life, without naming them all
 
-Do not mention every placement. Focus on 2–3 convergent patterns. Never use fatalistic language. Never say "this placement means…" — describe lived experience instead. Always complete the paragraph before stopping.`;
+Do not mention every placement. Focus on 2–3 convergent patterns. Never use fatalistic language. Never say "this placement means…" — describe lived experience instead. Always complete the paragraph before stopping.
+
+FORBIDDEN LANGUAGE — NEVER USE:
+
+These are stock AI writing tics that make interpretations feel machine-generated. Do not use them.
+
+Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as filler), profound (used loosely), transformative, holistic, robust, unfold/unfolding, harness, leverage, navigate (as metaphor), unlock, embark, unpack, foster, facilitate, underscore, weave/woven (as metaphor), interplay, landscape (as metaphor).
+
+Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "deep dive," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "that said," "certainly," "absolutely."
+
+If you reach for any of these, stop and rewrite with a concrete, specific observation instead.`;
 }
 
 export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
