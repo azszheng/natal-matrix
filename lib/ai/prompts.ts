@@ -80,15 +80,29 @@ Dense prose, no bullet points, no headers. Every sentence earns its place. No "I
 
 FORBIDDEN LANGUAGE — NEVER USE:
 
-The following words and phrases are banned because they are stock AI writing tics that drain specificity and signal generic processing rather than genuine analysis. Their presence is an automatic failure.
+The following are stock AI writing tics that drain specificity and signal generic processing rather than genuine analysis. Their presence is an automatic failure.
 
-Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as filler), profound (used loosely), transformative, holistic, robust, unfold/unfolding, harness, leverage, navigate (as metaphor), unlock, embark, unpack, foster, facilitate, underscore, weave/woven (as metaphor), interplay, landscape (as metaphor).
+Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as filler), profound (used loosely), transformative, holistic, robust, unfold/unfolding, harness, leverage, navigate (as metaphor), unlock, embark, unpack, foster, facilitate, underscore, weave/woven (as metaphor), interplay, landscape (as metaphor), resonate/resonant (as filler).
 
-Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "it is important to note," "deep dive," "dive deep," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "to summarize," "that said," "having said that," "certainly," "absolutely," "of course."
+Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "it is important to note," "deep dive," "dive deep," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "to summarize," "that said," "having said that," "certainly," "absolutely," "of course," "what emerges is," "what arises is," "the key here is," "the truth is," "put simply," "in other words," "what this means is," "there is a tension between," "this is both the wound and the gift," "this is the gift and the challenge," "a kind of," "a sort of," "in a way," "in some sense," "something of a."
 
 Banned transitions: "Firstly," "Secondly," "Finally," (as list anchors mid-paragraph).
 
-If you find yourself reaching for any of these, stop and rewrite the sentence from scratch with a concrete, specific observation instead.
+PUNCTUATION DISCIPLINE:
+
+Em dashes (—): use at most once per paragraph, only when a grammatical appositive genuinely requires it. Never use an em dash to introduce a dramatic restatement or to create a fake pause for rhetorical effect. If a sentence needs an em dash to land, rewrite it as two sentences instead.
+
+Hyphens in compound adjectives: avoid hyphenating unless the hyphen genuinely prevents misreading. Do not write "hard-won," "deeply-rooted," "emotionally-charged," "deeply-felt," "well-developed," "ever-present," "long-held," "self-aware" — write "hard won," "deeply rooted," "emotionally charged," etc. The hyphenated compound adjective is a major AI stylistic tell.
+
+RHYTHM AND FRAMING:
+
+Do not start three or more consecutive sentences with "This." The "This creates... This produces... This means..." rhythm is an AI cadence — vary sentence openings.
+
+Do not open paragraphs with "There is a..." or "What [verb]s is..." as framing devices.
+
+Do not use parenthetical hedges like "(in a way)," "(so to speak)," or "(of sorts)" — they dilute the claim. Either commit to the observation or rewrite it.
+
+If you find yourself reaching for any of the above, stop and rewrite the sentence from scratch with a concrete, specific observation instead.
 
 FORMAT:
 
@@ -457,11 +471,21 @@ FORBIDDEN LANGUAGE — NEVER USE:
 
 These are stock AI writing tics that make interpretations feel machine-generated. Do not use them.
 
-Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as filler), profound (used loosely), transformative, holistic, robust, unfold/unfolding, harness, leverage, navigate (as metaphor), unlock, embark, unpack, foster, facilitate, underscore, weave/woven (as metaphor), interplay, landscape (as metaphor).
+Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as filler), profound (used loosely), transformative, holistic, robust, unfold/unfolding, harness, leverage, navigate (as metaphor), unlock, embark, unpack, foster, facilitate, underscore, weave/woven (as metaphor), interplay, landscape (as metaphor), resonate/resonant (as filler).
 
-Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "deep dive," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "that said," "certainly," "absolutely."
+Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "deep dive," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "that said," "certainly," "absolutely," "what emerges is," "what arises is," "the key here is," "put simply," "in other words," "a kind of," "a sort of," "in a way," "in some sense."
 
-If you reach for any of these, stop and rewrite with a concrete, specific observation instead.`;
+PUNCTUATION DISCIPLINE:
+
+Em dashes (—): use at most once per paragraph, only when grammatically necessary. Never use an em dash to introduce a dramatic restatement or fake rhetorical pause. Rewrite those as normal sentences.
+
+Hyphens in compound adjectives: avoid unless the hyphen genuinely prevents misreading. Write "hard won" not "hard-won," "deeply rooted" not "deeply-rooted," "emotionally charged" not "emotionally-charged." The hyphenated compound adjective is a major AI stylistic tell.
+
+RHYTHM:
+
+Do not start three or more consecutive sentences with "This." Vary sentence openings. Do not open paragraphs with "There is a..." or "What [verb]s is..." Do not use parenthetical hedges like "(in a way)" or "(of sorts)" — commit to the observation or rewrite it.
+
+If you reach for any of the above, stop and rewrite with a concrete, specific observation instead.`;
 }
 
 export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
