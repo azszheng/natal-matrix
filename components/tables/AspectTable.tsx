@@ -58,7 +58,7 @@ export default function AspectTable({ chart, onInterpret }: { chart: NatalChart;
                 </td>
                 {onInterpret && (
                   <td style={{ ...td, textAlign: 'center' }}>
-                    <InterpretButton section={buildAspectSection(asp)} onInterpret={onInterpret} />
+                    <InterpretButton section={buildAspectSection(asp, chart)} onInterpret={onInterpret} />
                   </td>
                 )}
               </tr>

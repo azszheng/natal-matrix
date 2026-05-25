@@ -2,6 +2,7 @@ import type { NatalChart, BodyId, Aspect, TransitAspect, ProgressedAspect, BodyP
 import { SIGNS } from '@/lib/astro/types';
 import type { DashaPeriod, DashaLord } from '@/lib/astro/dashas';
 import type { SynastryAspect } from '@/lib/astro/synastry';
+import { analyzeChart, formatChartAnalysis, bodyContext, houseContext, aspectContext } from './chartAnalysis';
 
 export type InterpretSection = {
   type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry';
@@ -133,6 +134,10 @@ export function buildChartContext(chart: NatalChart): string {
 
   lines.push(`Vedic ASC rashi: ${chart.vedic.ascendantRashi} · Ayanamsa: ${chart.vedic.ayanamsa.toFixed(2)}°`);
 
+  const analysis = analyzeChart(chart);
+  lines.push('');
+  lines.push(formatChartAnalysis(chart, analysis));
+
   return lines.join('\n');
 }
 
@@ -159,17 +164,21 @@ export function buildBodySection(bodyId: BodyId, chart: NatalChart): InterpretSe
     : '';
 
   const name = BODY_LABEL[bodyId] ?? bodyId;
+  const analysis = analyzeChart(chart);
+  const synthCtx = bodyContext(bodyId, chart, analysis);
 
   return {
     type: 'body',
     label: `${cap(bodyId)} in ${cap(body.sign)} · House ${body.house}`,
-    prompt: `Interpret ${name}${retro} in ${body.sign}${digNote}, House ${body.house}.${aspLine}
+    prompt: `${synthCtx}
+
+Interpret ${name}${retro} in ${body.sign}${digNote}, House ${body.house}.${aspLine}
 
 Draw on the full chart in context. Synthesize sign + house + aspects + the nodal axis + any elemental or modality patterns you observe. What does this configuration mechanically produce in the person's psychology — not what it symbolizes in the abstract, but what internal dynamic it actually creates? What is the core tension or polarity at work: the desire structure and the fear structure, the drive toward expression and the defense against it?
 
 Trace the compensatory arc: what adaptive strategy does this placement produce, how does that strategy serve the person, and where does it break down — in relationships, in ambition, in the body, in the inner life? Show the mechanism that links the placement to the pattern.
 
-Do not explain what the placement means in general. Reveal what it does in this specific chart.`,
+Do not explain what the placement means in general. Reveal what it does in this specific chart. Weight the interpretation toward the dominant themes identified in the synthesis context.`,
   };
 }
 
@@ -185,6 +194,9 @@ export function buildHouseSection(houseNum: number, chart: NatalChart): Interpre
   const planetsNote = planetsIn.length > 0
     ? ` Planets currently living in this house: ${planetsIn.join(', ')}.`
     : ' This house has no natal planets in it — its themes are still very much alive, but they operate more quietly, colored primarily by the sign on the cusp and the house ruler\'s placement.';
+
+  const analysis = analyzeChart(chart);
+  const synthCtx = houseContext(houseNum, chart, analysis);
 
   const houseThemes: Record<number, string> = {
     1:  'identity, appearance, how you instinctively meet the world, and the energy you lead with',
@@ -204,30 +216,36 @@ export function buildHouseSection(houseNum: number, chart: NatalChart): Interpre
   return {
     type: 'house',
     label: `House ${houseNum} · ${cap(sign)} on cusp`,
-    prompt: `Interpret the ${houseNum}${ordSuffix(houseNum)} house — ${houseThemes[houseNum] ?? 'this life domain'} — with ${sign} on the cusp.${planetsNote}
+    prompt: `${synthCtx}
+
+Interpret the ${houseNum}${ordSuffix(houseNum)} house — ${houseThemes[houseNum] ?? 'this life domain'} — with ${sign} on the cusp.${planetsNote}
 
 Draw on the full chart. Analyze what this house configuration mechanically produces: how does ${sign}'s specific psychological signature shape the approach to this life domain — not just the style, but the underlying motivation, the defensive structure around it, and the growth edge? What does ${sign} want from this arena, and what does it fear? How does that tension play out in actual behavior?
 
 If planets occupy the house, show how their drives interact with and complicate the sign's energy — what inner conflicts or amplifications arise? If the house is empty, trace how the ruler's placement elsewhere imports its conditions into this domain.
 
-Root every observation in what is specific to this chart. Name the contradiction at the heart of it.`,
+Root every observation in what is specific to this chart. Name the contradiction at the heart of it. Frame the interpretation through the dominant themes in the synthesis context.`,
   };
 }
 
-export function buildAspectSection(asp: Aspect): InterpretSection {
+export function buildAspectSection(asp: Aspect, chart: NatalChart): InterpretSection {
   const aName = BODY_LABEL[asp.a] ?? asp.a;
   const bName = BODY_LABEL[asp.b] ?? asp.b;
+  const analysis = analyzeChart(chart);
+  const synthCtx = aspectContext(asp.a, asp.b, chart, analysis);
 
   return {
     type: 'aspect',
     label: `${aName} ${asp.kind} ${bName}`,
-    prompt: `Interpret the ${asp.kind} between ${aName} and ${bName} in this chart (${asp.orb.toFixed(1)}° orb, ${asp.applying ? 'applying' : 'separating'}).
+    prompt: `${synthCtx}
+
+Interpret the ${asp.kind} between ${aName} and ${bName} in this chart (${asp.orb.toFixed(1)}° orb, ${asp.applying ? 'applying' : 'separating'}).
 
 Draw on the full chart. What does this specific planetary pairing create as an internal dynamic — not what a ${asp.kind} generically means, but what these two particular drives, in these signs and houses, produce in this person's psychology? How do they amplify, contradict, block, or shadow each other? What is the felt quality of their interaction — what does the person actually experience around this energy, and what do they tend to do with it?
 
 Trace the mechanism: what compensatory pattern does this aspect generate? Where does it produce strength through friction, and where does it create a recurring breakdown — in relationships, in self-expression, in the way the person moves toward what they want? If the orb is tight, treat this as a primary psychological structure, not background noise.
 
-Identify the developmental arc: what becomes available when this tension is held consciously rather than enacted automatically?`,
+Identify the developmental arc: what becomes available when this tension is held consciously rather than enacted automatically? Ground the interpretation in the chart's dominant themes from the synthesis context.`,
   };
 }
 
