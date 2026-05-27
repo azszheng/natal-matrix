@@ -4,15 +4,11 @@ import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
-export default function AuthHeader() {
+export default function AuthHeader({ initialUser }: { initialUser: User | null }) {
   const supabase = useMemo(() => createClient(), []);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(initialUser);
 
   useEffect(() => {
-    // getSession is instant (reads local storage/cookies), getUser verifies with server
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
     });

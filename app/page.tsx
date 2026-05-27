@@ -1,7 +1,11 @@
 import Dashboard from '@/components/Dashboard';
 import AuthHeader from '@/components/auth/AuthHeader';
+import { createClient } from '@/lib/supabase/server';
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <main className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}>
       <header
@@ -14,9 +18,9 @@ export default function Home() {
         >
           Natal Matrix
         </h1>
-        <AuthHeader />
+        <AuthHeader initialUser={user} />
       </header>
-      <Dashboard />
+      <Dashboard initialLoggedIn={!!user} />
     </main>
   );
 }

@@ -105,7 +105,7 @@ function chartSummary(chart: NatalChart, birth: ResolvedBirth): string {
   return parts.join(' · ');
 }
 
-export default function Dashboard() {
+export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn?: boolean }) {
   const supabase = useMemo(() => createClient(), []);
 
   const [birth,     setBirth]     = useState<ResolvedBirth | null>(null);
@@ -120,7 +120,7 @@ export default function Dashboard() {
     return (localStorage.getItem('interpretMode') as InterpretMode) ?? 'deepdive';
   });
 
-  const [isLoggedIn,   setIsLoggedIn]   = useState(false);
+  const [isLoggedIn,   setIsLoggedIn]   = useState(initialLoggedIn);
   const [savedCharts,  setSavedCharts]  = useState<SavedChart[]>([]);
   const [saveStatus,   setSaveStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedChartId, setSavedChartId] = useState<number | null>(null);
