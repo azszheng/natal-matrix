@@ -1,5 +1,5 @@
-import BirthForm from '@/components/BirthForm';
 import Dashboard from '@/components/Dashboard';
+import AuthHeader from '@/components/auth/AuthHeader';
 
 export default function Home() {
   return (
@@ -14,6 +14,7 @@ export default function Home() {
         >
           Amy&apos;s Chart
         </h1>
+        <AuthHeader />
       </header>
       <Dashboard />
     </main>

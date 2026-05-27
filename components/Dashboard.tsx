@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import BirthForm from '@/components/BirthForm';
 import WesternWheel from '@/components/charts/WesternWheel';
 import NorthIndianDiamond from '@/components/charts/NorthIndianDiamond';
@@ -19,8 +19,18 @@ import ModeSelector from '@/components/interpret/ModeSelector';
 import ChartSnapshot from '@/components/interpret/ChartSnapshot';
 import BirthAtmosphere from '@/components/BirthAtmosphere';
 import { SIGN_GLYPH } from '@/components/charts/glyphs';
+import { createClient } from '@/lib/supabase/client';
 import type { ResolvedBirth, NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
+
+type SavedChart = {
+  id: number;
+  label: string;
+  birth_date: string;
+  birth_time: string;
+  birth_location: string;
+  chart_data: NatalChart;
+};
 
 function interpCacheKey(chart: NatalChart, section: InterpretSection, mode: InterpretMode): string {
   const { date, time, lat, lng } = chart.input;
@@ -96,6 +106,8 @@ function chartSummary(chart: NatalChart, birth: ResolvedBirth): string {
 }
 
 export default function Dashboard() {
+  const supabase = createClient();
+
   const [birth,     setBirth]     = useState<ResolvedBirth | null>(null);
   const [chart,     setChart]     = useState<NatalChart | null>(null);
   const [formOpen,  setFormOpen]  = useState(true);
@@ -107,6 +119,67 @@ export default function Dashboard() {
     if (typeof window === 'undefined') return 'deepdive';
     return (localStorage.getItem('interpretMode') as InterpretMode) ?? 'deepdive';
   });
+
+  const [isLoggedIn,   setIsLoggedIn]   = useState(false);
+  const [savedCharts,  setSavedCharts]  = useState<SavedChart[]>([]);
+  const [saveStatus,   setSaveStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [savedChartId, setSavedChartId] = useState<number | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setIsLoggedIn(true);
+        loadSavedCharts();
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      const loggedIn = !!session?.user;
+      setIsLoggedIn(loggedIn);
+      if (loggedIn) loadSavedCharts(); else setSavedCharts([]);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadSavedCharts = useCallback(async () => {
+    const res = await fetch('/api/charts');
+    if (res.ok) setSavedCharts(await res.json());
+  }, []);
+
+  async function saveChart() {
+    if (!chart || !birth) return;
+    setSaveStatus('saving');
+    const res = await fetch('/api/charts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ birth, chart }),
+    });
+    if (res.ok) {
+      const { id } = await res.json();
+      setSavedChartId(id);
+      setSaveStatus('saved');
+      loadSavedCharts();
+    } else {
+      setSaveStatus('error');
+    }
+  }
+
+  async function deleteChart(id: number) {
+    await fetch('/api/charts', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    setSavedCharts(prev => prev.filter(c => c.id !== id));
+    if (savedChartId === id) setSavedChartId(null);
+  }
+
+  function loadChart(saved: SavedChart) {
+    setChart(saved.chart_data);
+    setBirth(saved.chart_data.input);
+    setSavedChartId(saved.id);
+    setSaveStatus('saved');
+    setFormOpen(false);
+  }
 
   function cacheResult(key: string, text: string) {
     setInterpCache(prev => new Map(prev).set(key, text));
@@ -122,6 +195,8 @@ export default function Dashboard() {
     setBirth(b);
     setChart(c);
     setFormOpen(false);
+    setSaveStatus('idle');
+    setSavedChartId(null);
   }
 
   const section: React.CSSProperties = {
@@ -151,16 +226,38 @@ export default function Dashboard() {
             <span style={{ fontSize: 12, color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>
               {chartSummary(chart, birth)}
             </span>
-            <button
-              onClick={() => setFormOpen(true)}
-              style={{
-                fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
-                letterSpacing: '0.06em', color: 'var(--accent)', background: 'none',
-                border: '1px solid var(--line)', borderRadius: 4, padding: '3px 10px', cursor: 'pointer',
-              }}
-            >
-              Edit
-            </button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {isLoggedIn && saveStatus !== 'saved' && (
+                <button
+                  onClick={saveChart}
+                  disabled={saveStatus === 'saving'}
+                  style={{
+                    fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                    letterSpacing: '0.06em', color: 'var(--accent)', background: 'none',
+                    border: '1px solid var(--accent)', borderRadius: 4, padding: '3px 10px',
+                    cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer',
+                    opacity: saveStatus === 'saving' ? 0.5 : 1,
+                  }}
+                >
+                  {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'error' ? 'Retry Save' : 'Save'}
+                </button>
+              )}
+              {saveStatus === 'saved' && (
+                <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  ✓ Saved
+                </span>
+              )}
+              <button
+                onClick={() => setFormOpen(true)}
+                style={{
+                  fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                  letterSpacing: '0.06em', color: 'var(--accent)', background: 'none',
+                  border: '1px solid var(--line)', borderRadius: 4, padding: '3px 10px', cursor: 'pointer',
+                }}
+              >
+                Edit
+              </button>
+            </div>
           </div>
         ) : (
           /* Expanded form */
@@ -170,6 +267,51 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+
+      {/* ── Saved Charts ── */}
+      {isLoggedIn && savedCharts.length > 0 && (
+        <section style={section}>
+          <div style={{ padding: '12px 16px' }}>
+            <p style={{ ...sectionHead, marginBottom: 10 }}>Saved Charts</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {savedCharts.map(c => (
+                <div
+                  key={c.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: 12, padding: '7px 10px', borderRadius: 4,
+                    background: savedChartId === c.id ? 'var(--bg)' : 'transparent',
+                    border: `1px solid ${savedChartId === c.id ? 'var(--accent)' : 'var(--line)'}`,
+                  }}
+                >
+                  <button
+                    onClick={() => loadChart(c)}
+                    style={{
+                      flex: 1, background: 'none', border: 'none', cursor: 'pointer',
+                      textAlign: 'left', padding: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: 'var(--fg)', display: 'block' }}>{c.label}</span>
+                    <span style={{ fontSize: 10, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
+                      {c.birth_date} · {c.birth_time} · {c.birth_location}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => deleteChart(c.id)}
+                    title="Delete"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--fg-dim)', fontSize: 14, lineHeight: 1, padding: '2px 4px',
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Chart Snapshot (free teaser) ── */}
       {chart && <ChartSnapshot chart={chart} />}
