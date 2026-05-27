@@ -15,7 +15,9 @@ const BODY_ABBR: Record<string, string> = {
 export default function AspectTable({ chart, onInterpret }: { chart: NatalChart; onInterpret?: (s: InterpretSection) => void }) {
   const { aspects } = chart.western;
 
-  const sorted = [...aspects].sort((a, b) => a.orb - b.orb);
+  const sorted = [...aspects]
+    .filter(a => a.kind !== 'quincunx')
+    .sort((a, b) => a.orb - b.orb);
 
   return (
     <div style={{ overflowX: 'auto' }}>

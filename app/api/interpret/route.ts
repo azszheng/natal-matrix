@@ -9,9 +9,9 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MODEL = process.env.CLAUDE_MODEL ?? 'claude-sonnet-4-6';
 
 const MAX_TOKENS: Record<InterpretMode, number> = {
-  essence:    400,
-  deepdive:   800,
-  astrologer: 1200,
+  essence:    600,
+  deepdive:   1400,
+  astrologer: 2000,
 };
 
 const VEDIC_MAX_TOKENS: Record<InterpretMode, number> = {
