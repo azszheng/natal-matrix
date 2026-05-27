@@ -22,6 +22,19 @@ import { SIGN_GLYPH } from '@/components/charts/glyphs';
 import type { ResolvedBirth, NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
 
+function interpCacheKey(chart: NatalChart, section: InterpretSection, mode: InterpretMode): string {
+  const { date, time, lat, lng } = chart.input;
+  return `nc_interp::${date}|${time}|${lat.toFixed(3)}|${lng.toFixed(3)}::${mode}::${section.type}|${section.label}`;
+}
+
+function lsGet(key: string): string | undefined {
+  try { return localStorage.getItem(key) ?? undefined; } catch { return undefined; }
+}
+
+function lsSet(key: string, value: string) {
+  try { localStorage.setItem(key, value); } catch { /* storage full — in-memory cache still works */ }
+}
+
 type TableTab = 'planets' | 'houses' | 'aspects' | 'dignities' | 'vedic';
 
 const TAB_DESC: Record<TableTab, { title: string; body: string }> = {
@@ -97,6 +110,7 @@ export default function Dashboard() {
 
   function cacheResult(key: string, text: string) {
     setInterpCache(prev => new Map(prev).set(key, text));
+    lsSet(key, text);
   }
 
   function handleModeChange(m: InterpretMode) {
@@ -156,6 +170,17 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+
+      {/* ── Chart Snapshot (free teaser) ── */}
+      {chart && <ChartSnapshot chart={chart} />}
+
+      {/* ── Reading Style ── */}
+      {chart && (
+        <section style={{ ...section, padding: '14px 20px' }}>
+          <p style={{ ...sectionHead, marginBottom: 12 }}>Reading Style</p>
+          <ModeSelector mode={interpMode} onChange={handleModeChange} />
+        </section>
+      )}
 
       {/* ── Chart wheels ── */}
       {chart && (
@@ -252,17 +277,6 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* ── Chart Snapshot (free teaser) ── */}
-      {chart && <ChartSnapshot chart={chart} />}
-
-      {/* ── Reading Style ── */}
-      {chart && (
-        <section style={{ ...section, padding: '14px 20px' }}>
-          <p style={{ ...sectionHead, marginBottom: 12 }}>Reading Style</p>
-          <ModeSelector mode={interpMode} onChange={handleModeChange} />
-        </section>
-      )}
-
       {/* ── Actions ── */}
       {chart && (
         <section style={{ ...section, padding: '14px 20px' }}>
@@ -313,16 +327,20 @@ export default function Dashboard() {
         />
       )}
 
-      {interpSection && chart && (
-        <InterpretationPanel
-          chart={chart}
-          section={interpSection}
-          onClose={() => setInterpSection(null)}
-          mode={interpMode}
-          cachedText={interpCache.get(`${interpMode}|${interpSection.prompt}`)}
-          onCached={(text) => cacheResult(`${interpMode}|${interpSection.prompt}`, text)}
-        />
-      )}
+      {interpSection && chart && (() => {
+        const cKey   = interpCacheKey(chart, interpSection, interpMode);
+        const cached = interpCache.get(cKey) ?? lsGet(cKey);
+        return (
+          <InterpretationPanel
+            chart={chart}
+            section={interpSection}
+            onClose={() => setInterpSection(null)}
+            mode={interpMode}
+            cachedText={cached}
+            onCached={(text) => cacheResult(cKey, text)}
+          />
+        );
+      })()}
     </div>
   );
 }

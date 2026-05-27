@@ -19,7 +19,7 @@ export default function HouseTable({ chart, onInterpret }: { chart: NatalChart; 
             <th style={{ ...th, fontFamily: 'var(--font-mono)' }}><Tooltip text="The degree within the sign where this house cusp falls (0°–30°). This is the same position expressed relative to the sign, rather than the full zodiac circle.">Degree</Tooltip></th>
             <th style={th}><Tooltip text="The traditional planetary ruler of the sign on this cusp. This planet 'governs' the house — its sign, house placement, and condition in your chart deeply affect how the themes of this house manifest in your life. For example, if your 7th house is in Libra, Venus rules it — the state of your Venus reflects your relationship life.">Trad. Ruler</Tooltip></th>
             <th style={th}><Tooltip text="The modern ruler, assigned after the discovery of the outer planets (Uranus 1781, Neptune 1846, Pluto 1930). Most signs share traditional and modern rulers. Three exceptions: Aquarius (modern ruler: Uranus), Pisces (modern ruler: Neptune), Scorpio (modern ruler: Pluto)." align="right">Modern Ruler</Tooltip></th>
-            {onInterpret && <th style={{ ...th, width: 28 }} />}
+            {onInterpret && <th style={{ ...th, width: 72, textAlign: 'center' }}><Tooltip align="right" text="Click the circle on any row to generate an AI interpretation for that placement.">Interpret</Tooltip></th>}
           </tr>
         </thead>
         <tbody>

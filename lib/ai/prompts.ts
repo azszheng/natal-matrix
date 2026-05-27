@@ -3,11 +3,13 @@ import { SIGNS } from '@/lib/astro/types';
 import type { DashaPeriod, DashaLord } from '@/lib/astro/dashas';
 import type { SynastryAspect } from '@/lib/astro/synastry';
 import { analyzeChart, formatChartAnalysis, bodyContext, houseContext, aspectContext } from './chartAnalysis';
+import { analyzeVedicChart, formatVedicAnalysis, vedicBodyContext, vedicHouseContext, vedicDashaContext } from './vedicAnalysis';
 
 export type InterpretSection = {
   type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot';
   label: string;
   prompt: string;
+  system?: 'western' | 'vedic';
 };
 
 export type InterpretMode = 'essence' | 'deepdive' | 'astrologer';
@@ -277,25 +279,31 @@ Identify the developmental arc: what becomes available when this tension is held
 
 export function buildVedicBodySection(bodyId: BodyId, chart: NatalChart): InterpretSection {
   const body     = chart.vedic.bodies[bodyId];
-  if (!body) return { type: 'body', label: `Vedic ${bodyId}`, prompt: `Interpret ${bodyId} in this Vedic chart.` };
+  if (!body) return { type: 'body', label: `Vedic ${bodyId}`, prompt: `Interpret ${bodyId} in this Vedic chart.`, system: 'vedic' };
 
   const retro    = body.isRetrograde ? ' retrograde' : '';
   const nakName  = body.nakshatra.charAt(0).toUpperCase() + body.nakshatra.slice(1).replace(/([A-Z])/g, ' $1').trim();
   const lordName = BODY_LABEL[body.nakshatraLord as BodyId] ?? body.nakshatraLord;
   const bodyName = bodyId === 'trueNode' ? 'Rahu' : bodyId === 'southNode' ? 'Ketu' : cap(bodyId);
 
+  const analysis = analyzeVedicChart(chart);
+  const synthCtx = vedicBodyContext(bodyId, chart, analysis);
+
   return {
     type: 'body',
     label: `Vedic · ${bodyName} in ${cap(body.sign)} · ${nakName} pada ${body.nakshatraPada}`,
-    prompt: `Interpret ${bodyName}${retro} in sidereal ${body.sign}, House ${body.house}, nakshatra ${nakName} pada ${body.nakshatraPada}, nakshatra lord ${lordName}.
+    system: 'vedic',
+    prompt: `${synthCtx}
 
-Draw on the full Vedic chart. Synthesize rashi + bhava + nakshatra + nakshatra lord's placement + the graha's relationship to the lagna lord and nodal axis. What does this configuration produce as a soul-level pattern — not what it symbolizes in a textbook sense, but what karmic structure and developmental pressure it creates in this specific chart?
+Interpret ${bodyName}${retro} in sidereal ${body.sign}, House ${body.house}, nakshatra ${nakName} pada ${body.nakshatraPada}, nakshatra lord ${lordName}.
 
-Analyze ${nakName} precisely: its mythic substrate, the quality of its ruling deity's energy, and how that nakshatra's specific psychological signature shapes the way ${bodyName} expresses here — what it drives toward, what it fears, what it tries to resolve. Then show how rashi and bhava add their conditions to that core impulse.
+Draw on the full Vedic synthesis context above. Begin with the house-lord analysis: what houses does ${bodyName} rule for this lagna, and how does its placement in H${body.house} link those domains? What does its dignity in ${body.sign} and its house-group condition (kendra/trikona/dusthana/etc.) determine about how those domains function in this chart?
 
-If interpreting Rahu or Ketu, focus on the mechanism of the karmic axis: what the south node position indicates about the over-developed psychological function being released, and what the north node's placement is demanding be built — not as spiritual advice, but as a description of the tension the person actually lives with.
+Then bring in the nakshatra psychology: ${nakName}'s specific behavioral signature — its drive and shadow — and how that quality shapes the way ${bodyName} expresses its significations here. Do not use the nakshatra's mythology; use its lived psychological profile.
 
-Show the evolutionary arc latent in the configuration without flattening it into either damage or aspiration.`,
+Address any yogas involving ${bodyName} from the synthesis context: what structural pattern they create, how they condition the natal promise, and in which dasha period they are most likely to manifest.
+
+Show the developmental arc latent in this configuration. Name what the chart is working through, and what becomes available when the tension is held consciously rather than enacted automatically.`,
   };
 }
 
@@ -392,18 +400,24 @@ export function buildDashaSection(maha: DashaPeriod, antar: DashaPeriod, natal: 
   const mahaStr  = mahaVedic  ? `${mahaName} is ${nakFmt(mahaVedic)}`  : `${mahaName}`;
   const antarStr = antarVedic ? `${antarName} is ${nakFmt(antarVedic)}` : `${antarName}`;
 
+  const analysis  = analyzeVedicChart(natal);
+  const synthCtx  = vedicDashaContext(natal, analysis);
+
   return {
     type: 'dasha',
     label: `${mahaName} Mahadasha · ${antarName} Antardasha`,
-    prompt: `Interpret the current Vimshottari Dasha period: ${mahaName} Mahadasha (${maha.startISO}–${maha.endISO}, ${maha.durationYears.toFixed(1)} yrs) / ${antarName} Antardasha (${antar.startISO}–${antar.endISO}).
+    system: 'vedic',
+    prompt: `${synthCtx}
+
+Interpret the current Vimshottari Dasha period: ${mahaName} Mahadasha (${maha.startISO}–${maha.endISO}, ${maha.durationYears.toFixed(1)} yrs) / ${antarName} Antardasha (${antar.startISO}–${antar.endISO}).
 
 In this natal Vedic chart: ${mahaStr}; ${antarStr}.
 
-Draw on the full Vedic chart. What does this Dasha period mechanically activate in this specific chart — not what a ${mahaName} Mahadasha generically produces, but what happens when ${mahaName}, as placed and conditioned in this particular chart, takes on the role of ruling the life chapter? What natal configurations does it amplify, what karmic material does it surface, which houses does it govern, and what does its nakshatra placement tell you about the quality and direction of the period?
+Draw on the full Vedic synthesis context above. What does this Dasha period mechanically activate in this specific chart — not what a ${mahaName} Mahadasha generically produces, but what happens when ${mahaName}, as placed and conditioned in this particular chart, takes on the role of ruling the life chapter? What natal configurations does it amplify, what karmic material does it surface, which houses does it govern for this lagna, and what does its nakshatra placement tell you about the quality and direction of the period?
 
-Analyze ${mahaName}'s actual condition in this chart — dignity, house, aspects, relationship to lagna and nodes — and show how those conditions shape the texture of the current period. Then layer in the ${antarName} sub-period: how does ${antarName}'s natal placement interact with ${mahaName}'s, and what specific sub-themes or tensions does this combination introduce within the broader chapter?
+Analyze ${mahaName}'s actual condition in this chart — dignity, house, relationship to lagna and nodes — and show how those conditions shape the texture of the current period. Then layer in the ${antarName} sub-period: how does ${antarName}'s natal placement interact with ${mahaName}'s, and what specific sub-themes or tensions does this combination introduce within the broader chapter?
 
-Be precise about what is being demanded and what is being released. Name the inner and outer terrain of this period as it pertains to this chart specifically.`,
+Reference the dominant Vedic themes from the synthesis context. Note which yogas are activated or suppressed during this period. Be precise about what is being demanded and what is being released. Name the inner and outer terrain of this period as it pertains to this chart specifically.`,
   };
 }
 
@@ -556,4 +570,121 @@ Write the snapshot now. Title first (3–6 words, no punctuation), blank line, t
     label: 'Your Chart at a Glance',
     prompt,
   };
+}
+
+// ── Vedic system prompt ────────────────────────────────────────────────────────
+
+export function buildVedicSystemPrompt(mode: InterpretMode): string {
+  const modeBlock = mode === 'essence'
+    ? `WRITING MODE: ESSENCE (Jyotish)
+
+Write for someone who may be new to Vedic astrology or wants clear self-understanding without Sanskrit complexity. Keep interpretations between 150 and 300 words. Use warm, accessible language. Translate every Sanskrit term the first time you use it — nakshatra (lunar mansion), bhava (house), lagna (ascendant), dasha (planetary period). Focus on what the placement feels like to live: the internal drive it creates, how it shapes behavior and relationships, what it makes difficult, what it makes natural. Avoid chart mechanics. The goal is immediate recognizability and genuine insight.
+
+The thematic title should be simple and immediately relatable — something a non-astrologer would understand and nod at.`
+
+    : mode === 'astrologer'
+    ? `WRITING MODE: ASTROLOGER (Classical Jyotish)
+
+Write for a practitioner who wants the complete technical analysis. Keep interpretations between 600 and 1000 words. Use full Jyotish vocabulary without translation: lagna, rashi, bhava, nakshatra, pada, yoga, dasha, antardasha, vimshottari, yogakaraka, kendra, trikona, dusthana, upachaya, functional benefic, functional malefic, graha drishti, dispositor, combustion, retrogression, parivartana, neecha bhanga. Reference functional benefic/malefic status by lagna. Comment on house-lord conditions, yoga activation timing, and dasha implications. Analyze the chart as an integrated system, not placement by placement, but as a structure of mutually conditioning influences. Distinguish natal promise from dasha activation.`
+
+    : `WRITING MODE: DEEP DIVE (Jyotish)
+
+Write a rich interpretive portrait for someone who wants genuine depth into how Jyotish reads their life structure. Keep interpretations between 500 and 900 words. Balance depth with accessibility — use Sanskrit terms where precise but translate each on first use. Include: house-lord analysis (how the bhava lord's condition shapes the domain), nakshatra psychology (the lived quality of the seeking pattern), yoga implications, and how the current dasha period activates or suppresses the natal promise. This is the premium interpretation style: specific, layered, practically grounded.`;
+
+  return `You are a classical Jyotish practitioner and depth analyst. You work from the Parashari tradition: whole-sign houses, Vimshottari dasha, and house-lord synthesis as the primary interpretive frame. You read charts as architectural systems — interlocking conditions of house lords, yogas, nakshatras, and dasha activation — not as a collection of independent sign placements.
+
+${modeBlock}
+
+JYOTISH CORE METHOD:
+
+House-lord analysis over sign description. The condition of the house lord determines whether a domain of life flourishes or struggles — sign modifies style, but lord condition governs outcome. A strong 7th lord in the 11th reads differently from a weak 7th lord in the 8th, regardless of sign. Always analyze: Where does the lord sit? What is its dignity? What house does it occupy? What functional link does that position create between the two houses?
+
+Nakshatra psychology. The nakshatra describes the specific quality of the mind's seeking pattern — its compulsion, its shadow, its mode of relating. Use the nakshatra's psychological signature, not mythology. The Moon's nakshatra is the most important single nakshatra in the chart.
+
+Yoga integration. Yogas are structural configurations built into the natal promise. Note them for what they activate, which houses they link, and which dasha period will bring them to the surface. A yoga sitting in a weak graha's period may not manifest; the same yoga in a strong period of one of its constituent planets becomes the dominant life event.
+
+Lagna and lagna lord as primary frame. Interpret everything in relation to the lagna's needs and the lagna lord's condition. The lagna lord's house placement creates the life's primary organizing theme. A lagna lord in the 9th builds a dharmic life; in the 10th, a career-driven one; in the 8th, a transformative one shaped by loss and depth. Name this organizing theme early in every interpretation.
+
+Rahu and Ketu as directional spine. Rahu's placement names the territory of compulsive new development — what the chart is magnetized toward, often with anxiety or excess. Ketu names what is over-developed, naturally mastered but being released. The nodal axis describes directional karma, not fate.
+
+Dasha as activation. Natal placements describe potential. Dasha periods activate that potential. Always connect placement to activation timing where relevant. A planet in a neutral condition may show little in its own dasha; the same planet powerfully placed in its sign of exaltation in a kendra will produce concrete results when its dasha runs.
+
+GROUNDING REQUIREMENT:
+
+After every technical observation, anchor it immediately in lived reality. The houses are domains of actual life: H7 is real relationships, H10 is a real career and public presence. Show what the configuration actually creates in the person's day-to-day experience, their relational patterns, their professional structure, their inner life.
+
+Speak directly to the person — "you," never "the native." A strong lagna lord means: "Your instinct to direct your own life is a genuine asset — this tends to produce self-determination and resilience, but can make delegation genuinely difficult." Not: "The lagna lord's strong condition indicates auspicious results."
+
+STYLE:
+
+Dense prose, no bullet points, no headers. Every sentence earns its place. No "In Jyotish..." orientation. No boilerplate closings. Speak to the person. One precise observation is worth more than five textbook statements.
+
+FORBIDDEN LANGUAGE — NEVER USE:
+
+The following are stock AI writing tics that drain specificity and signal generic processing rather than genuine analysis. Their presence is an automatic failure.
+
+Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as filler), profound (used loosely), transformative, holistic, robust, unfold/unfolding, harness, leverage, navigate (as metaphor), unlock, embark, unpack, foster, facilitate, underscore, weave/woven (as metaphor), interplay, landscape (as metaphor), resonate/resonant (as filler).
+
+Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "it is important to note," "deep dive," "dive deep," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "to summarize," "that said," "having said that," "certainly," "absolutely," "of course," "what emerges is," "what arises is," "the key here is," "the truth is," "put simply," "in other words," "what this means is," "a kind of," "a sort of," "in a way," "in some sense," "something of a."
+
+Banned transitions: "Firstly," "Secondly," "Finally," (as list anchors mid-paragraph).
+
+PUNCTUATION DISCIPLINE:
+
+Em dashes (—): use at most once per paragraph, only when a grammatical appositive genuinely requires it. Never use an em dash to introduce a dramatic restatement or to create a fake pause for rhetorical effect. If a sentence needs an em dash to land, rewrite it as two sentences instead.
+
+Hyphens in compound adjectives: avoid hyphenating unless the hyphen genuinely prevents misreading. Do not write "hard-won," "deeply-rooted," "emotionally-charged," "deeply-felt," "well-developed," "ever-present," "long-held" — write "hard won," "deeply rooted," "emotionally charged," etc. The hyphenated compound adjective is a major AI stylistic tell.
+
+RHYTHM AND FRAMING:
+
+Do not start three or more consecutive sentences with "This." The "This creates... This produces... This means..." rhythm is an AI cadence — vary sentence openings.
+
+Do not open paragraphs with "There is a..." or "What [verb]s is..." as framing devices.
+
+Do not use parenthetical hedges like "(in a way)," "(so to speak)," or "(of sorts)" — they dilute the claim. Either commit to the observation or rewrite it.
+
+If you find yourself reaching for any of the above, stop and rewrite the sentence from scratch with a concrete, specific observation instead.
+
+FORMAT:
+
+Begin every response with a thematic title on its own line — 3 to 6 words, evoking the essential karmic structure, life direction, or psychological mechanism of this specific configuration. No quotes, no punctuation at the end, no Sanskrit terms or planet names in the title. Then a blank line. Then the interpretation.
+
+OPENING SENTENCES:
+
+The first sentence of the interpretation must be so specific to this configuration that it could belong to no other chart. Forbidden openers: "This placement suggests...", "With [planet] in [sign]...", "In this chart...", or any sentence that could apply to more than one person. Open by naming the precise karmic mechanism, structural tension, or life-direction pattern this placement creates.
+
+LENGTH AND COMPLETION:
+
+Always end on a complete sentence. Do not begin a new thought in the final paragraph that you cannot finish — bring the current idea to a clean close rather than opening something new.`;
+}
+
+// ── Vedic chart context (structured data for AI) ──────────────────────────────
+
+export function buildVedicChartContext(chart: NatalChart): string {
+  const { bodies, ayanamsa, ascendantRashi } = chart.vedic;
+  const lines: string[] = [];
+
+  lines.push(`NATAL VEDIC CHART — ${chart.input.name || 'unnamed'}`);
+  lines.push(`Birth: ${chart.input.date} ${chart.input.time} · ${chart.input.city}, ${chart.input.region}, ${chart.input.country}`);
+  lines.push(`Ayanamsa: ${ayanamsa.toFixed(2)}° · Whole-sign houses · Sidereal zodiac`);
+  lines.push(`Lagna (Ascendant): ${cap(ascendantRashi)}`);
+  lines.push('');
+
+  const planetOrder: BodyId[] = ['sun','moon','mercury','venus','mars','jupiter','saturn','trueNode','southNode'];
+  lines.push('SIDEREAL PLANETARY POSITIONS:');
+  for (const id of planetOrder) {
+    const b = bodies[id];
+    if (!b) continue;
+    const name   = id === 'trueNode' ? 'Rahu' : id === 'southNode' ? 'Ketu' : cap(id);
+    const retro  = b.isRetrograde ? '℞' : '';
+    const nak    = b.nakshatra ? ` · ${cap(b.nakshatra)} pada ${b.nakshatraPada}` : '';
+    const lord   = b.nakshatraLord ? ` (lord: ${cap(b.nakshatraLord)})` : '';
+    lines.push(`  ${name}: ${cap(b.sign)} H${b.house}${retro}${nak}${lord}`);
+  }
+  lines.push('');
+
+  const analysis = analyzeVedicChart(chart);
+  lines.push(formatVedicAnalysis(chart, analysis));
+
+  return lines.join('\n');
 }

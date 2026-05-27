@@ -400,6 +400,22 @@ function SkyCard({ atmo }: { atmo: BirthAtmosphere }) {
   );
 }
 
+// ─── Birth header ─────────────────────────────────────────────────────────────
+
+function formatBirthLine(chart: NatalChart): string {
+  const { date, time, city, region } = chart.input;
+  const [y, mo, d] = date.split('-').map(Number);
+  const jsDate   = new Date(Date.UTC(y, mo - 1, d));
+  const weekday  = jsDate.toLocaleDateString('en-US', { weekday: 'long',  timeZone: 'UTC' });
+  const datePart = jsDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  const [h, m]   = time.split(':').map(Number);
+  const ampm     = h < 12 ? 'AM' : 'PM';
+  const hour12   = h % 12 || 12;
+  const timePart = `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+  const place    = city || region;
+  return `You were born on ${weekday}, ${datePart} at ${timePart}${place ? ` in ${place}` : ''}`;
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export default function BirthAtmosphere({ chart }: { chart: NatalChart }) {
@@ -423,5 +439,18 @@ export default function BirthAtmosphere({ chart }: { chart: NatalChart }) {
   }, [atmo]);
 
   if (!atmo) return null;
-  return <SkyCard atmo={atmo} />;
+  return (
+    <div>
+      <p style={{
+        margin:        '0 0 8px',
+        fontSize:      11,
+        color:         'var(--fg-muted)',
+        fontFamily:    'var(--font-mono)',
+        letterSpacing: '0.03em',
+      }}>
+        {formatBirthLine(chart)}
+      </p>
+      <SkyCard atmo={atmo} />
+    </div>
+  );
 }

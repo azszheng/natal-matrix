@@ -27,7 +27,7 @@ export default function AspectTable({ chart, onInterpret }: { chart: NatalChart;
             <th style={th}>Body B</th>
             <th style={{ ...th, fontFamily: 'var(--font-mono)' }}><Tooltip text="How many degrees the aspect deviates from exact. A 0° orb is a perfect aspect. The 'orb of influence' allowed before two planets are no longer considered in aspect varies: typically up to 10° for Sun/Moon aspects, 8° for other major aspects. Tighter orbs = stronger aspects.">Orb</Tooltip></th>
             <th style={{ ...th, textAlign: 'center' }}><Tooltip align="right" text="Applying (A): the planets are still moving toward exact alignment. The aspect is building in strength and considered more powerful and 'live.' Separating (S): the exact moment has passed and the planets are moving apart — the influence is present but fading.">A/S</Tooltip></th>
-            {onInterpret && <th style={{ ...th, width: 28 }} />}
+            {onInterpret && <th style={{ ...th, width: 72, textAlign: 'center' }}><Tooltip align="right" text="Click the circle on any row to generate an AI interpretation for that aspect.">Interpret</Tooltip></th>}
           </tr>
         </thead>
         <tbody>

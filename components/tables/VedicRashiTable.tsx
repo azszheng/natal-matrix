@@ -35,7 +35,7 @@ export default function VedicRashiTable({ chart, onInterpret }: { chart: NatalCh
             <th style={{ ...th, textAlign: 'center' }}><Tooltip align="center" text="Each nakshatra is divided into 4 padas (quarters) of 3°20' each. The padas cycle through the 12 signs in order — pada 1 has Aries energy, pada 2 has Taurus energy, etc. The pada adds a sign-based sub-quality to the nakshatra. Padas also form the basis of the Navamsha divisional chart, which is crucial for marriage and the soul's dharma.">Pada</Tooltip></th>
             <th style={th}><Tooltip text="The ruling planet of this nakshatra. The nakshatra lord governs the Vimshottari Dasha period associated with this nakshatra — so if your Moon is in Rohini (nakshatra lord: Moon), your life begins in a Moon Mahadasha. The lord's strength in your chart affects that entire Dasha period.">Lord</Tooltip></th>
             <th style={{ ...th, textAlign: 'center' }}><Tooltip align="right" text="Whole Sign house (bhava). In Vedic astrology, each house corresponds to one complete sign. The sign of your Ascendant is the 1st house, the next sign is always the 2nd house, and so on — regardless of the degree. This makes house placements clean and sign-based, unlike Western Placidus houses which vary in size.">House</Tooltip></th>
-            {onInterpret && <th style={{ ...th, width: 28 }} />}
+            {onInterpret && <th style={{ ...th, width: 72, textAlign: 'center' }}><Tooltip align="right" text="Click the circle on any row to generate an AI interpretation for that Vedic placement.">Interpret</Tooltip></th>}
           </tr>
         </thead>
         <tbody>

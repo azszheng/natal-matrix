@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
-import { buildSystemPrompt, buildChartContext } from '@/lib/ai/prompts';
+import { buildSystemPrompt, buildChartContext, buildVedicSystemPrompt, buildVedicChartContext } from '@/lib/ai/prompts';
 
 export const maxDuration = 60;
 
@@ -14,6 +14,11 @@ const MAX_TOKENS: Record<InterpretMode, number> = {
   astrologer: 1200,
 };
 
+const VEDIC_MAX_TOKENS: Record<InterpretMode, number> = {
+  essence:    500,
+  deepdive:   1600,
+  astrologer: 1800,
+};
 
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -22,9 +27,10 @@ export async function POST(req: Request) {
 
   const { chart, section, mode = 'deepdive' }: { chart: NatalChart; section: InterpretSection; mode: InterpretMode } = await req.json();
 
-  const systemPrompt = buildSystemPrompt(mode, '');
-  const chartContext = buildChartContext(chart);
-  const maxTokens = MAX_TOKENS[mode] ?? 800;
+  const isVedic      = section.system === 'vedic';
+  const systemPrompt = isVedic ? buildVedicSystemPrompt(mode) : buildSystemPrompt(mode, '');
+  const chartContext = isVedic ? buildVedicChartContext(chart) : buildChartContext(chart);
+  const maxTokens    = isVedic ? (VEDIC_MAX_TOKENS[mode] ?? 1200) : (MAX_TOKENS[mode] ?? 800);
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({

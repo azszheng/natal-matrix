@@ -42,7 +42,7 @@ export default function PlanetTable({ chart, onInterpret }: { chart: NatalChart;
             <th style={th}><Tooltip text="Which of the 12 houses (life areas) this planet occupies. 1st: identity/body, 2nd: money/values, 3rd: communication/siblings, 4th: home/roots, 5th: creativity/romance, 6th: health/daily work, 7th: partnerships/marriage, 8th: transformation/death/shared resources, 9th: philosophy/travel/higher learning, 10th: career/public status, 11th: friends/community, 12th: unconscious/spirituality/hidden matters." align="center">House</Tooltip></th>
             <th style={{ ...th, fontFamily: 'var(--font-mono)' }}><Tooltip text="How fast the planet is moving in degrees per day. Positive = direct (forward) motion; negative = retrograde (backward). The Moon moves ~13°/day; the Sun ~1°/day; Saturn ~0.03°/day; Pluto less than 0.04°/day. Slower-moving planets create longer-lasting influences in your life.">Speed</Tooltip></th>
             <th style={th}><Tooltip text="Whether the planet is in a sign that supports or challenges its natural energy. Domicile: the planet rules this sign — most comfortable and powerful. Exaltation: honored guest — very effective. Detriment: opposite of domicile — uncomfortable, energy expressed awkwardly. Fall: opposite of exaltation — most challenged. Peregrine: no special relationship — neutral expression." align="right">Dignity</Tooltip></th>
-            {onInterpret && <th style={{ ...th, width: 28 }} />}
+            {onInterpret && <th style={{ ...th, width: 72, textAlign: 'center' }}><Tooltip align="right" text="Click the circle on any row to generate an AI interpretation for that placement.">Interpret</Tooltip></th>}
           </tr>
         </thead>
         <tbody>
