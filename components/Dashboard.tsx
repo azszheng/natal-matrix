@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import BirthForm from '@/components/BirthForm';
 import WesternWheel from '@/components/charts/WesternWheel';
 import NorthIndianDiamond from '@/components/charts/NorthIndianDiamond';
@@ -106,7 +106,7 @@ function chartSummary(chart: NatalChart, birth: ResolvedBirth): string {
 }
 
 export default function Dashboard() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [birth,     setBirth]     = useState<ResolvedBirth | null>(null);
   const [chart,     setChart]     = useState<NatalChart | null>(null);
@@ -125,9 +125,14 @@ export default function Dashboard() {
   const [saveStatus,   setSaveStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedChartId, setSavedChartId] = useState<number | null>(null);
 
+  const loadSavedCharts = useCallback(async () => {
+    const res = await fetch('/api/charts');
+    if (res.ok) setSavedCharts(await res.json());
+  }, []);
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
         setIsLoggedIn(true);
         loadSavedCharts();
       }
@@ -138,12 +143,7 @@ export default function Dashboard() {
       if (loggedIn) loadSavedCharts(); else setSavedCharts([]);
     });
     return () => subscription.unsubscribe();
-  }, []);
-
-  const loadSavedCharts = useCallback(async () => {
-    const res = await fetch('/api/charts');
-    if (res.ok) setSavedCharts(await res.json());
-  }, []);
+  }, [supabase, loadSavedCharts]);
 
   async function saveChart() {
     if (!chart || !birth) return;
