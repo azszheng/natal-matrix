@@ -65,7 +65,7 @@ export default function AuthPage() {
             textAlign: 'center', color: 'var(--fg)',
           }}
         >
-          Amy&apos;s Chart
+          Natal Matrix
         </h1>
 
         <div

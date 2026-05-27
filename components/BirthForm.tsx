@@ -121,8 +121,8 @@ export default function BirthForm({ onResolved }: Props) {
       }
 
       const chart: NatalChart = await chartRes.json();
-      console.log('[Amy\'s Chart] ResolvedBirth:', resolved);
-      console.log('[Amy\'s Chart] NatalChart:', chart);
+      console.log('[Natal Matrix] ResolvedBirth:', resolved);
+      console.log('[Natal Matrix] NatalChart:', chart);
       onResolved(resolved, chart);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

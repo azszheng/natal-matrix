@@ -12,7 +12,7 @@ export default function Home() {
           className="text-xl tracking-wide"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--fg)' }}
         >
-          Amy&apos;s Chart
+          Natal Matrix
         </h1>
         <AuthHeader />
       </header>

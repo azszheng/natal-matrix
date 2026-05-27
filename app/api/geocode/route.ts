@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { GeoResult } from '@/lib/astro/types';
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-const UA = process.env.NOMINATIM_USER_AGENT ?? 'AmysChart/1.0 (azszheng@gmail.com)';
+const UA = process.env.NOMINATIM_USER_AGENT ?? 'NatalMatrix/1.0 (azszheng@gmail.com)';
 
 // In-memory rate limit: Nominatim requires max 1 req/sec
 let lastRequestAt = 0;

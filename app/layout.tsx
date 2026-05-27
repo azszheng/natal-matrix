@@ -22,12 +22,12 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Amy's Chart",
+  title: "Natal Matrix",
   description: "Rigorously accurate Western + Vedic natal charts with on-demand AI interpretation.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Amy's Chart",
+    title: "Natal Matrix",
   },
 };
 
