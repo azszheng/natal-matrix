@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const { data, error } = await supabase.from('birth_charts').insert({
     user_id:        user.id,
-    label:          label ?? `${birth.city || birth.region || 'Chart'} ${birth.date}`,
+    label:          label ?? (birth.name ? `${birth.name} — ${birth.date}` : `${birth.city || birth.region || 'Chart'} ${birth.date}`),
     birth_date:     birth.date,
     birth_time:     birth.time,
     birth_location: [birth.city, birth.region, birth.country].filter(Boolean).join(', '),
