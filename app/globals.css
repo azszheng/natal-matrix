@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  /* palette — dark only, research tool feel */
-  --bg: #0a0b0d;
-  --bg-raised: #14161a;
-  --bg-chart: #0d0f12;
-  --line: #1f232a;
-  --line-chart: #2a3038;
-  --fg: #e6e8eb;
-  --fg-muted: #8a92a0;
-  --fg-dim: #556070;
-  --fg-glyph: #d4b071;
-  --accent: #7cb7d9;
-  --aspect-harmonious: #6ba8c9;
-  --aspect-dynamic: #c46e6e;
-  --aspect-neutral: #b8b8b8;
-  --aspect-minor: #c4a968;
-  --retro: #c46e6e;
+  /* Celestial Almanac — warm ink night (default) */
+  --bg: #0c0a08;
+  --bg-raised: #14110d;
+  --bg-chart: #100d0a;
+  --line: #2a241b;
+  --line-chart: #3a3225;
+  --fg: #ece4d3;
+  --fg-muted: #b0a48c;
+  --fg-dim: #7c715c;
+  --fg-glyph: #d9b774;
+  --accent: #c9a44c;
+  --aspect-harmonious: #7ba6b8;
+  --aspect-dynamic: #c96a52;
+  --aspect-neutral: #b0a48c;
+  --aspect-minor: #c9a44c;
+  --retro: #c96a52;
 
-  /* typography */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
-  --font-display: var(--font-cormorant), ui-serif, serif;
+  /* typography — Celestial Almanac stack */
+  --font-sans: var(--font-hanken), system-ui, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, 'PingFang SC', 'Hiragino Sans GB', monospace;
+  --font-display: var(--font-newsreader), Georgia, serif;
 
   /* layout */
-  --radius: 2px;
+  --radius: 1px;
   --grid: 4px;
 }
 

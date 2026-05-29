@@ -17,8 +17,9 @@ import SynastryDrawer from '@/components/modals/SynastryDrawer';
 import InterpretationPanel from '@/components/interpret/InterpretationPanel';
 import ModeSelector from '@/components/interpret/ModeSelector';
 import ChartSnapshot from '@/components/interpret/ChartSnapshot';
-import BirthAtmosphere from '@/components/BirthAtmosphere';
-import { SIGN_GLYPH } from '@/components/charts/glyphs';
+import BirthAtmosphereHero from '@/components/BirthAtmosphere';
+import Disclosure from '@/components/ui/Disclosure';
+import { SIGN_GLYPH, PLANET_GLYPH } from '@/components/charts/glyphs';
 import { createClient } from '@/lib/supabase/client';
 import type { ResolvedBirth, NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
@@ -42,42 +43,27 @@ function lsGet(key: string): string | undefined {
 }
 
 function lsSet(key: string, value: string) {
-  try { localStorage.setItem(key, value); } catch { /* storage full — in-memory cache still works */ }
+  try { localStorage.setItem(key, value); } catch { /* storage full */ }
 }
 
 type TableTab = 'planets' | 'houses' | 'aspects' | 'dignities' | 'vedic';
-
-const TAB_DESC: Record<TableTab, { title: string; body: string }> = {
-  planets: {
-    title: 'Planets',
-    body:  'Shows where each planet was in the sky the moment you were born. Each planet represents a different part of life — the Sun is your core identity, the Moon your emotions, Mercury your mind and communication, Venus love and beauty, Mars drive and action, and so on. The sign a planet occupies colors how that energy expresses itself; the house shows which life area it plays out in.',
-  },
-  houses: {
-    title: 'Houses',
-    body:  'The birth chart is divided into 12 "houses," each governing a different area of life — from the 1st house (your appearance and how others see you) through to the 12th (the subconscious, solitude, and hidden matters). The house a planet falls in shows where its energy is most active in your day-to-day life. Houses are calculated from your exact birth time and location.',
-  },
-  aspects: {
-    title: 'Aspects',
-    body:  'When two planets are a specific number of degrees apart, they form an "aspect" — a geometric relationship that describes how they interact. Trines (120°) and sextiles (60°) are generally harmonious and easy; squares (90°) and oppositions (180°) create tension and challenge that often drives growth; conjunctions (0°) merge the two energies together.',
-  },
-  dignities: {
-    title: 'Dignities',
-    body:  'Each planet has signs where it feels at home and signs where it struggles. "Domicile" means the planet rules that sign and operates at full strength. "Exaltation" is another comfortable placement. "Detriment" and "Fall" are opposite positions — the planet is in unfamiliar territory and its energy is harder to express cleanly. This doesn\'t make a placement "bad," just different in character.',
-  },
-  vedic: {
-    title: 'Vedic Rashi (Signs)',
-    body:  'The Vedic equivalent of the Western planets table, but calculated using the sidereal zodiac. Also includes each planet\'s Nakshatra — one of 27 lunar mansions that divide the zodiac into finer 13.3° segments. Nakshatras add a layer of nuance to a planet\'s sign placement and are especially important in Vedic timing (Dashas) and compatibility.',
-  },
-};
 type ModalId  = 'transits' | 'progressions' | 'dashas' | 'synastry';
 
 const TABS: { id: TableTab; label: string }[] = [
-  { id: 'planets',   label: 'Planets'   },
-  { id: 'houses',    label: 'Houses'    },
-  { id: 'aspects',   label: 'Aspects'   },
-  { id: 'dignities', label: 'Dignities' },
+  { id: 'planets',   label: 'Planets'     },
+  { id: 'houses',    label: 'Houses'      },
+  { id: 'aspects',   label: 'Aspects'     },
+  { id: 'dignities', label: 'Dignities'   },
   { id: 'vedic',     label: 'Vedic Rashi' },
 ];
+
+const TAB_DESC: Record<TableTab, string> = {
+  planets:   'Where each planet sat in the sky the moment you were born. The Sun is your core identity, the Moon your emotions, Mercury your mind — the sign colors how that energy expresses, the house shows where it plays out.',
+  houses:    'The birth chart is divided into 12 houses, each governing a different area of life — from your appearance (1st) to the subconscious (12th). The house a planet falls in shows where its energy is most active in your day-to-day life.',
+  aspects:   'When two planets sit at a precise angle they form an aspect. Trines and sextiles flow easily; squares and oppositions create the tension that drives growth; conjunctions fuse two energies into one.',
+  dignities: 'Each planet has signs where it is at home (Domicile, Exaltation) and signs where it struggles (Detriment, Fall). This shapes how cleanly its energy expresses — not better or worse, just easier or harder.',
+  vedic:     'The sidereal view, tied to the actual constellations rather than the seasons — usually one sign earlier than Western. Each planet also falls in a Nakshatra, one of 27 lunar mansions that add fine-grained nuance.',
+};
 
 const MODALS: { id: ModalId; label: string; phase: number }[] = [
   { id: 'transits',     label: 'Transits',     phase: 6 },
@@ -86,24 +72,66 @@ const MODALS: { id: ModalId; label: string; phase: number }[] = [
   { id: 'synastry',     label: 'Synastry',     phase: 9 },
 ];
 
-function cap(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+const SIGN_NAME: Record<string, string> = {
+  aries: 'Aries', taurus: 'Taurus', gemini: 'Gemini', cancer: 'Cancer',
+  leo: 'Leo', virgo: 'Virgo', libra: 'Libra', scorpio: 'Scorpio',
+  sagittarius: 'Sagittarius', capricorn: 'Capricorn', aquarius: 'Aquarius', pisces: 'Pisces',
+};
+
+// ── Section header (almanac style) ───────────────────────────────────────────
+
+function SectionHead({ n, title, note }: { n: string; title: string; note?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, margin: '6px 0 2px' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', color: 'var(--fg-glyph)', whiteSpace: 'nowrap' }}>§{n}</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>{title}</span>
+      <span style={{ flex: 1, height: 1, background: 'var(--line)', position: 'relative', top: -3 }} />
+      {note && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>{note}</span>}
+    </div>
+  );
 }
 
-function chartSummary(chart: NatalChart, birth: ResolvedBirth): string {
+// ── Big Three ─────────────────────────────────────────────────────────────────
+
+function BigThree({ chart }: { chart: NatalChart }) {
   const sun  = chart.western.bodies.sun;
   const moon = chart.western.bodies.moon;
   const asc  = chart.western.bodies.asc;
-  const parts: string[] = [];
-  if (sun)  parts.push(`${SIGN_GLYPH[sun.sign]} ${cap(sun.sign)} Sun`);
-  if (moon) parts.push(`${SIGN_GLYPH[moon.sign]} ${cap(moon.sign)} Moon`);
-  if (asc)  parts.push(`${SIGN_GLYPH[asc.sign]} ${cap(asc.sign)} rising`);
-  const [y, m, d] = birth.date.split('-').map(Number);
-  const dateStr = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  parts.push(dateStr);
-  parts.push([birth.city, birth.region].filter(Boolean).join(', '));
-  return parts.join(' · ');
+  const cards = [
+    { role: 'Sun',    sub: 'Core identity', body: sun  },
+    { role: 'Moon',   sub: 'Inner world',   body: moon },
+    { role: 'Rising', sub: 'The mask',      body: asc  },
+  ];
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+      {cards.map((c, i) => (
+        <div key={c.role} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 22px', borderLeft: i === 0 ? 'none' : '1px solid var(--line)' }}>
+          <span style={{ fontSize: 44, color: 'var(--fg-glyph)', fontFamily: 'serif', lineHeight: 1 }}>
+            {SIGN_GLYPH[c.body.sign]}
+          </span>
+          <div>
+            <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>
+              {c.role} · {c.sub}
+            </p>
+            <p style={{ margin: '5px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 22, color: 'var(--fg)', lineHeight: 1.05 }}>
+              {SIGN_NAME[c.body.sign]}
+            </p>
+            <p style={{ margin: '4px 0 0', fontSize: 11.5, fontFamily: 'var(--font-mono)', color: 'var(--fg-muted)' }}>
+              {c.body.signDegree.toFixed(1)}° {SIGN_ABBR[c.body.sign]}{c.role !== 'Rising' ? ` · H${c.body.house}` : ''}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
+
+const SIGN_ABBR: Record<string, string> = {
+  aries: 'Ar', taurus: 'Ta', gemini: 'Ge', cancer: 'Cn', leo: 'Le', virgo: 'Vi',
+  libra: 'Li', scorpio: 'Sc', sagittarius: 'Sg', capricorn: 'Cp', aquarius: 'Aq', pisces: 'Pi',
+};
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn?: boolean }) {
   const supabase = useMemo(() => createClient(), []);
@@ -119,7 +147,6 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
     if (typeof window === 'undefined') return 'deepdive';
     return (localStorage.getItem('interpretMode') as InterpretMode) ?? 'deepdive';
   });
-
   const [isLoggedIn,   setIsLoggedIn]   = useState(initialLoggedIn);
   const [saveStatus,   setSaveStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedChartId, setSavedChartId] = useState<number | null>(null);
@@ -191,269 +218,207 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
     setSavedChartId(null);
   }
 
-  const section: React.CSSProperties = {
-    border: '1px solid var(--line)',
-    borderRadius: 'var(--radius)',
-    backgroundColor: 'var(--bg-raised)',
-  };
-
-  const sectionHead: React.CSSProperties = {
-    fontSize: 10,
-    textTransform: 'uppercase',
+  // ── Styles ──
+  const barBtn = (primary: boolean): React.CSSProperties => ({
+    fontSize: 10.5, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    color: 'var(--fg-muted)',
-    fontFamily: 'var(--font-mono)',
-  };
+    color: primary ? 'var(--fg-glyph)' : 'var(--fg-muted)',
+    background: 'none',
+    border: `1px solid ${primary ? 'var(--fg-glyph)' : 'var(--line)'}`,
+    borderRadius: 1, padding: '6px 14px', cursor: 'pointer',
+  });
 
   return (
-    <div className="flex-1 px-4 py-6 max-w-5xl w-full mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* ── Birth Atmosphere card ── */}
-      {chart && <BirthAtmosphere chart={chart} />}
+    <div className="flex-1 w-full" style={{ display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Birth Data section ── */}
-      <section style={section}>
+      {/* ── Full-bleed Hero (atmosphere + sky band) ── */}
+      {chart && <BirthAtmosphereHero chart={chart} />}
+
+      {/* ── Content column ── */}
+      <main style={{
+        maxWidth: 1040, width: '100%', margin: '0 auto',
+        padding: '0 28px 72px',
+        marginTop: chart ? -30 : 32,
+        position: 'relative', zIndex: 3,
+        display: 'flex', flexDirection: 'column', gap: 10,
+      }}>
+
+        {/* Birth bar / form */}
         {chart && birth && !formOpen ? (
-          /* Collapsed summary */
-          <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <section style={{ borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', padding: '12px 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'var(--bg)' }}>
             <span style={{ fontSize: 12, color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>
-              {chartSummary(chart, birth)}
+              {SIGN_GLYPH[chart.western.bodies.sun.sign]}︎ {SIGN_NAME[chart.western.bodies.sun.sign]} Sun
+              {' · '}{SIGN_GLYPH[chart.western.bodies.moon.sign]}︎ {SIGN_NAME[chart.western.bodies.moon.sign]} Moon
+              {' · '}{SIGN_GLYPH[chart.western.bodies.asc.sign]}︎ {SIGN_NAME[chart.western.bodies.asc.sign]} rising
+              {' · '}{birth.date}
+              {(birth.city || birth.region) && ` · ${[birth.city, birth.region].filter(Boolean).join(', ')}`}
             </span>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
               {isLoggedIn && saveStatus !== 'saved' && (
-                <button
-                  onClick={saveChart}
-                  disabled={saveStatus === 'saving'}
-                  style={{
-                    fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
-                    letterSpacing: '0.06em', color: 'var(--accent)', background: 'none',
-                    border: '1px solid var(--accent)', borderRadius: 4, padding: '3px 10px',
-                    cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer',
-                    opacity: saveStatus === 'saving' ? 0.5 : 1,
-                  }}
-                >
-                  {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'error' ? 'Retry Save' : 'Save'}
+                <button onClick={saveChart} disabled={saveStatus === 'saving'} style={barBtn(true)}>
+                  {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'error' ? 'Retry' : 'Save'}
                 </button>
               )}
               {saveStatus === 'saved' && (
-                <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  ✓ Saved
-                </span>
+                <span style={{ ...barBtn(false), cursor: 'default', opacity: 0.6 }}>✓ Saved</span>
               )}
-              <button
-                onClick={() => setFormOpen(true)}
-                style={{
-                  fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
-                  letterSpacing: '0.06em', color: 'var(--accent)', background: 'none',
-                  border: '1px solid var(--line)', borderRadius: 4, padding: '3px 10px', cursor: 'pointer',
-                }}
-              >
-                Edit
-              </button>
+              <button onClick={() => setFormOpen(true)} style={barBtn(false)}>Edit</button>
             </div>
-          </div>
+          </section>
         ) : (
-          /* Expanded form */
-          <div style={{ padding: '16px 20px' }}>
-            <h2 style={{ ...sectionHead, marginBottom: 16 }}>Birth Data</h2>
+          <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', padding: '20px 24px', marginTop: chart ? 0 : 0 }}>
+            <p style={{ margin: '0 0 16px', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-muted)' }}>Birth Data</p>
             <BirthForm onResolved={handleResolved} />
-          </div>
+          </section>
         )}
-      </section>
 
-      {/* ── Chart Snapshot (free teaser) ── */}
-      {chart && <ChartSnapshot chart={chart} />}
+        {chart && (
+          <>
+            {/* §01 Big Three */}
+            <SectionHead n="01" title="The Big Three" note="Sun · Moon · Rising" />
+            <BigThree chart={chart} />
 
-      {/* ── Reading Style ── */}
-      {chart && (
-        <section style={{ ...section, padding: '14px 20px' }}>
-          <p style={{ ...sectionHead, marginBottom: 12 }}>Reading Style</p>
-          <ModeSelector mode={interpMode} onChange={handleModeChange} />
-        </section>
-      )}
+            {/* §02 Chart at a Glance */}
+            <SectionHead n="02" title="Your Chart at a Glance" />
+            <ChartSnapshot chart={chart} />
 
-      {/* ── Chart wheel ── */}
-      {chart && (
-        <section style={section}>
-          <div style={{ padding: '16px 20px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <h3 style={sectionHead}>Western · Tropical · Placidus</h3>
-            <div style={{ ...descBox, maxWidth: 420 }}>
-              <strong style={descTitle}>Western Astrology — Personality &amp; Psychology</strong>
-              <p style={descText}>
-                The Western chart is a map of your <strong>conscious self, ego, and personality</strong> — who you are and how you show up in the world. It uses the <em>tropical zodiac</em>, anchored to Earth's seasons (Aries always begins at the spring equinox), making it a system rooted in present, earthly experience.
-              </p>
-              <p style={{ ...descText, marginTop: 8 }}>
-                Your Sun sign describes your core identity and life purpose; your Moon sign shows your emotional world and instincts; your Rising sign (Ascendant) is the mask you wear — how others first perceive you. Together these three form the backbone of your Western chart. The planets, signs, houses, and aspects layer on top to paint a detailed picture of your psychology, strengths, wounds, and patterns of behavior.
-              </p>
-              <p style={{ ...descText, marginTop: 8 }}>
-                <strong>Best used for:</strong> understanding personality, psychological patterns, relationships, and how you experience life consciously.
-              </p>
-            </div>
-            <div style={{ maxWidth: 420 }}>
-              <WesternWheel chart={chart} />
-            </div>
-          </div>
-        </section>
-      )}
+            {/* §03 Reading Style */}
+            <SectionHead n="03" title="Reading Style" />
+            <section style={{ padding: '4px 2px 2px' }}>
+              <ModeSelector mode={interpMode} onChange={handleModeChange} />
+            </section>
 
-      {/* ── Data tables ── */}
-      {chart && (
-        <section style={section}>
-          {/* Tab bar */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', padding: '0 4px' }}>
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  padding: '10px 14px',
-                  fontSize: 11,
-                  fontFamily: 'var(--font-mono)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: tab === t.id ? 'var(--accent)' : 'var(--fg-dim)',
-                  borderBottom: tab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
-                  marginBottom: -1,
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab description */}
-          <div style={{ margin: '12px 16px 4px', ...descBox }}>
-            <strong style={descTitle}>{TAB_DESC[tab].title}</strong>
-            <p style={descText}>{TAB_DESC[tab].body}</p>
-          </div>
-
-          {/* Table content */}
-          <div style={{ padding: '4px 0 12px' }}>
-            {tab === 'planets'   && <PlanetTable    chart={chart} onInterpret={setInterpSection} />}
-            {tab === 'houses'    && <HouseTable     chart={chart} onInterpret={setInterpSection} />}
-            {tab === 'aspects'   && <AspectTable    chart={chart} onInterpret={setInterpSection} />}
-            {tab === 'dignities' && <DignityTable   chart={chart} />}
-            {tab === 'vedic'     && (
-              <>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '8px 16px 16px' }}>
-                  <h3 style={sectionHead}>Vedic · Sidereal · Whole Sign</h3>
-                  <div style={{ ...descBox, maxWidth: 420 }}>
-                    <strong style={descTitle}>Vedic / Jyotish Astrology — Karma &amp; Destiny</strong>
-                    <p style={descText}>
-                      The Vedic chart reveals your <strong>soul's journey, karma, and life circumstances</strong> — the deeper purpose and conditions you were born into. It is a system over 5,000 years old, rooted in the Indian tradition of Jyotish ("the science of light"). It uses the <em>sidereal zodiac</em>, tied to the actual star constellations rather than the seasons, which currently runs about 23° behind the Western zodiac. This is why most people find their Vedic sign is one sign earlier than their Western sign.
-                    </p>
-                    <p style={{ ...descText, marginTop: 8 }}>
-                      Where Western astrology focuses on who you <em>are</em>, Vedic astrology focuses on what you are <em>here to do</em> — your dharma (life path), karma (past-life debts and gifts), artha (livelihood), and moksha (spiritual liberation). Timing is tracked through Dasha cycles — planetary periods that govern specific chapters of your life with remarkable precision.
-                    </p>
-                    <p style={{ ...descText, marginTop: 8 }}>
-                      <strong>Best used for:</strong> life circumstances, career and relationship timing, spiritual path, and understanding your soul's deeper intentions.
-                    </p>
+            {/* §04 Chart Wheel */}
+            <SectionHead n="04" title="The Chart Wheel" note="Western · Tropical · Placidus" />
+            <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
+              <div style={{ padding: '22px 22px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0 18px' }}>
+                  <div style={{ maxWidth: 460 }}>
+                    <WesternWheel chart={chart} />
                   </div>
-                  <div style={{ maxWidth: 420 }}>
-                    <NorthIndianDiamond chart={chart} />
-                  </div>
-                  <p style={{ fontSize: 10, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', margin: 0 }}>
-                    Lahiri ayanamsa {chart.vedic.ayanamsa.toFixed(4)}°
-                  </p>
                 </div>
-                <VedicRashiTable chart={chart} onInterpret={setInterpSection} />
-              </>
-            )}
-          </div>
-        </section>
-      )}
+                {/* Aspect color legend */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 22, flexWrap: 'wrap', paddingBottom: 14 }}>
+                  {[
+                    { label: 'Trine · Sextile', color: 'var(--aspect-harmonious)' },
+                    { label: 'Square · Opposition', color: 'var(--aspect-dynamic)' },
+                    { label: 'Conjunction', color: 'var(--aspect-neutral)' },
+                    { label: 'Quincunx', color: 'var(--aspect-minor)' },
+                  ].map(l => (
+                    <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 20, height: 2, background: l.color, flexShrink: 0, display: 'inline-block' }} />
+                      <span style={{ fontSize: 11, color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)' }}>{l.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <Disclosure label="What this shows">
+                  A map of your <strong>conscious self, ego, and personality</strong>, anchored to Earth&apos;s seasons. The Sun is your core identity, the Moon your emotional world, the Rising sign how others first perceive you. The lines across the center are <strong>aspects</strong> — geometric relationships between planets that describe how their energies interact.
+                </Disclosure>
+              </div>
+            </section>
 
-      {/* ── Actions ── */}
-      {chart && (
-        <section style={{ ...section, padding: '14px 20px' }}>
-          <p style={{ ...sectionHead, marginBottom: 12 }}>Advanced</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {MODALS.map(m => (
-              <button
-                key={m.id}
-                onClick={() => setModal(m.id)}
-                style={{
-                  fontSize: 11,
-                  fontFamily: 'var(--font-mono)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--fg-muted)',
-                  background: 'none',
-                  border: '1px solid var(--line)',
-                  borderRadius: 4,
-                  padding: '6px 14px',
-                  cursor: 'pointer',
-                }}
-              >
-                ▸ {m.label}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+            {/* §05 The Tables */}
+            <SectionHead n="05" title="The Tables" note="Ephemeris data" />
+            <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
+              {/* Tab bar */}
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', padding: '0 8px' }}>
+                {TABS.map(t => (
+                  <button key={t.id} onClick={() => setTab(t.id)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer', padding: '14px 16px',
+                    fontSize: 12, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.07em',
+                    borderBottom: tab === t.id ? '2px solid var(--fg-glyph)' : '2px solid transparent',
+                    marginBottom: -1, color: tab === t.id ? 'var(--fg-glyph)' : 'var(--fg-muted)',
+                  }}>{t.label}</button>
+                ))}
+              </div>
+              {/* Collapsible description */}
+              <div style={{ padding: '16px 22px 6px' }}>
+                <Disclosure label={`About ${TABS.find(t => t.id === tab)!.label}`}>
+                  {TAB_DESC[tab]}
+                </Disclosure>
+              </div>
+              {/* Vedic Lahiri note */}
+              {tab === 'vedic' && (
+                <p style={{ margin: '0 22px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>
+                  Lahiri ayanamsa {chart.vedic.ayanamsa.toFixed(4)}°
+                </p>
+              )}
+              {/* Table content */}
+              <div style={{ padding: '4px 8px 14px', overflowX: 'auto' }}>
+                {tab === 'planets'   && <PlanetTable    chart={chart} onInterpret={setInterpSection} />}
+                {tab === 'houses'    && <HouseTable     chart={chart} onInterpret={setInterpSection} />}
+                {tab === 'aspects'   && <AspectTable    chart={chart} onInterpret={setInterpSection} />}
+                {tab === 'dignities' && <DignityTable   chart={chart} />}
+                {tab === 'vedic'     && (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '8px 16px 16px' }}>
+                      <div style={{ maxWidth: 420 }}>
+                        <NorthIndianDiamond chart={chart} />
+                      </div>
+                    </div>
+                    <VedicRashiTable chart={chart} onInterpret={setInterpSection} />
+                  </>
+                )}
+              </div>
+            </section>
 
-      {/* ── Modals / drawers ── */}
-      {modal === 'transits' && chart && (
-        <TransitsDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
-      )}
-      {modal === 'progressions' && chart && (
-        <ProgressionsDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
-      )}
-      {modal === 'dashas' && chart && (
-        <DashasDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
-      )}
-      {modal === 'synastry' && chart && (
-        <SynastryDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
-      )}
-      {modal && modal !== 'transits' && modal !== 'progressions' && modal !== 'dashas' && modal !== 'synastry' && (
-        <PlaceholderModal
-          title={MODALS.find(m => m.id === modal)!.label}
-          phase={MODALS.find(m => m.id === modal)!.phase}
-          onClose={() => setModal(null)}
-        />
-      )}
+            {/* §06 Advanced */}
+            <SectionHead n="06" title="Advanced" />
+            <section style={{ padding: '4px 2px 0' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
+                {MODALS.map(m => (
+                  <button key={m.id} onClick={() => setModal(m.id)} style={{
+                    fontSize: 12, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                    letterSpacing: '0.08em', color: 'var(--fg-muted)', background: 'transparent',
+                    border: '1px solid var(--line)', borderRadius: 1, padding: '9px 16px', cursor: 'pointer',
+                  }}>{m.label}</button>
+                ))}
+                <button style={{
+                  fontSize: 12, fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                  letterSpacing: '0.08em', color: 'var(--fg-muted)', background: 'transparent',
+                  border: '1px solid var(--line)', borderRadius: 1, padding: '9px 16px', cursor: 'pointer',
+                }}>Export PDF</button>
+              </div>
+            </section>
+          </>
+        )}
 
-      {interpSection && chart && (() => {
-        const cKey   = interpCacheKey(chart, interpSection, interpMode);
-        const cached = interpCache.get(cKey) ?? lsGet(cKey);
-        return (
-          <InterpretationPanel
-            chart={chart}
-            section={interpSection}
-            onClose={() => setInterpSection(null)}
-            mode={interpMode}
-            cachedText={cached}
-            onCached={(text) => cacheResult(cKey, text)}
+        {/* ── Modals / drawers ── */}
+        {modal === 'transits' && chart && (
+          <TransitsDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
+        )}
+        {modal === 'progressions' && chart && (
+          <ProgressionsDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
+        )}
+        {modal === 'dashas' && chart && (
+          <DashasDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
+        )}
+        {modal === 'synastry' && chart && (
+          <SynastryDrawer chart={chart} onClose={() => setModal(null)} onInterpret={setInterpSection} />
+        )}
+        {modal && !['transits', 'progressions', 'dashas', 'synastry'].includes(modal) && (
+          <PlaceholderModal
+            title={MODALS.find(m => m.id === modal)!.label}
+            phase={MODALS.find(m => m.id === modal)!.phase}
+            onClose={() => setModal(null)}
           />
-        );
-      })()}
+        )}
+
+        {interpSection && chart && (() => {
+          const cKey   = interpCacheKey(chart, interpSection, interpMode);
+          const cached = interpCache.get(cKey) ?? lsGet(cKey);
+          return (
+            <InterpretationPanel
+              chart={chart}
+              section={interpSection}
+              onClose={() => setInterpSection(null)}
+              mode={interpMode}
+              cachedText={cached}
+              onCached={(text) => cacheResult(cKey, text)}
+            />
+          );
+        })()}
+      </main>
     </div>
   );
 }
-
-const descBox: React.CSSProperties = {
-  background: 'var(--bg)',
-  border: '1px solid var(--line)',
-  borderLeft: '3px solid var(--accent)',
-  borderRadius: 4,
-  padding: '10px 14px',
-  maxWidth: 380,
-};
-
-const descTitle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 11,
-  fontFamily: 'var(--font-mono)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.07em',
-  color: 'var(--fg-muted)',
-  marginBottom: 6,
-};
-
-const descText: React.CSSProperties = {
-  margin: 0,
-  fontSize: 12,
-  color: 'var(--fg)',
-  lineHeight: 1.7,
-  fontFamily: 'var(--font-sans, sans-serif)',
-};

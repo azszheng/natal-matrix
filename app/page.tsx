@@ -8,17 +8,18 @@ export default async function Home() {
 
   return (
     <main className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}>
-      <header
-        className="flex items-center justify-between px-6 py-4 border-b"
-        style={{ borderColor: 'var(--line)' }}
-      >
-        <h1
-          className="text-xl tracking-wide"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--fg)' }}
-        >
-          Natal Matrix
-        </h1>
-        <AuthHeader initialUser={user} />
+      <header style={{ borderBottom: '1px solid var(--line)' }}>
+        <div style={{ maxWidth: 1040, margin: '0 auto', padding: '18px 28px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 500, color: 'var(--fg)', letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
+              Natal Matrix
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>
+              Celestial Almanac
+            </span>
+          </div>
+          <AuthHeader initialUser={user} />
+        </div>
       </header>
       <Dashboard initialLoggedIn={!!user} />
     </main>
