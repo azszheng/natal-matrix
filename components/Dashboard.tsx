@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import BirthForm from '@/components/BirthForm';
 import WesternWheel from '@/components/charts/WesternWheel';
 import NorthIndianDiamond from '@/components/charts/NorthIndianDiamond';
@@ -121,29 +121,39 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
   });
 
   const [isLoggedIn,   setIsLoggedIn]   = useState(initialLoggedIn);
-  const [savedCharts,  setSavedCharts]  = useState<SavedChart[]>([]);
   const [saveStatus,   setSaveStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedChartId, setSavedChartId] = useState<number | null>(null);
 
-  const loadSavedCharts = useCallback(async () => {
-    const res = await fetch('/api/charts');
-    if (res.ok) setSavedCharts(await res.json());
-  }, []);
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setIsLoggedIn(true);
-        loadSavedCharts();
-      }
+      if (session?.user) setIsLoggedIn(true);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      const loggedIn = !!session?.user;
-      setIsLoggedIn(loggedIn);
-      if (loggedIn) loadSavedCharts(); else setSavedCharts([]);
+      setIsLoggedIn(!!session?.user);
     });
     return () => subscription.unsubscribe();
-  }, [supabase, loadSavedCharts]);
+  }, [supabase]);
+
+  useEffect(() => {
+    function onLoadChart(e: Event) {
+      const c = (e as CustomEvent<SavedChart>).detail;
+      setChart(c.chart_data);
+      setBirth(c.chart_data.input);
+      setSavedChartId(c.id);
+      setSaveStatus('saved');
+      setFormOpen(false);
+    }
+    function onChartDeleted(e: Event) {
+      const { id } = (e as CustomEvent<{ id: number }>).detail;
+      setSavedChartId(prev => (prev === id ? null : prev));
+    }
+    window.addEventListener('natal:load-chart', onLoadChart);
+    window.addEventListener('natal:chart-deleted', onChartDeleted);
+    return () => {
+      window.removeEventListener('natal:load-chart', onLoadChart);
+      window.removeEventListener('natal:chart-deleted', onChartDeleted);
+    };
+  }, []);
 
   async function saveChart() {
     if (!chart || !birth) return;
@@ -157,28 +167,10 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
       const { id } = await res.json();
       setSavedChartId(id);
       setSaveStatus('saved');
-      loadSavedCharts();
+      window.dispatchEvent(new CustomEvent('natal:chart-saved', { detail: { id } }));
     } else {
       setSaveStatus('error');
     }
-  }
-
-  async function deleteChart(id: number) {
-    await fetch('/api/charts', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    setSavedCharts(prev => prev.filter(c => c.id !== id));
-    if (savedChartId === id) setSavedChartId(null);
-  }
-
-  function loadChart(saved: SavedChart) {
-    setChart(saved.chart_data);
-    setBirth(saved.chart_data.input);
-    setSavedChartId(saved.id);
-    setSaveStatus('saved');
-    setFormOpen(false);
   }
 
   function cacheResult(key: string, text: string) {
@@ -267,51 +259,6 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
           </div>
         )}
       </section>
-
-      {/* ── Saved Charts ── */}
-      {isLoggedIn && savedCharts.length > 0 && (
-        <section style={section}>
-          <div style={{ padding: '12px 16px' }}>
-            <p style={{ ...sectionHead, marginBottom: 10 }}>Saved Charts</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {savedCharts.map(c => (
-                <div
-                  key={c.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    gap: 12, padding: '7px 10px', borderRadius: 4,
-                    background: savedChartId === c.id ? 'var(--bg)' : 'transparent',
-                    border: `1px solid ${savedChartId === c.id ? 'var(--accent)' : 'var(--line)'}`,
-                  }}
-                >
-                  <button
-                    onClick={() => loadChart(c)}
-                    style={{
-                      flex: 1, background: 'none', border: 'none', cursor: 'pointer',
-                      textAlign: 'left', padding: 0,
-                    }}
-                  >
-                    <span style={{ fontSize: 12, color: 'var(--fg)', display: 'block' }}>{c.label}</span>
-                    <span style={{ fontSize: 10, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
-                      {c.birth_date} · {c.birth_time} · {c.birth_location}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => deleteChart(c.id)}
-                    title="Delete"
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--fg-dim)', fontSize: 14, lineHeight: 1, padding: '2px 4px',
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── Chart Snapshot (free teaser) ── */}
       {chart && <ChartSnapshot chart={chart} />}

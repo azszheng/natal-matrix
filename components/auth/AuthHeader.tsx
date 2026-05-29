@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import SavedChartsDropdown from './SavedChartsDropdown';
 
 export default function AuthHeader({ initialUser }: { initialUser: User | null }) {
   const supabase = useMemo(() => createClient(), []);
@@ -36,6 +37,7 @@ export default function AuthHeader({ initialUser }: { initialUser: User | null }
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <SavedChartsDropdown />
       <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {user.email}
       </span>
