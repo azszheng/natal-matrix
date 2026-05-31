@@ -53,7 +53,7 @@ export default function BirthDayEvents({ date }: { date: string }) {
         }}
       >
         <span style={{ opacity: 0.55, fontFamily: 'var(--font-display)', fontSize: 14 }}>§</span>
-        In the News on {displayDate}
+        News on {displayDate}
         <span style={{
           display: 'inline-block', transition: 'transform .2s',
           transform: open ? 'rotate(90deg)' : 'none', opacity: 0.5, fontSize: 10,
