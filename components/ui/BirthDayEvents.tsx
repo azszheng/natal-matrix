@@ -2,21 +2,29 @@
 
 import { useState } from 'react';
 
-type WikiEvent = { year: number; text: string };
+type WikiItem = { year: number; text: string };
+type Bucket = { events: WikiItem[]; births: WikiItem[]; deaths: WikiItem[] };
+
+function filterByYear(arr: { year: unknown; text: unknown }[], yr: number): WikiItem[] {
+  return arr
+    .filter(e => Number(e.year) === yr)
+    .map(e => ({ year: Number(e.year), text: String(e.text) }));
+}
 
 export default function BirthDayEvents({ date }: { date: string }) {
-  const [open,   setOpen]   = useState(false);
-  const [events, setEvents] = useState<WikiEvent[]>([]);
+  const [open,    setOpen]    = useState(false);
+  const [bucket,  setBucket]  = useState<Bucket>({ events: [], births: [], deaths: [] });
   const [loading, setLoading] = useState(false);
-  const [error,  setError]  = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+  const [loaded,  setLoaded]  = useState(false);
 
-  const [, mo, d] = date.split('-');
+  const [yr, mo, d] = date.split('-');
+  const yrInt = parseInt(yr, 10);
   const moInt = parseInt(mo, 10);
   const dInt  = parseInt(d, 10);
 
-  const displayDate = new Date(Date.UTC(2000, moInt - 1, dInt))
-    .toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const displayDate = new Date(Date.UTC(yrInt, moInt - 1, dInt))
+    .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
   async function toggle() {
     if (open) { setOpen(false); return; }
@@ -26,16 +34,16 @@ export default function BirthDayEvents({ date }: { date: string }) {
     setError(null);
     try {
       const res = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${moInt}/${dInt}`,
+        `https://en.wikipedia.org/api/rest_v1/feed/onthisday/all/${moInt}/${dInt}`,
         { headers: { Accept: 'application/json' } }
       );
       if (!res.ok) throw new Error();
       const data = await res.json();
-      const sorted: WikiEvent[] = (data.events ?? [])
-        .map((e: { year: unknown; text: unknown }) => ({ year: Number(e.year), text: String(e.text) }))
-        .sort((a: WikiEvent, b: WikiEvent) => a.year - b.year)
-        .slice(0, 10);
-      setEvents(sorted);
+      setBucket({
+        events: filterByYear(data.events ?? [], yrInt),
+        births: filterByYear(data.births ?? [], yrInt),
+        deaths: filterByYear(data.deaths ?? [], yrInt),
+      });
       setLoaded(true);
     } catch {
       setError('Could not load events. Check your connection and try again.');
@@ -44,9 +52,11 @@ export default function BirthDayEvents({ date }: { date: string }) {
     }
   }
 
+  const total = bucket.events.length + bucket.births.length + bucket.deaths.length;
+
   return (
     <div>
-      {/* Trigger button */}
+      {/* Trigger */}
       <button
         onClick={toggle}
         style={{
@@ -60,7 +70,7 @@ export default function BirthDayEvents({ date }: { date: string }) {
         }}
       >
         <span style={{ opacity: 0.55, fontFamily: 'var(--font-display)', fontSize: 14 }}>§</span>
-        On {displayDate} in History
+        What Happened on {displayDate}
         <span style={{
           display: 'inline-block', transition: 'transform .2s',
           transform: open ? 'rotate(90deg)' : 'none', opacity: 0.5, fontSize: 10,
@@ -82,37 +92,57 @@ export default function BirthDayEvents({ date }: { date: string }) {
               {error}
             </p>
           )}
-          {!loading && !error && events.length > 0 && (
+
+          {!loading && !error && loaded && total === 0 && (
+            <p style={{
+              margin: 0, fontSize: 13, fontFamily: 'var(--font-mono)',
+              color: 'var(--fg-muted)', letterSpacing: '0.04em', lineHeight: 1.7,
+            }}>
+              No notable events are recorded in the Wikipedia archive for {displayDate}.
+            </p>
+          )}
+
+          {!loading && !error && total > 0 && (
             <>
               <p style={{
                 margin: '0 0 14px', fontSize: 10.5,
                 fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
                 textTransform: 'uppercase', color: 'var(--fg-dim)',
               }}>
-                Notable events on {displayDate} throughout history — via Wikipedia
+                From the historical record · {displayDate} · via Wikipedia
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {events.map((ev, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex', gap: 20, padding: '11px 0',
-                      borderTop: '1px solid var(--line)',
-                    }}
-                  >
-                    <span style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 12,
-                      color: 'var(--accent)', letterSpacing: '0.05em',
-                      flexShrink: 0, paddingTop: 2, minWidth: 42,
+
+              {(['events', 'births', 'deaths'] as const).map(cat => {
+                const rows = bucket[cat];
+                if (rows.length === 0) return null;
+                const labels: Record<string, string> = {
+                  events: 'Events', births: 'Notable Births', deaths: 'Notable Deaths',
+                };
+                return (
+                  <div key={cat} style={{ marginBottom: 22 }}>
+                    <p style={{
+                      margin: '0 0 4px', fontSize: 9.5,
+                      fontFamily: 'var(--font-mono)', letterSpacing: '0.18em',
+                      textTransform: 'uppercase', color: 'var(--fg-glyph)',
                     }}>
-                      {ev.year}
-                    </span>
-                    <span style={{ fontSize: 14, lineHeight: 1.65, color: 'var(--fg)', opacity: 0.9 }}>
-                      {ev.text}
-                    </span>
+                      {labels[cat]}
+                    </p>
+                    {rows.map((item, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex', gap: 0, padding: '10px 0',
+                          borderTop: '1px solid var(--line)',
+                        }}
+                      >
+                        <span style={{ fontSize: 14, lineHeight: 1.65, color: 'var(--fg)', opacity: 0.9 }}>
+                          {item.text}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </>
           )}
         </div>
