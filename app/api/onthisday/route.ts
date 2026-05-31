@@ -29,20 +29,27 @@ export async function GET(req: NextRequest) {
     section_name: string;
   }[] = data.response?.docs ?? [];
 
-  // Filter to the exact day and exclude fluff sections
-  const SKIP = new Set(['Corrections', 'Obituaries', 'Classifieds', 'Real Estate', 'Style', 'Fashion & Style']);
-  const articles = docs
-    .filter(doc => {
-      const pubDay = new Date(doc.pub_date).getUTCDate();
-      return pubDay === day && !SKIP.has(doc.section_name);
-    })
-    .slice(0, 8)
-    .map(doc => ({
-      headline: doc.headline.main,
-      abstract: doc.abstract ?? '',
-      url: doc.web_url,
-      section: doc.section_name ?? '',
-    }));
+  // Prioritise front-page / major sections; skip fluff
+  const PRIORITY = ['Front Page', 'U.S.', 'World', 'Politics', 'Business', 'Science', 'Health', 'National', 'International'];
+  const SKIP     = new Set(['Corrections', 'Obituaries', 'Classifieds', 'Real Estate', 'Style', 'Fashion & Style', 'Sports', 'Arts', 'Books', 'Travel', 'Food']);
+
+  const onDay = docs.filter(doc => {
+    const pubDay = new Date(doc.pub_date).getUTCDate();
+    return pubDay === day && !SKIP.has(doc.section_name);
+  });
+
+  // Sort: priority sections first, then everything else
+  const sorted = [
+    ...onDay.filter(d => PRIORITY.includes(d.section_name)),
+    ...onDay.filter(d => !PRIORITY.includes(d.section_name)),
+  ];
+
+  const articles = sorted.slice(0, 2).map(doc => ({
+    headline: doc.headline.main,
+    abstract: doc.abstract ?? '',
+    url: doc.web_url,
+    section: doc.section_name ?? '',
+  }));
 
   return NextResponse.json({ articles });
 }
