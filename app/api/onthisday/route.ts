@@ -29,9 +29,9 @@ export async function GET(req: NextRequest) {
     section_name: string;
   }[] = data.response?.docs ?? [];
 
-  // Prioritise front-page / major sections; skip fluff
-  const PRIORITY = ['Front Page', 'U.S.', 'World', 'Politics', 'Business', 'Science', 'Health', 'National', 'International'];
-  const SKIP     = new Set(['Corrections', 'Obituaries', 'Classifieds', 'Real Estate', 'Style', 'Fashion & Style', 'Sports', 'Arts', 'Books', 'Travel', 'Food']);
+  // Prioritise human-interest sections; skip political/fluff
+  const PRIORITY = ['Science', 'Health', 'Technology', 'Environment', 'Education', 'Space', 'Arts', 'Culture', 'World', 'International', 'National', 'U.S.', 'Business', 'Front Page'];
+  const SKIP     = new Set(['Corrections', 'Classifieds', 'Real Estate', 'Style', 'Fashion & Style', 'Sports', 'Travel', 'Food', 'Politics', 'Washington', 'Opinion', 'Editorial']);
 
   const onDay = docs.filter(doc => {
     const pubDay = new Date(doc.pub_date).getUTCDate();
