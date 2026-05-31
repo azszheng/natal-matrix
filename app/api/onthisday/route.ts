@@ -29,22 +29,34 @@ export async function GET(req: NextRequest) {
     section_name: string;
   }[] = data.response?.docs ?? [];
 
-  // Prioritise human-interest sections; skip political/fluff
-  const PRIORITY = ['Science', 'Health', 'Technology', 'Environment', 'Education', 'Space', 'Arts', 'Culture', 'World', 'International', 'National', 'U.S.', 'Business', 'Front Page'];
-  const SKIP     = new Set(['Corrections', 'Classifieds', 'Real Estate', 'Style', 'Fashion & Style', 'Sports', 'Travel', 'Food', 'Politics', 'Washington', 'Opinion', 'Editorial']);
+  const PRIORITY = [
+    'Science', 'Health', 'Technology', 'Environment', 'Education', 'Space',
+    'Arts', 'Culture', 'World', 'International', 'National',
+    'U.S.', 'Business', 'Front Page', 'Politics', 'Washington',
+  ];
+  const SKIP = new Set(['Corrections', 'Classifieds', 'Real Estate', 'Style', 'Fashion & Style', 'Travel', 'Food', 'Opinion', 'Editorial', 'Obituaries']);
+
+  // Minor-negative keywords — deprioritise unless the story is clearly major
+  const MINOR_NEG = /\b(murder|robbery|arrest|indicted|lawsuit|sentenced|convicted|fired|resigned|scandal|fraud)\b/i;
+  // Major-event signals that override negativity penalty
+  const MAJOR_SIG = /\b(historic|record|first|discovery|breakthrough|peace|landmark|milestone|announced|launch|cure|treaty|summit|crisis|war|invasion|disaster|earthquake|hurricane|tsunami)\b/i;
 
   const onDay = docs.filter(doc => {
     const pubDay = new Date(doc.pub_date).getUTCDate();
     return pubDay === day && !SKIP.has(doc.section_name);
   });
 
-  // Sort: priority sections first, then everything else
-  const sorted = [
-    ...onDay.filter(d => PRIORITY.includes(d.section_name)),
-    ...onDay.filter(d => !PRIORITY.includes(d.section_name)),
-  ];
+  function score(doc: typeof docs[0]): number {
+    const text    = `${doc.headline.main} ${doc.abstract ?? ''}`;
+    const priIdx  = PRIORITY.indexOf(doc.section_name);
+    const secScore = priIdx === -1 ? PRIORITY.length : priIdx; // lower = better
+    const negPenalty = MINOR_NEG.test(text) && !MAJOR_SIG.test(text) ? 20 : 0;
+    return secScore + negPenalty;
+  }
 
-  const articles = sorted.slice(0, 2).map(doc => ({
+  const sorted = [...onDay].sort((a, b) => score(a) - score(b));
+
+  const articles = sorted.slice(0, 3).map(doc => ({
     headline: doc.headline.main,
     abstract: doc.abstract ?? '',
     url: doc.web_url,
