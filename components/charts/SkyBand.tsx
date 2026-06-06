@@ -152,16 +152,19 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme }:
     { x: 150, y: 64, s: 1.35 }, { x: 520, y: 120, s: 0.95 }, { x: 840, y: 56, s: 1.5 },
     { x: 1150, y: 110, s: 1.1 }, { x: 1430, y: 80, s: 1.25 }, { x: 330, y: 150, s: 0.85 },
   ];
-  const cloudFill = overcast ? '#dbe3ea' : '#ffffff';
-  const cloudOp = overcast ? 0.95 : 0.82;
+  const cloudFill = overcast ? '#c8d4de' : '#f4f8fc';
+  const cloudOp = overcast ? 0.96 : 0.88;
+  const cloudFilter = overcast ? 'url(#cloud-overcast)' : 'url(#cloud-clear)';
   const clouds = isDay ? CLOUD_BASE.map((c, i) => {
     const cx = ((c.x + mins * 0.5) % (W + 320)) - 160;
     return (
-      <g key={`cl${i}`} opacity={cloudOp} transform={`translate(${cx},${c.y}) scale(${c.s})`}>
-        <ellipse cx={0} cy={12} rx={74} ry={20} fill={cloudFill} />
-        <ellipse cx={-34} cy={5} rx={30} ry={20} fill={cloudFill} />
-        <ellipse cx={4} cy={-7} rx={36} ry={27} fill={cloudFill} />
-        <ellipse cx={42} cy={2} rx={28} ry={21} fill={cloudFill} />
+      <g key={`cl${i}`} opacity={cloudOp} transform={`translate(${cx},${c.y}) scale(${c.s})`} filter={cloudFilter}>
+        <ellipse cx={0}   cy={14}  rx={80} ry={22} fill={cloudFill} />
+        <ellipse cx={-38} cy={6}   rx={34} ry={22} fill={cloudFill} />
+        <ellipse cx={6}   cy={-8}  rx={40} ry={30} fill={cloudFill} />
+        <ellipse cx={46}  cy={4}   rx={32} ry={24} fill={cloudFill} />
+        <ellipse cx={-16} cy={-14} rx={26} ry={20} fill={cloudFill} />
+        <ellipse cx={28}  cy={-16} rx={28} ry={18} fill={cloudFill} />
       </g>
     );
   }) : [];
@@ -286,6 +289,17 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme }:
               ? <><stop offset="0%" stopColor="#c2d0db" stopOpacity="0.0" /><stop offset="100%" stopColor="#aebcc8" stopOpacity="0.55" /></>
               : <><stop offset="0%" stopColor="#0a0c16" stopOpacity="0.0" /><stop offset="100%" stopColor="#05060c" stopOpacity="0.7" /></>}
           </linearGradient>
+          {/* Realistic cloud filters — feTurbulence displaces ellipse edges into organic shapes */}
+          <filter id="cloud-clear" x="-25%" y="-25%" width="150%" height="150%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.013 0.009" numOctaves={4} seed={2} result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale={18} xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur in="displaced" stdDeviation={2.5} />
+          </filter>
+          <filter id="cloud-overcast" x="-25%" y="-25%" width="150%" height="150%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.020 0.013" numOctaves={5} seed={5} result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale={28} xChannelSelector="R" yChannelSelector="G" result="displaced" />
+            <feGaussianBlur in="displaced" stdDeviation={3.5} />
+          </filter>
           {Object.entries(PLANET_STYLE).map(([id, s]) => (
             <radialGradient key={id} id={`pg-${id}`} cx="36%" cy="30%" r="78%">
               <stop offset="0%"   stopColor={s.hi} />
