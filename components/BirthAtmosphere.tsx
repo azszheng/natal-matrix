@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
 import { computeAtmosphere, type BirthAtmosphere } from '@/lib/astro/atmosphere';
 import SkyBand from '@/components/charts/SkyBand';
-import BirthDayEvents from '@/components/ui/BirthDayEvents';
 
 // Celestial Almanac theme tokens
 const NIGHT_VARS: Record<string, string> = {
@@ -217,10 +216,6 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
       {/* Celestial band — fully unobstructed */}
       <SkyBand chart={chart} atmo={atmo} theme={theme} height={380} />
 
-      {/* On This Day */}
-      <div style={{ maxWidth: 1040, margin: '0 auto', padding: '24px 28px 30px' }}>
-        <BirthDayEvents date={chart.input.date} />
-      </div>
     </section>
   );
 }

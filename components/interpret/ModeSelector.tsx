@@ -24,13 +24,6 @@ const MODES: {
     description: 'For users who want richer insight into patterns, relationships, growth, and life themes.',
     tooltip: 'The full psychological portrait — how your placements shape relationships, work, creativity, and growth. Balances depth with accessibility. 320–600 words.',
   },
-  {
-    id: 'astrologer',
-    name: 'Astrologer Mode',
-    subtitle: 'Technical, chart-based, and expert-level',
-    description: 'For users who already understand astrology and want the chart mechanics behind the interpretation.',
-    tooltip: 'Full chart synthesis with signs, houses, orbs, chart rulers, and aspect patterns — written for readers who already speak the language. 500–850 words.',
-  },
 ];
 
 export default function ModeSelector({ mode, onChange }: { mode: InterpretMode; onChange: (m: InterpretMode) => void }) {
