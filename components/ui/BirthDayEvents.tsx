@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type NytArticle = { headline: string; abstract: string; url: string; section: string };
+type NytArticle = { headline: string; abstract: string; url: string; section: string; source: 'nyt' | 'guardian' };
 
 export default function BirthDayEvents({ date }: { date: string }) {
   const [open,    setOpen]    = useState(false);
@@ -96,13 +96,11 @@ export default function BirthDayEvents({ date }: { date: string }) {
                   {a.abstract}
                 </p>
               )}
+              <p style={{ margin: '5px 0 0', fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--fg-dim)' }}>
+                {a.source === 'guardian' ? 'The Guardian' : 'The New York Times'}{a.section ? ` · ${a.section}` : ''}
+              </p>
             </div>
           ))}
-          {!loading && !error && articles.length > 0 && (
-            <p style={{ margin: '10px 0 0', fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--fg-dim)' }}>
-              Source: The New York Times Archive
-            </p>
-          )}
         </div>
       )}
     </div>
