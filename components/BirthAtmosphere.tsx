@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
 import { computeAtmosphere, type BirthAtmosphere } from '@/lib/astro/atmosphere';
 import SkyBand from '@/components/charts/SkyBand';
+import MoonFace from '@/components/charts/MoonFace';
 
 // Celestial Almanac theme tokens
 const NIGHT_VARS: Record<string, string> = {
@@ -23,30 +24,11 @@ const DAY_VARS: Record<string, string> = {
   '--aspect-neutral': '#5f6f82', '--aspect-minor': '#b07d1e', '--retro': '#c2542f',
 };
 
-// ── Moon SVG ─────────────────────────────────────────────────────────────────
-
 function MoonSVG({ phase, size = 46 }: { phase: number; size?: number }) {
-  const r = size / 2, cx = r, cy = r;
-  const id = `mh${Math.round(phase)}`;
-  const isWaxing = phase < 180;
-  const norm = isWaxing ? phase / 180 : (phase - 180) / 180;
-  const termRx = r * Math.abs(Math.cos(norm * Math.PI));
-  const isGibbous = phase >= 90 && phase < 270;
-  const litRight = isWaxing;
+  const uid = `hero-moon-${Math.round(phase)}`;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <defs>
-        <clipPath id={`${id}o`}><circle cx={cx} cy={cy} r={r - 0.5} /></clipPath>
-        <mask id={`${id}m`}>
-          <circle cx={cx} cy={cy} r={r} fill="#fff" />
-          {!isGibbous && <ellipse cx={cx + (litRight ? termRx : -termRx)} cy={cy} rx={termRx} ry={r} fill="#000" />}
-          <rect x={litRight ? 0 : cx} y={0} width={r} height={size} fill="#000" />
-          {isGibbous && <ellipse cx={cx + (litRight ? -termRx : termRx)} cy={cy} rx={termRx} ry={r} fill="#fff" />}
-        </mask>
-      </defs>
-      <circle cx={cx} cy={cy} r={r - 0.5} fill="#161a26" clipPath={`url(#${id}o)`} />
-      <circle cx={cx} cy={cy} r={r - 0.5} fill="#e8e0c8" mask={`url(#${id}m)`} clipPath={`url(#${id}o)`} />
-      <circle cx={cx} cy={cy} r={r - 1} fill="none" stroke="#e8e0c8" strokeWidth={0.5} opacity={0.3} />
+      <MoonFace phase={phase} size={size} uid={uid} />
     </svg>
   );
 }

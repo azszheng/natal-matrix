@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
 import type { BirthAtmosphere } from '@/lib/astro/atmosphere';
 import { PLANET_GLYPH } from './glyphs';
+import MoonFace from './MoonFace';
 
 // ── Static data ───────────────────────────────────────────────────────────────
 
@@ -77,33 +78,6 @@ const SKY_VISIBLE = [
 // PLANET_GLYPH already has U+FE0E appended at source
 const G = PLANET_GLYPH as Record<string, string>;
 
-// ── Moon SVG (inline, for the band) ──────────────────────────────────────────
-
-function SkyMoon({ phase, size }: { phase: number; size: number }) {
-  const r = size / 2, cx = r, cy = r;
-  const isWaxing = phase < 180;
-  const norm = isWaxing ? phase / 180 : (phase - 180) / 180;
-  const termRx = r * Math.abs(Math.cos(norm * Math.PI));
-  const isGibbous = phase >= 90 && phase < 270;
-  const litRight = isWaxing;
-  const id = `sm${Math.round(phase)}`;
-  return (
-    <g>
-      <defs>
-        <clipPath id={`${id}o`}><circle cx={cx} cy={cy} r={r - 0.5} /></clipPath>
-        <mask id={`${id}m`}>
-          <circle cx={cx} cy={cy} r={r} fill="#fff" />
-          {!isGibbous && <ellipse cx={cx + (litRight ? termRx : -termRx)} cy={cy} rx={termRx} ry={r} fill="#000" />}
-          <rect x={litRight ? 0 : cx} y={0} width={r} height={size} fill="#000" />
-          {isGibbous && <ellipse cx={cx + (litRight ? -termRx : termRx)} cy={cy} rx={termRx} ry={r} fill="#fff" />}
-        </mask>
-      </defs>
-      <circle cx={cx} cy={cy} r={r + 4} fill="#f0e6c0" opacity={0.12} />
-      <circle cx={cx} cy={cy} r={r - 0.5} fill="#1a1d2a" clipPath={`url(#${id}o)`} />
-      <circle cx={cx} cy={cy} r={r - 0.5} fill="#eee6cf" mask={`url(#${id}m)`} clipPath={`url(#${id}o)`} />
-    </g>
-  );
-}
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -233,9 +207,13 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
 
     if (id === 'moon') {
       const ms = 30;
+      const uid = `skm${Math.round(atmo.moonPhase)}`;
       return (
         <g key={id} transform={`translate(${p.x - ms / 2},${p.y - ms / 2})`} opacity={fade}>
-          <SkyMoon phase={atmo.moonPhase} size={ms} />
+          <circle cx={ms / 2} cy={ms / 2} r={ms / 2 + 4} fill="#f0e6c0" opacity={0.12} />
+          <svg width={ms} height={ms} viewBox={`0 0 ${ms} ${ms}`} overflow="visible">
+            <MoonFace phase={atmo.moonPhase} size={ms} uid={uid} />
+          </svg>
           <text x={ms / 2} y={ms + 14} fontSize={11} fill="var(--fg-muted)" textAnchor="middle"
             style={{ fontFamily: 'var(--font-mono)' }}>Moon</text>
         </g>
