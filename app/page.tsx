@@ -15,7 +15,7 @@ export default async function Home() {
               Natal Matrix
             </span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>
-              Celestial Almanac
+              Advanced Astrology
             </span>
           </div>
           <AuthHeader initialUser={user} />

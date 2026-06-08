@@ -80,12 +80,10 @@ const SIGN_NAME: Record<string, string> = {
 
 // ── Section header (almanac style) ───────────────────────────────────────────
 
-function SectionHead({ n, title, note }: { n: string; title: string; note?: string }) {
+function SectionHead({ title, note }: { title: string; note?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, margin: '6px 0 2px' }}>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', color: 'var(--fg-glyph)', whiteSpace: 'nowrap' }}>§{n}</span>
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, margin: '20px 2px 2px' }}>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>{title}</span>
-      <span style={{ flex: 1, height: 1, background: 'var(--line)', position: 'relative', top: -3 }} />
       {note && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>{note}</span>}
     </div>
   );
@@ -238,14 +236,14 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
       <main style={{
         maxWidth: 1040, width: '100%', margin: '0 auto',
         padding: '0 28px 72px',
-        marginTop: chart ? -30 : 32,
+        marginTop: chart ? 24 : 32,
         position: 'relative', zIndex: 3,
         display: 'flex', flexDirection: 'column', gap: 10,
       }}>
 
         {/* Birth bar / form */}
         {chart && birth && !formOpen ? (
-          <section style={{ borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', padding: '12px 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'var(--bg)' }}>
+          <section style={{ borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'var(--bg)' }}>
             <span style={{ fontSize: 12, color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)', lineHeight: 1.5 }}>
               {SIGN_GLYPH[chart.western.bodies.sun.sign]}︎ {SIGN_NAME[chart.western.bodies.sun.sign]} Sun
               {' · '}{SIGN_GLYPH[chart.western.bodies.moon.sign]}︎ {SIGN_NAME[chart.western.bodies.moon.sign]} Moon
@@ -275,21 +273,21 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
         {chart && (
           <>
             {/* §01 Big Three */}
-            <SectionHead n="01" title="The Big Three" note="Sun · Moon · Rising" />
+            <SectionHead title="The Big Three" note="Sun · Moon · Rising" />
             <BigThree chart={chart} />
 
             {/* §02 Chart at a Glance */}
-            <SectionHead n="02" title="Your Chart at a Glance" />
+            <SectionHead title="Your Chart at a Glance" />
             <ChartSnapshot chart={chart} />
 
             {/* §03 Reading Style */}
-            <SectionHead n="03" title="Reading Style" />
+            <SectionHead title="Reading Style" />
             <section style={{ padding: '4px 2px 2px' }}>
               <ModeSelector mode={interpMode} onChange={handleModeChange} />
             </section>
 
             {/* §04 Chart Wheel */}
-            <SectionHead n="04" title="The Chart Wheel" note="Western · Tropical · Placidus" />
+            <SectionHead title="The Chart Wheel" note="Western · Tropical · Placidus" />
             <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
               <div style={{ padding: '22px 22px 16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0 18px' }}>
@@ -318,7 +316,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
             </section>
 
             {/* §05 The Tables */}
-            <SectionHead n="05" title="The Tables" note="Ephemeris data" />
+            <SectionHead title="The Tables" note="Ephemeris data" />
             <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
               {/* Tab bar */}
               <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', padding: '0 8px' }}>
@@ -363,7 +361,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
             </section>
 
             {/* §06 Advanced */}
-            <SectionHead n="06" title="Advanced" />
+            <SectionHead title="Advanced" />
             <section style={{ padding: '4px 2px 0' }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
                 {MODALS.map(m => (
