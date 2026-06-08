@@ -160,7 +160,7 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
             <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>
               Natal Atmosphere
             </p>
-            <h1 style={{ margin: '10px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 29, lineHeight: 1.16, color: textColor, letterSpacing: '0.005em' }}>
+            <h1 style={{ margin: '12px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.16, color: textColor, letterSpacing: '0.005em' }}>
               The sky at the moment of your birth
             </h1>
             <p style={{ margin: '9px 0 0', fontSize: 12.5, fontFamily: 'var(--font-mono)', color: labelColor, letterSpacing: '0.02em' }}>
