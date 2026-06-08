@@ -53,3 +53,39 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ── Responsive — am-* utility classes ─────────────────────────────────────── */
+
+/* Wheel SVG always scales to container */
+.am-wheel svg { width: 100%; height: auto; max-width: 460px; }
+
+@keyframes blink {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 0; }
+}
+
+@media (max-width: 720px) {
+  /* Tighter gutters on main column and masthead */
+  .am-main    { padding-left: 18px !important; padding-right: 18px !important; }
+  .am-masthead { padding-left: 18px !important; padding-right: 18px !important; }
+
+  /* Hero strip: title left column + weather/moon right → stacked */
+  .am-hero-pad { padding-left: 18px !important; padding-right: 18px !important; }
+  .am-hero-row { flex-direction: column !important; align-items: flex-start !important; gap: 22px !important; }
+
+  /* Shrink the hero h1 so it doesn't overflow */
+  .am-h1 { font-size: 25px !important; }
+
+  /* Reading-style / BigThree 3-column grids → single column */
+  .am-grid-3 { grid-template-columns: 1fr !important; }
+
+  /* Weather+moon readout row: tighter gap */
+  .am-readout { gap: 18px !important; }
+}
+
+@media (max-width: 460px) {
+  /* Stack weather + moon vertically on very narrow phones */
+  .am-readout { flex-wrap: wrap !important; }
+  /* Hide the sky-band caption text — too cramped */
+  .am-band-cap { display: none !important; }
+}

@@ -153,14 +153,14 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
   return (
     <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--line)', background: heroBg }}>
       {/* Title strip — sits above the sky, never over it */}
-      <div style={{ maxWidth: 1040, margin: '0 auto', padding: '26px 28px 22px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 28, flexWrap: 'wrap' }}>
+      <div className="am-hero-pad" style={{ maxWidth: 1040, margin: '0 auto', padding: '26px 28px 22px' }}>
+        <div className="am-hero-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 28, flexWrap: 'wrap' }}>
           {/* Left: kicker + headline + birth line */}
           <div style={{ flex: '1 1 340px', minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>
               Natal Atmosphere
             </p>
-            <h1 style={{ margin: '12px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.16, color: textColor, letterSpacing: '0.005em' }}>
+            <h1 className="am-h1" style={{ margin: '12px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.16, color: textColor, letterSpacing: '0.005em' }}>
               The sky at the moment of your birth
             </h1>
             <p style={{ margin: '9px 0 0', fontSize: 12.5, fontFamily: 'var(--font-mono)', color: labelColor, letterSpacing: '0.02em' }}>
@@ -169,7 +169,7 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
           </div>
 
           {/* Right: weather + moon readout */}
-          <div style={{ display: 'flex', gap: 26, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+          <div className="am-readout" style={{ display: 'flex', gap: 26, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
               <WeatherIcon cat={atmo.weatherCategory} size={46} />
               <div>

@@ -28,7 +28,7 @@ const MODES: {
 
 export default function ModeSelector({ mode, onChange }: { mode: InterpretMode; onChange: (m: InterpretMode) => void }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+    <div className="am-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
       {MODES.map(m => {
         const selected = mode === m.id;
         return (

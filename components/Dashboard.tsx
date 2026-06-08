@@ -101,7 +101,7 @@ function BigThree({ chart }: { chart: NatalChart }) {
     { role: 'Rising', sub: 'The mask',      body: asc  },
   ];
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+    <div className="am-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
       {cards.map((c, i) => (
         <div key={c.role} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 22px', borderLeft: i === 0 ? 'none' : '1px solid var(--line)' }}>
           <span style={{ fontSize: 44, color: 'var(--fg-glyph)', fontFamily: 'serif', lineHeight: 1 }}>
@@ -233,7 +233,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
       {chart && <BirthAtmosphereHero chart={chart} />}
 
       {/* ── Content column ── */}
-      <main style={{
+      <main className="am-main" style={{
         maxWidth: 1040, width: '100%', margin: '0 auto',
         padding: '0 28px 72px',
         marginTop: chart ? 24 : 32,
@@ -291,7 +291,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
             <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
               <div style={{ padding: '22px 22px 16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0 18px' }}>
-                  <div style={{ maxWidth: 460 }}>
+                  <div className="am-wheel" style={{ maxWidth: 460, width: '100%' }}>
                     <WesternWheel chart={chart} />
                   </div>
                 </div>
