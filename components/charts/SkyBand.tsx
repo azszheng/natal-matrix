@@ -202,10 +202,10 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
     const cp = pos(c.lon, 1);
     const fade = edgeFade(cp.x);
     if (fade <= 0.02) return null;
-    const CSCALE = 0.6;
+    const CSCALE = 0.32;
     const pts = c.stars.map(s => {
       const p = pos((c.lon + s.dl * CSCALE + 360) % 360, 1);
-      return { x: p.x, y: p.y - s.dh * amp * 0.4 * CSCALE, r: s.r * 0.8 };
+      return { x: p.x, y: p.y - s.dh * amp * 0.4 * CSCALE, r: s.r * 0.55 };
     });
     const segs = c.edges.map(([a, b]) =>
       `M${pts[a].x.toFixed(1)} ${pts[a].y.toFixed(1)}L${pts[b].x.toFixed(1)} ${pts[b].y.toFixed(1)}`
