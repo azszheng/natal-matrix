@@ -76,48 +76,24 @@ export default function ChartSnapshot({ chart }: Props) {
     return () => controller.abort();
   }, [chart]);
 
-  // Parse title from first line
+  // Parse title from first line; split drop cap from body
   const newlineIdx = text.indexOf('\n');
   const hasTitle   = newlineIdx > 0;
   const title      = hasTitle ? text.slice(0, newlineIdx).trim() : '';
   const body       = hasTitle ? text.slice(newlineIdx + 1).trimStart() : text;
+  const dropChar   = body.charAt(0);
+  const bodyRest   = body.slice(1);
 
   return (
-    <section style={{
-      border:          '1px solid var(--line)',
-      borderLeft:      '3px solid var(--accent)',
-      borderRadius:    'var(--radius)',
-      backgroundColor: 'var(--bg-raised)',
-      padding:         '18px 22px 20px',
-    }}>
-      {/* Section label */}
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
-        <p style={{
-          margin:         0,
-          fontSize:       10,
-          textTransform:  'uppercase',
-          letterSpacing:  '0.08em',
-          color:          'var(--accent)',
-          fontFamily:     'var(--font-mono)',
-          fontWeight:     600,
-        }}>
-          Your Chart at a Glance
-        </p>
-        <span style={{ fontSize: 10, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
-          Free
-        </span>
+    <section style={{ padding: '8px 2px 8px', position: 'relative' }}>
+      {/* "Free reading" tag — top right */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+        <span style={{
+          fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
+          fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)',
+          border: '1px solid var(--line)', padding: '3px 9px',
+        }}>Free reading</span>
       </div>
-
-      {/* Subtitle */}
-      <p style={{
-        margin:     '0 0 16px',
-        fontSize:   11,
-        color:      'var(--fg-dim)',
-        fontFamily: 'var(--font-sans, sans-serif)',
-        lineHeight: 1.5,
-      }}>
-        A short snapshot of your dominant chart patterns — unlock the full reading to explore the deeper layers.
-      </p>
 
       {/* Loading state */}
       {loading && (
@@ -133,60 +109,59 @@ export default function ChartSnapshot({ chart }: Props) {
         </p>
       )}
 
-      {/* Content */}
-      {(title || body) && (
-        <div>
-          {title && (
-            <p style={{
-              margin:        '0 0 10px',
-              fontSize:      16,
-              fontWeight:    600,
-              color:         'var(--fg)',
-              fontFamily:    'var(--font-sans, sans-serif)',
-              letterSpacing: '-0.01em',
-              lineHeight:    1.3,
-            }}>
-              {title}
-            </p>
-          )}
-          {body && (
-            <p style={{
-              margin:     0,
-              fontSize:   13,
-              color:      'var(--fg)',
-              lineHeight: 1.75,
-              fontFamily: 'var(--font-sans, sans-serif)',
-            }}>
-              {body}
-              {/* Blinking cursor while streaming */}
-              {!done && !error && (
-                <span style={{
-                  display:        'inline-block',
-                  width:          7,
-                  height:         13,
-                  background:     'var(--accent)',
-                  opacity:        0.6,
-                  verticalAlign:  'middle',
-                  marginLeft:     2,
-                  animation:      'blink 1s step-end infinite',
-                }} />
-              )}
-            </p>
-          )}
-        </div>
+      {/* Title (display serif h2) */}
+      {title && (
+        <h2 style={{
+          margin: '0 0 18px',
+          fontFamily: 'var(--font-display)',
+          fontWeight: 500,
+          fontSize: 38,
+          lineHeight: 1.12,
+          color: 'var(--fg)',
+          letterSpacing: '0.005em',
+          maxWidth: 680,
+        }}>
+          {title}
+        </h2>
       )}
 
-      {/* Post-stream unlock nudge */}
-      {done && !error && (
-        <p style={{
-          margin:     '14px 0 0',
-          fontSize:   11,
-          color:      'var(--fg-dim)',
-          fontFamily: 'var(--font-mono)',
-          letterSpacing: '0.02em',
-        }}>
-          ↓ Select a reading style below to explore the full depth of your chart
+      {/* Body with gold drop cap on first character */}
+      {body && (
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.85, color: 'var(--fg)', maxWidth: 680, opacity: 0.95 }}>
+          {dropChar && (
+            <span style={{
+              float: 'left',
+              fontFamily: 'var(--font-display)',
+              fontSize: 62,
+              lineHeight: 0.78,
+              fontWeight: 500,
+              color: 'var(--fg-glyph)',
+              padding: '6px 12px 0 0',
+            }}>
+              {dropChar}
+            </span>
+          )}
+          {bodyRest}
+          {/* Blinking cursor while streaming */}
+          {!done && !error && (
+            <span style={{
+              display: 'inline-block', width: 7, height: 14,
+              background: 'var(--accent)', opacity: 0.6,
+              verticalAlign: 'middle', marginLeft: 2,
+              animation: 'blink 1s step-end infinite',
+            }} />
+          )}
         </p>
+      )}
+
+      {/* Post-stream footer */}
+      {done && !error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 22, paddingTop: 16, borderTop: '1px solid var(--line)', clear: 'both' }}>
+          <span style={{ color: 'var(--fg-glyph)', fontFamily: 'var(--font-mono)', fontSize: 14 }}>↓</span>
+          <p style={{ margin: 0, fontSize: 12.5, fontFamily: 'var(--font-mono)', color: 'var(--fg-muted)', letterSpacing: '0.02em' }}>
+            Choose a reading style to explore the full depth of your chart
+          </p>
+        </div>
       )}
     </section>
   );
