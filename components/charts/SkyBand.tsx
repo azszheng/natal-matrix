@@ -21,19 +21,46 @@ const BG_STARS = Array.from({ length: 90 }, (_, i) => ({
   ph:  seeded(i + 300) * 6.28,
 }));
 
-const ZODIAC_DATA = [
-  { sign: 'aries', lon: 15 }, { sign: 'taurus', lon: 45 }, { sign: 'gemini', lon: 75 },
-  { sign: 'cancer', lon: 105 }, { sign: 'leo', lon: 135 }, { sign: 'virgo', lon: 165 },
-  { sign: 'libra', lon: 195 }, { sign: 'scorpio', lon: 225 }, { sign: 'sagittarius', lon: 255 },
-  { sign: 'capricorn', lon: 285 }, { sign: 'aquarius', lon: 315 }, { sign: 'pisces', lon: 345 },
-].map((c, ci) => ({
-  ...c,
-  stars: Array.from({ length: 4 }, (_, j) => ({
-    dl: (seeded(ci * 10 + j) - 0.5) * 16,
-    dh: (seeded(ci * 10 + j + 5) - 0.5) * 0.26,
-    r:   0.8 + seeded(ci * 10 + j + 9) * 1.1,
-  })),
-}));
+// Real zodiac asterisms with proper branching edge connections (UPDATE 3)
+// dl = longitude offset (°), dh = vertical offset (up = +), r = magnitude radius
+const ZODIAC_DATA: { sign: string; lon: number; stars: { dl: number; dh: number; r: number }[]; edges: [number, number][] }[] = [
+  { sign: 'aries', lon: 15,
+    stars: [{ dl: 4, dh: 0.1, r: 2.2 }, { dl: 0, dh: -0.1, r: 1.6 }, { dl: -1.6, dh: -0.35, r: 1.2 }, { dl: 6, dh: 0.95, r: 1.2 }],
+    edges: [[0,1],[1,2],[0,3]] },
+  { sign: 'taurus', lon: 45,
+    stars: [{ dl: 2, dh: 0, r: 2.4 }, { dl: 1, dh: 0.6, r: 1.4 }, { dl: -5, dh: 1.25, r: 2.0 }, { dl: 0, dh: -0.55, r: 1.3 }, { dl: -5, dh: -0.75, r: 1.6 }, { dl: 7, dh: 1.05, r: 1.0 }],
+    edges: [[0,1],[1,2],[0,3],[3,4]] },
+  { sign: 'gemini', lon: 75,
+    stars: [{ dl: 4, dh: 1.05, r: 2.2 }, { dl: 1.5, dh: 1.25, r: 2.0 }, { dl: 2.5, dh: 0, r: 1.2 }, { dl: 0, dh: 0.2, r: 1.2 }, { dl: 1, dh: -1.05, r: 1.8 }, { dl: -3, dh: -0.7, r: 1.3 }],
+    edges: [[1,0],[0,2],[2,4],[1,3],[3,5]] },
+  { sign: 'cancer', lon: 105,
+    stars: [{ dl: 0, dh: 0.1, r: 1.4 }, { dl: -3, dh: 0.85, r: 1.2 }, { dl: 3, dh: 0.75, r: 1.2 }, { dl: 1, dh: -0.95, r: 1.2 }],
+    edges: [[0,1],[0,2],[0,3]] },
+  { sign: 'leo', lon: 135,
+    stars: [{ dl: -4, dh: -0.2, r: 2.3 }, { dl: -4, dh: 0.45, r: 1.3 }, { dl: -3.5, dh: 0.95, r: 1.9 }, { dl: -5, dh: 1.15, r: 1.3 }, { dl: -6.5, dh: 0.8, r: 1.2 }, { dl: 6, dh: 0.2, r: 2.0 }, { dl: 3, dh: 0.85, r: 1.5 }],
+    edges: [[0,1],[1,2],[2,3],[3,4],[0,6],[6,5],[5,0]] },
+  { sign: 'virgo', lon: 165,
+    stars: [{ dl: 0, dh: -1.05, r: 2.3 }, { dl: -1, dh: -0.1, r: 1.5 }, { dl: 4, dh: 0.6, r: 1.6 }, { dl: -5, dh: 0.3, r: 1.2 }, { dl: 6.5, dh: 0.05, r: 1.2 }],
+    edges: [[0,1],[1,2],[1,3],[2,4]] },
+  { sign: 'libra', lon: 195,
+    stars: [{ dl: -4, dh: -0.4, r: 1.9 }, { dl: 3, dh: 0.65, r: 2.0 }, { dl: 5, dh: -0.2, r: 1.3 }, { dl: -2, dh: -0.95, r: 1.2 }],
+    edges: [[0,1],[1,2],[2,3],[3,0]] },
+  { sign: 'scorpio', lon: 225,
+    stars: [{ dl: -7.5, dh: 0.95, r: 1.5 }, { dl: -7.5, dh: 0.35, r: 1.6 }, { dl: -7.5, dh: -0.2, r: 1.3 }, { dl: -3.5, dh: 0, r: 2.4 }, { dl: -2, dh: -0.45, r: 1.3 }, { dl: 0, dh: -0.75, r: 1.4 }, { dl: 2.5, dh: -0.9, r: 1.3 }, { dl: 4.5, dh: -0.75, r: 1.4 }, { dl: 6.5, dh: -0.35, r: 2.0 }, { dl: 7, dh: -0.1, r: 1.5 }],
+    edges: [[0,1],[1,2],[1,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]] },
+  { sign: 'sagittarius', lon: 255,
+    stars: [{ dl: -5.5, dh: -0.2, r: 1.5 }, { dl: -1, dh: 0.85, r: 1.7 }, { dl: -3, dh: 0.1, r: 1.5 }, { dl: -3, dh: -0.7, r: 1.6 }, { dl: 2, dh: -0.6, r: 1.6 }, { dl: 4, dh: 0.5, r: 1.8 }, { dl: 4, dh: -0.3, r: 1.3 }],
+    edges: [[2,1],[1,5],[5,6],[6,4],[4,3],[3,2],[0,2],[0,3]] },
+  { sign: 'capricorn', lon: 285,
+    stars: [{ dl: -5, dh: 0.55, r: 1.7 }, { dl: 5, dh: 0.35, r: 1.7 }, { dl: 0, dh: -0.95, r: 1.3 }],
+    edges: [[0,1],[1,2],[2,0]] },
+  { sign: 'aquarius', lon: 315,
+    stars: [{ dl: -5, dh: 0.45, r: 1.8 }, { dl: -1, dh: 0.75, r: 1.7 }, { dl: 2, dh: 0.5, r: 1.3 }, { dl: 2.5, dh: 0.95, r: 1.1 }, { dl: 3.5, dh: 0.4, r: 1.1 }, { dl: 4.5, dh: -0.4, r: 1.2 }, { dl: 5.5, dh: -0.95, r: 1.4 }],
+    edges: [[0,1],[1,2],[2,3],[2,4],[4,5],[5,6]] },
+  { sign: 'pisces', lon: 345,
+    stars: [{ dl: -7, dh: 0.85, r: 1.2 }, { dl: -4, dh: 0.5, r: 1.2 }, { dl: -1, dh: 0.2, r: 1.3 }, { dl: 2, dh: -0.2, r: 1.7 }, { dl: 4, dh: 0.3, r: 1.2 }, { dl: 6.5, dh: 0.9, r: 1.3 }],
+    edges: [[0,1],[1,2],[2,3],[3,4],[4,5]] },
+];
 
 // Apparent magnitude table (lower = brighter). Sun/Moon always large.
 const PLANET_MAG: Record<string, number> = {
@@ -175,14 +202,21 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
     const cp = pos(c.lon, 1);
     const fade = edgeFade(cp.x);
     if (fade <= 0.02) return null;
-    const pts = c.stars.map(s => { const p = pos((c.lon + s.dl + 360) % 360, 1); return { x: p.x, y: p.y + s.dh * amp * 0.5, r: s.r }; });
-    const line = 'M ' + pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ');
+    const CSCALE = 0.6;
+    const pts = c.stars.map(s => {
+      const p = pos((c.lon + s.dl * CSCALE + 360) % 360, 1);
+      return { x: p.x, y: p.y - s.dh * amp * 0.4 * CSCALE, r: s.r * 0.8 };
+    });
+    const segs = c.edges.map(([a, b]) =>
+      `M${pts[a].x.toFixed(1)} ${pts[a].y.toFixed(1)}L${pts[b].x.toFixed(1)} ${pts[b].y.toFixed(1)}`
+    ).join('');
+    const labelColor = isDay ? 'rgba(22,38,55,0.72)' : 'rgba(210,192,148,0.62)';
     return (
       <g key={c.sign} opacity={fade}>
-        <path d={line} fill="none" stroke="var(--fg-glyph)" strokeWidth={0.6} opacity={isDay ? 0.42 : 0.30} />
-        {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={dotFill} opacity={isDay ? 0.7 : 0.85} />)}
-        <text x={cp.x} y={cp.y - 16} fontSize={11} fill="var(--fg-glyph)" textAnchor="middle"
-          style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', opacity: isDay ? 0.6 : 0.45 }}>
+        <path d={segs} fill="none" stroke={isDay ? 'rgba(22,38,55,0.55)' : 'rgba(210,192,148,0.42)'} strokeWidth={0.7} strokeLinecap="round" />
+        {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={dotFill} opacity={isDay ? 0.75 : 0.92} />)}
+        <text x={cp.x} y={cp.y - 16} fontSize={11} fill={labelColor} textAnchor="middle"
+          style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
           {c.sign.toUpperCase()}
         </text>
       </g>
@@ -207,7 +241,7 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
           <svg width={ms} height={ms} viewBox={`0 0 ${ms} ${ms}`} overflow="visible">
             <MoonFace phase={atmo.moonPhase} size={ms} uid={uid} />
           </svg>
-          <text x={ms / 2} y={ms + 14} fontSize={11} fill="var(--fg-muted)" textAnchor="middle"
+          <text x={ms / 2} y={ms + 14} fontSize={11} fill={isDay ? 'rgba(22,38,55,0.85)' : 'rgba(200,182,148,0.92)'} textAnchor="middle"
             style={{ fontFamily: 'var(--font-mono)' }}>Moon</text>
         </g>
       );
@@ -219,9 +253,9 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
       return (
         <g key={id} opacity={fade}>
           <circle cx={p.x} cy={p.y} r={2.6} fill="none" stroke="var(--fg-glyph)" strokeWidth={1.1} opacity={0.7} />
-          <text x={p.x} y={p.y - 9} fontSize={13} fill="var(--fg-glyph)" textAnchor="middle"
-            style={{ fontFamily: 'serif', opacity: 0.8 }}>{G[id] ?? id}</text>
-          <text x={p.x} y={p.y + 15} fontSize={9.5} fill="var(--fg-dim)" textAnchor="middle"
+          <text x={p.x} y={p.y - 9} fontSize={13} fill={isDay ? 'rgba(22,38,55,0.9)' : 'rgba(228,210,165,0.92)'} textAnchor="middle"
+            style={{ fontFamily: 'serif' }}>{G[id] ?? id}</text>
+          <text x={p.x} y={p.y + 15} fontSize={9.5} fill={isDay ? 'rgba(30,50,70,0.8)' : 'rgba(195,178,148,0.85)'} textAnchor="middle"
             style={{ fontFamily: 'var(--font-mono)' }}>{BODY_LABEL[id] ?? id}</text>
         </g>
       );
@@ -242,9 +276,9 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
             <ellipse cx={p.x} cy={p.y + pr * 0.30} rx={pr} ry={pr * 0.12} fill={s.edge} opacity={0.18} />
           </g>
         )}
-        <text x={p.x} y={p.y - pr - 8} fontSize={15} fill="var(--fg-glyph)" textAnchor="middle"
+        <text x={p.x} y={p.y - pr - 8} fontSize={15} fill={isDay ? 'rgba(22,38,55,0.92)' : 'rgba(228,210,165,0.95)'} textAnchor="middle"
           style={{ fontFamily: 'serif' }}>{G[id] ?? id}</text>
-        <text x={p.x} y={p.y + pr + 15} fontSize={10} fill="var(--fg-muted)" textAnchor="middle"
+        <text x={p.x} y={p.y + pr + 15} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.82)' : 'rgba(200,182,148,0.9)'} textAnchor="middle"
           style={{ fontFamily: 'var(--font-mono)' }}>{BODY_LABEL[id] ?? id}</text>
       </g>
     );
@@ -333,11 +367,11 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
         <line x1="0" y1={mid} x2={W} y2={mid} stroke="var(--fg-glyph)" strokeWidth={0.8} opacity={0.28} />
         {consts}
         {bodies}
-        <text x={W * 0.25} y={mid - amp - 12} fontSize={10} fill="var(--fg-dim)" textAnchor="middle"
+        <text x={W * 0.25} y={mid - amp - 12} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.65)' : 'rgba(180,162,130,0.72)'} textAnchor="middle"
           style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.18em' }}>OVERHEAD</text>
-        <text x={W * 0.75} y={mid + amp + 22} fontSize={10} fill="var(--fg-dim)" textAnchor="middle"
+        <text x={W * 0.75} y={mid + amp + 22} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.65)' : 'rgba(180,162,130,0.72)'} textAnchor="middle"
           style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.18em' }}>BELOW HORIZON</text>
-        <text x={12} y={mid - 6} fontSize={10} fill="var(--fg-muted)"
+        <text x={12} y={mid - 6} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.75)' : 'rgba(195,178,148,0.82)'}
           style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.12em' }}>↑ HORIZON</text>
       </svg>
 
