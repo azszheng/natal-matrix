@@ -134,27 +134,20 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
   const overcast = atmo.weatherCategory === 'rain' || atmo.weatherCategory === 'snow' || atmo.weatherCategory === 'cloudy';
   const dotFill = isDay ? '#5b6e88' : '#dfe7f5';
 
-  // Drifting clouds (day only)
-  const CLOUD_BASE = [
-    { x: 150, y: 64, s: 1.35 }, { x: 520, y: 120, s: 0.95 }, { x: 840, y: 56, s: 1.5 },
-    { x: 1150, y: 110, s: 1.1 }, { x: 1430, y: 80, s: 1.25 }, { x: 330, y: 150, s: 0.85 },
-  ];
-  const cloudFill = overcast ? '#c8d4de' : '#f4f8fc';
-  const cloudOp = overcast ? 0.96 : 0.88;
-  const cloudFilter = overcast ? 'url(#cloud-overcast)' : 'url(#cloud-clear)';
-  const clouds = isDay ? CLOUD_BASE.map((c, i) => {
-    const cx = ((c.x + mins * 0.5) % (W + 320)) - 160;
-    return (
-      <g key={`cl${i}`} opacity={cloudOp} transform={`translate(${cx},${c.y}) scale(${c.s})`} filter={cloudFilter}>
-        <ellipse cx={0}   cy={14}  rx={80} ry={22} fill={cloudFill} />
-        <ellipse cx={-38} cy={6}   rx={34} ry={22} fill={cloudFill} />
-        <ellipse cx={6}   cy={-8}  rx={40} ry={30} fill={cloudFill} />
-        <ellipse cx={46}  cy={4}   rx={32} ry={24} fill={cloudFill} />
-        <ellipse cx={-16} cy={-14} rx={26} ry={20} fill={cloudFill} />
-        <ellipse cx={28}  cy={-16} rx={28} ry={18} fill={cloudFill} />
+  // Fractal-noise clouds (day only) — stitched tiles drift seamlessly, density mask shapes the layer
+  const cloudDrift  = isDay ? (mins * 0.7) % W : 0;
+  const cloudSlope  = overcast ? 3.4 : 3.0;
+  const cloudThresh = overcast ? 0.44 : 0.52;
+  const cloudAlphaRow = `${cloudSlope} 0 0 0 ${(-cloudSlope * cloudThresh).toFixed(3)}`;
+  const tint = overcast ? { r: 0.97, g: 0.98, b: 1 } : { r: 1, g: 1, b: 1 };
+  const cloudLayer = isDay ? (
+    <g mask="url(#cloud-mask)">
+      <g transform={`translate(${-cloudDrift},0)`}>
+        <rect x={0} y={0} width={W} height={H} fill="#fff" filter="url(#pano-clouds)" />
+        <rect x={W} y={0} width={W} height={H} fill="#fff" filter="url(#pano-clouds)" />
       </g>
-    );
-  }) : [];
+    </g>
+  ) : null;
 
   // Sun glow (day, when sun above horizon)
   const sunLon = chart.western.bodies.sun?.longitude ?? 0;
@@ -281,17 +274,35 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
               ? <><stop offset="0%" stopColor="#c2d0db" stopOpacity="0.0" /><stop offset="100%" stopColor="#aebcc8" stopOpacity="0.55" /></>
               : <><stop offset="0%" stopColor="#0a0c16" stopOpacity="0.0" /><stop offset="100%" stopColor="#05060c" stopOpacity="0.7" /></>}
           </linearGradient>
-          {/* Realistic cloud filters — feTurbulence displaces ellipse edges into organic shapes */}
-          <filter id="cloud-clear" x="-25%" y="-25%" width="150%" height="150%" colorInterpolationFilters="sRGB">
-            <feTurbulence type="fractalNoise" baseFrequency="0.013 0.009" numOctaves={4} seed={2} result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale={18} xChannelSelector="R" yChannelSelector="G" result="displaced" />
-            <feGaussianBlur in="displaced" stdDeviation={2.5} />
-          </filter>
-          <filter id="cloud-overcast" x="-25%" y="-25%" width="150%" height="150%" colorInterpolationFilters="sRGB">
-            <feTurbulence type="fractalNoise" baseFrequency="0.020 0.013" numOctaves={5} seed={5} result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale={28} xChannelSelector="R" yChannelSelector="G" result="displaced" />
-            <feGaussianBlur in="displaced" stdDeviation={3.5} />
-          </filter>
+          {/* Fractal-noise cloud filter — feColorMatrix derives alpha from noise; stitchTiles = seamless loop */}
+          {isDay && (
+            <filter id="pano-clouds" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.004 0.0085" numOctaves={4} seed={11} stitchTiles="stitch" result="n" />
+              <feColorMatrix in="n" type="matrix"
+                values={`0 0 0 0 ${tint.r}  0 0 0 0 ${tint.g}  0 0 0 0 ${tint.b}  ${cloudAlphaRow}`}
+                result="c" />
+              <feGaussianBlur in="c" stdDeviation={0.9} />
+            </filter>
+          )}
+          {isDay && (
+            <>
+              <linearGradient id="cloud-dens" x1="0" y1="0" x2="0" y2="1">
+                {overcast ? (<>
+                  <stop offset="0%"   stopColor="#fff" stopOpacity={0.6} />
+                  <stop offset="50%"  stopColor="#fff" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#fff" stopOpacity={0.82} />
+                </>) : (<>
+                  <stop offset="0%"   stopColor="#fff" stopOpacity={0.72} />
+                  <stop offset="40%"  stopColor="#fff" stopOpacity={0.38} />
+                  <stop offset="68%"  stopColor="#fff" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="#fff" stopOpacity={0.95} />
+                </>)}
+              </linearGradient>
+              <mask id="cloud-mask">
+                <rect x="0" y="0" width={W} height={H} fill="url(#cloud-dens)" />
+              </mask>
+            </>
+          )}
           {Object.entries(PLANET_STYLE).map(([id, s]) => (
             <radialGradient key={id} id={`pg-${id}`} cx="36%" cy="30%" r="78%">
               <stop offset="0%"   stopColor={s.hi} />
@@ -309,7 +320,7 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
         </defs>
 
         <rect x="0" y="0" width={W} height={H} fill="url(#pano-sky)" />
-        {clouds}
+        {cloudLayer}
         <rect x="0" y={mid} width={W} height={H - mid} fill="url(#pano-ground)" />
         {stars}
         {showSunGlow && (
