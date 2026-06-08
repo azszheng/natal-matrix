@@ -367,9 +367,9 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
         <line x1="0" y1={mid} x2={W} y2={mid} stroke="var(--fg-glyph)" strokeWidth={0.8} opacity={0.28} />
         {consts}
         {bodies}
-        <text x={W * 0.25} y={mid - amp - 12} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.65)' : 'rgba(180,162,130,0.72)'} textAnchor="middle"
+        <text x={W * 0.25} y={14} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.65)' : 'rgba(180,162,130,0.72)'} textAnchor="middle"
           style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.18em' }}>OVERHEAD</text>
-        <text x={W * 0.75} y={mid + amp + 22} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.65)' : 'rgba(180,162,130,0.72)'} textAnchor="middle"
+        <text x={W * 0.75} y={H - 8} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.65)' : 'rgba(180,162,130,0.72)'} textAnchor="middle"
           style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.18em' }}>BELOW HORIZON</text>
         <text x={12} y={mid - 6} fontSize={10} fill={isDay ? 'rgba(30,50,70,0.75)' : 'rgba(195,178,148,0.82)'}
           style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.12em' }}>↑ HORIZON</text>
