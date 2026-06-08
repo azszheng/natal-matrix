@@ -60,10 +60,8 @@ const SKY_VISIBLE = [
   'chiron', 'blackMoonLilith', 'partOfFortune',
 ] as const;
 
-// U+FE0E forces monochrome text presentation (not emoji)
-const G = Object.fromEntries(
-  Object.entries(PLANET_GLYPH).map(([k, v]) => [k, v + '︎'])
-) as Record<string, string>;
+// PLANET_GLYPH already has U+FE0E appended at source
+const G = PLANET_GLYPH as Record<string, string>;
 
 // ── Moon SVG (inline, for the band) ──────────────────────────────────────────
 
