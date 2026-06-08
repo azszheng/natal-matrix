@@ -210,13 +210,13 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, s
     const segs = c.edges.map(([a, b]) =>
       `M${pts[a].x.toFixed(1)} ${pts[a].y.toFixed(1)}L${pts[b].x.toFixed(1)} ${pts[b].y.toFixed(1)}`
     ).join('');
-    const labelColor = isDay ? 'rgba(22,38,55,0.72)' : 'rgba(210,192,148,0.62)';
+    const glyphCol = isDay ? '#b07d1e' : '#d9b774';
     return (
       <g key={c.sign} opacity={fade}>
-        <path d={segs} fill="none" stroke={isDay ? 'rgba(22,38,55,0.55)' : 'rgba(210,192,148,0.42)'} strokeWidth={0.7} strokeLinecap="round" />
-        {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={dotFill} opacity={isDay ? 0.75 : 0.92} />)}
-        <text x={cp.x} y={cp.y - 16} fontSize={11} fill={labelColor} textAnchor="middle"
-          style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}>
+        <path d={segs} fill="none" stroke={glyphCol} strokeWidth={0.7} strokeLinecap="round" opacity={isDay ? 0.5 : 0.38} />
+        {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r} fill={glyphCol} opacity={isDay ? 0.65 : 0.82} />)}
+        <text x={cp.x} y={cp.y - 16} fontSize={11} fill={glyphCol} textAnchor="middle"
+          style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', opacity: isDay ? 0.6 : 0.5 }}>
           {c.sign.toUpperCase()}
         </text>
       </g>
