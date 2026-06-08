@@ -34,6 +34,20 @@ const ZODIAC_DATA = [
   })),
 }));
 
+// Apparent magnitude table (lower = brighter). Sun/Moon always large.
+const PLANET_MAG: Record<string, number> = {
+  mercury: -0.2, venus: -4.3, mars: -1.2,
+  jupiter: -2.4, saturn: 0.6, uranus: 5.7, neptune: 7.8, pluto: 14,
+};
+// 'equal' = symbolic uniform size (default per spec); 'brightness' = sized by apparent magnitude
+function orbRadius(id: string, mode: 'equal' | 'brightness'): number {
+  if (id === 'sun') return 12;
+  if (mode === 'equal') return 5;
+  const m = PLANET_MAG[id];
+  if (m == null) return 5;
+  return Math.max(2.0, Math.min(7.2, 4.0 + 0.6 * (-m)));
+}
+
 type PStyle = { c: string; hi: string; edge: string; r: number; glow: number; ring?: boolean; band?: boolean };
 const PLANET_STYLE: Record<string, PStyle> = {
   sun:     { c: '#f5c842', hi: '#fff4c8', edge: '#e08820', r: 12,  glow: 0.30 },
@@ -99,9 +113,10 @@ type Props = {
   height?: number;
   speed?: number;
   theme: 'night' | 'day';
+  sizeMode?: 'equal' | 'brightness';
 };
 
-export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme }: Props) {
+export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, sizeMode = 'equal' }: Props) {
   const W = 1600, H = height;
   const mid = H * 0.54;
   const amp = H * 0.30;
@@ -241,23 +256,24 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme }:
       );
     }
 
+    const pr = orbRadius(id, sizeMode);
     return (
       <g key={id} opacity={fade}>
-        <circle cx={p.x} cy={p.y} r={s.r * 2.6} fill={s.c} opacity={s.glow} />
+        <circle cx={p.x} cy={p.y} r={pr * 2.6} fill={s.c} opacity={s.glow} />
         {s.ring && (
-          <ellipse cx={p.x} cy={p.y} rx={s.r * 2.0} ry={s.r * 0.64} fill="none" stroke={s.hi}
+          <ellipse cx={p.x} cy={p.y} rx={pr * 2.0} ry={pr * 0.64} fill="none" stroke={s.hi}
             strokeWidth={1.5} opacity={0.75} transform={`rotate(-20 ${p.x} ${p.y})`} />
         )}
-        <circle cx={p.x} cy={p.y} r={s.r} fill={`url(#pg-${id})`} stroke={s.edge} strokeWidth={0.5} />
+        <circle cx={p.x} cy={p.y} r={pr} fill={`url(#pg-${id})`} stroke={s.edge} strokeWidth={0.5} />
         {s.band && (
           <g clipPath={`url(#pc-${id})`}>
-            <ellipse cx={p.x} cy={p.y - s.r * 0.28} rx={s.r} ry={s.r * 0.13} fill={s.edge} opacity={0.22} />
-            <ellipse cx={p.x} cy={p.y + s.r * 0.30} rx={s.r} ry={s.r * 0.12} fill={s.edge} opacity={0.18} />
+            <ellipse cx={p.x} cy={p.y - pr * 0.28} rx={pr} ry={pr * 0.13} fill={s.edge} opacity={0.22} />
+            <ellipse cx={p.x} cy={p.y + pr * 0.30} rx={pr} ry={pr * 0.12} fill={s.edge} opacity={0.18} />
           </g>
         )}
-        <text x={p.x} y={p.y - s.r - 8} fontSize={15} fill="var(--fg-glyph)" textAnchor="middle"
+        <text x={p.x} y={p.y - pr - 8} fontSize={15} fill="var(--fg-glyph)" textAnchor="middle"
           style={{ fontFamily: 'serif' }}>{G[id] ?? id}</text>
-        <text x={p.x} y={p.y + s.r + 15} fontSize={10} fill="var(--fg-muted)" textAnchor="middle"
+        <text x={p.x} y={p.y + pr + 15} fontSize={10} fill="var(--fg-muted)" textAnchor="middle"
           style={{ fontFamily: 'var(--font-mono)' }}>{BODY_LABEL[id] ?? id}</text>
       </g>
     );
@@ -305,11 +321,12 @@ export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme }:
               <stop offset="100%" stopColor={s.edge} />
             </radialGradient>
           ))}
-          {Object.entries(PLANET_STYLE).filter(([, s]) => s.band).map(([id, s]) => {
+          {Object.entries(PLANET_STYLE).filter(([, s]) => s.band).map(([id]) => {
             const b = chart.western.bodies[id as keyof typeof chart.western.bodies];
             if (!b) return null;
             const p = pos((b as { longitude: number }).longitude, 0.96);
-            return <clipPath key={id} id={`pc-${id}`}><circle cx={p.x} cy={p.y} r={s.r} /></clipPath>;
+            const pr = orbRadius(id, sizeMode);
+            return <clipPath key={id} id={`pc-${id}`}><circle cx={p.x} cy={p.y} r={pr} /></clipPath>;
           })}
         </defs>
 
