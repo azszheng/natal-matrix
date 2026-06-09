@@ -1,15 +1,19 @@
-// Moon phase icon — cool grey-blue style (lit side silver-white, dark side steel grey,
-// flat maria blobs on lit side, crisp terminator). Phase 0=new, 180=full.
+// Moon phase icon — flat illustrative style matching timeanddate.com aesthetic.
+// Lit side: flat light grey-blue. Dark side: flat steel grey. Clean terminator.
+// Phase 0=new moon, 90=first quarter, 180=full, 270=last quarter.
 
 const MOON_MARIA = [
-  { x: -0.34, y: -0.40, rx: 0.30, ry: 0.24 },
-  { x:  0.04, y: -0.28, rx: 0.19, ry: 0.18 },
-  { x:  0.32, y: -0.04, rx: 0.20, ry: 0.24 },
-  { x:  0.50, y: -0.42, rx: 0.09, ry: 0.09 },
-  { x: -0.50, y:  0.06, rx: 0.14, ry: 0.36 },
-  { x: -0.18, y:  0.38, rx: 0.20, ry: 0.16 },
-  { x:  0.14, y:  0.32, rx: 0.10, ry: 0.10 },
+  { x: -0.30, y: -0.38, rx: 0.28, ry: 0.22 },
+  { x:  0.05, y: -0.26, rx: 0.17, ry: 0.16 },
+  { x:  0.30, y: -0.04, rx: 0.18, ry: 0.22 },
+  { x:  0.48, y: -0.40, rx: 0.08, ry: 0.08 },
+  { x: -0.48, y:  0.06, rx: 0.12, ry: 0.32 },
+  { x: -0.16, y:  0.36, rx: 0.18, ry: 0.14 },
 ];
+
+const LIT  = '#cdd8e8';  // flat silver-grey (lit side)
+const DARK = '#4a5c72';  // flat steel blue-grey (dark side)
+const MARIA = '#8fa4bc'; // slightly darker blobs
 
 type Props = { phase: number; size: number; uid: string };
 
@@ -20,55 +24,54 @@ export default function MoonFace({ phase, size, uid }: Props) {
   const termRx    = r * Math.abs(Math.cos(norm * Math.PI));
   const isGibbous = phase >= 90 && phase < 270;
   const litRight  = isWaxing;
-  const blurSd    = Math.max(0.4, size * 0.008); // crisp terminator
+
+  // Build the lit-side clip path (same geometry as the old mask, no blur)
+  const litClipId = `${uid}lc`;
+  const baseClipId = `${uid}bc`;
 
   return (
     <>
       <defs>
-        <clipPath id={`${uid}c`}><circle cx={cx} cy={cy} r={r - 0.5} /></clipPath>
+        {/* Clip to circle boundary */}
+        <clipPath id={baseClipId}><circle cx={cx} cy={cy} r={r - 0.5} /></clipPath>
 
-        {/* Lit-side radial gradient — cool silver-white */}
-        <radialGradient id={`${uid}g`} cx="40%" cy="35%" r="65%">
-          <stop offset="0%"   stopColor="#e4eaf4" />
-          <stop offset="65%"  stopColor="#c8d4e4" />
-          <stop offset="100%" stopColor="#a2b2c8" />
-        </radialGradient>
-
-        {/* Slight blur on terminator for smooth edge */}
-        <filter id={`${uid}bt`}><feGaussianBlur stdDeviation={blurSd} /></filter>
-
-        {/* Phase mask */}
-        <mask id={`${uid}m`}>
-          <g filter={`url(#${uid}bt)`}>
-            <circle cx={cx} cy={cy} r={r} fill="#fff" />
-            {!isGibbous && (
-              <ellipse cx={cx + (litRight ? termRx : -termRx)} cy={cy} rx={termRx} ry={r} fill="#000" />
-            )}
-            <rect x={litRight ? 0 : cx} y={0} width={r} height={size} fill="#000" />
-            {isGibbous && (
-              <ellipse cx={cx + (litRight ? -termRx : termRx)} cy={cy} rx={termRx} ry={r} fill="#fff" />
-            )}
-          </g>
-        </mask>
+        {/* Lit portion clip — the illuminated region */}
+        <clipPath id={litClipId}>
+          {isGibbous ? (
+            // More than half lit: start with the lit half, expand with ellipse
+            <>
+              <rect x={litRight ? cx : 0} y={0} width={r} height={size} />
+              <ellipse cx={cx + (litRight ? -termRx : termRx)} cy={cy} rx={termRx} ry={r} />
+            </>
+          ) : (
+            // Less than half lit: narrow crescent using ellipse intersection
+            // Use a rect for the lit half side, clip with the terminator ellipse complement
+            // Achieved by defining the crescent region directly
+            <ellipse cx={cx + (litRight ? termRx : -termRx)} cy={cy} rx={termRx} ry={r} />
+          )}
+        </clipPath>
       </defs>
 
-      {/* Dark side — steel grey-blue */}
-      <circle cx={cx} cy={cy} r={r - 0.5} fill="#4e607a" clipPath={`url(#${uid}c)`} />
+      {/* Base circle — dark side colour */}
+      <circle cx={cx} cy={cy} r={r - 0.5} fill={DARK} clipPath={`url(#${baseClipId})`} />
 
-      {/* Lit side — gradient sphere + flat maria blobs */}
-      <g mask={`url(#${uid}m)`} clipPath={`url(#${uid}c)`}>
-        <circle cx={cx} cy={cy} r={r - 0.5} fill={`url(#${uid}g)`} />
-        {MOON_MARIA.map((m, i) => (
-          <ellipse key={i}
-            cx={cx + m.x * r} cy={cy + m.y * r}
-            rx={m.rx * r} ry={m.ry * r}
-            fill="#8aa0bc" opacity={0.52}
-          />
-        ))}
+      {/* Lit side */}
+      <g clipPath={`url(#${baseClipId})`}>
+        <g clipPath={`url(#${litClipId})`}>
+          <circle cx={cx} cy={cy} r={r} fill={LIT} />
+          {/* Maria blobs on lit surface */}
+          {MOON_MARIA.map((m, i) => (
+            <ellipse key={i}
+              cx={cx + m.x * r} cy={cy + m.y * r}
+              rx={m.rx * r} ry={m.ry * r}
+              fill={MARIA} opacity={0.55}
+            />
+          ))}
+        </g>
       </g>
 
-      {/* Subtle limb shadow */}
-      <circle cx={cx} cy={cy} r={r - 0.7} fill="none" stroke="#000" strokeOpacity={0.14} strokeWidth={0.8} />
+      {/* Thin border */}
+      <circle cx={cx} cy={cy} r={r - 0.7} fill="none" stroke="#1a2535" strokeOpacity={0.18} strokeWidth={0.8} />
     </>
   );
 }
