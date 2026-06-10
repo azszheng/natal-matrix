@@ -292,7 +292,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               <div style={{ padding: '22px 22px 16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '6px 0 18px' }}>
                   <div className="am-wheel" style={{ maxWidth: 460, width: '100%' }}>
-                    <WesternWheel chart={chart} />
+                    <WesternWheel chart={chart} onInterpret={setInterpSection} />
                   </div>
                 </div>
                 {/* Aspect color legend */}

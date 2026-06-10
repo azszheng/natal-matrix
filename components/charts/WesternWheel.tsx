@@ -1,10 +1,15 @@
-import type { NatalChart, AspectKind } from '@/lib/astro/types';
+'use client';
+
+import { useState } from 'react';
+import type { NatalChart, AspectKind, BodyId } from '@/lib/astro/types';
 import { SIGNS } from '@/lib/astro/types';
 import {
   CX, CY, R_OUTER, R_SIGN_IN, R_HOUSE_IN, R_PLANET, R_CORE,
   lonToAngle, polarToXY, midAngle,
 } from './wheel-geometry';
 import { PLANET_GLYPH, SIGN_GLYPH, WHEEL_BODIES } from './glyphs';
+import type { InterpretSection } from '@/lib/ai/prompts';
+import { buildBodySection, buildHouseSection } from '@/lib/ai/prompts';
 
 const ASPECT_COLOR: Record<AspectKind, string> = {
   trine:       'var(--aspect-harmonious)',
@@ -15,7 +20,6 @@ const ASPECT_COLOR: Record<AspectKind, string> = {
   quincunx:    'var(--aspect-minor)',
 };
 
-// Nudge planets that are within MIN_SEP degrees of each other
 const MIN_SEP = 6;
 
 type PlacedBody = { id: string; angle: number; r: number; lon: number };
@@ -28,7 +32,6 @@ function placePlanets(bodies: NatalChart['western']['bodies'], ascLon: number): 
     lon: bodies[id].longitude,
   }));
 
-  // Sort by angle, then nudge overlapping planets outward/inward in alternating rings
   placed.sort((a, b) => a.angle - b.angle);
   const rings = [R_PLANET, R_PLANET - 14, R_PLANET - 28];
   const ringIdx: number[] = new Array(placed.length).fill(0);
@@ -45,14 +48,20 @@ function placePlanets(bodies: NatalChart['western']['bodies'], ascLon: number): 
   return placed;
 }
 
-export default function WesternWheel({ chart }: { chart: NatalChart }) {
+type Props = {
+  chart: NatalChart;
+  onInterpret?: (s: InterpretSection) => void;
+};
+
+export default function WesternWheel({ chart, onInterpret }: Props) {
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
   const asc = chart.western.houses.asc;
   const { bodies, houses, aspects } = chart.western;
 
   const placed = placePlanets(bodies, asc);
   const placedMap = Object.fromEntries(placed.map(p => [p.id, p]));
 
-  // Sign ring: 12 signs, each 30° in ecliptic
   const signRing = SIGNS.map((sign, i) => {
     const startLon = i * 30;
     const endLon   = startLon + 30;
@@ -66,29 +75,25 @@ export default function WesternWheel({ chart }: { chart: NatalChart }) {
     return { sign, startOuter, startInner, midGlyph, midA };
   });
 
-  // Degree ticks in sign ring (every 5°)
   const ticks = Array.from({ length: 72 }, (_, i) => {
     const lon = i * 5;
     const a   = lonToAngle(lon, asc);
-    const isMajor = i % 2 === 0; // every 10°
+    const isMajor = i % 2 === 0;
     const rInner  = isMajor ? R_OUTER - 9 : R_OUTER - 5;
     return { a, rInner };
   });
 
-  // House cusps
   const cusps = houses.cusps.map((lon, i) => {
     const a = lonToAngle(lon, asc);
     const outer = polarToXY(R_SIGN_IN,  a);
     const inner = polarToXY(R_HOUSE_IN, a);
-    // house number at midpoint of house sector
     const nextLon = houses.cusps[(i + 1) % 12];
     const midA = midAngle(a, lonToAngle(nextLon, asc));
     const numPt  = polarToXY((R_SIGN_IN + R_HOUSE_IN) / 2, midA);
-    return { outer, inner, num: i + 1, numPt };
+    return { outer, inner, num: i + 1, numPt, midA };
   });
 
-  // ASC / MC axis lines — full diameters across the wheel
-  const ascA    = lonToAngle(asc, asc); // always 270°
+  const ascA    = lonToAngle(asc, asc);
   const descA   = (ascA + 180) % 360;
   const mcA     = lonToAngle(chart.western.houses.mc, asc);
   const icA     = (mcA + 180) % 360;
@@ -96,6 +101,8 @@ export default function WesternWheel({ chart }: { chart: NatalChart }) {
   const descOut = polarToXY(R_OUTER, descA);
   const mcOut   = polarToXY(R_OUTER, mcA);
   const icOut   = polarToXY(R_OUTER, icA);
+
+  const canInterpret = !!onInterpret;
 
   return (
     <svg
@@ -107,7 +114,6 @@ export default function WesternWheel({ chart }: { chart: NatalChart }) {
     >
       <title>Western Natal Chart — {chart.input.name || 'Chart'}</title>
 
-      {/* Background */}
       <circle cx={CX} cy={CY} r={R_OUTER} fill="var(--bg-chart)" />
 
       {/* Aspect lines */}
@@ -118,20 +124,16 @@ export default function WesternWheel({ chart }: { chart: NatalChart }) {
         const ptA = polarToXY(R_CORE, lonToAngle(bodies[asp.a].longitude, asc));
         const ptB = polarToXY(R_CORE, lonToAngle(bodies[asp.b].longitude, asc));
         return (
-          <line
-            key={i}
-            x1={ptA.x} y1={ptA.y}
-            x2={ptB.x} y2={ptB.y}
-            stroke={ASPECT_COLOR[asp.kind]}
-            strokeWidth="0.6"
-            strokeOpacity="0.45"
+          <line key={i}
+            x1={ptA.x} y1={ptA.y} x2={ptB.x} y2={ptB.y}
+            stroke={ASPECT_COLOR[asp.kind]} strokeWidth="0.6" strokeOpacity="0.45"
           >
             <title>{asp.a} {asp.kind} {asp.b} (orb {asp.orb.toFixed(2)}°)</title>
           </line>
         );
       })}
 
-      {/* Sign ring background */}
+      {/* Ring borders */}
       <circle cx={CX} cy={CY} r={R_OUTER}   fill="none" stroke="var(--line-chart)" strokeWidth="1" />
       <circle cx={CX} cy={CY} r={R_SIGN_IN}  fill="none" stroke="var(--line-chart)" strokeWidth="1" />
       <circle cx={CX} cy={CY} r={R_HOUSE_IN} fill="none" stroke="var(--line-chart)" strokeWidth="1" />
@@ -139,81 +141,93 @@ export default function WesternWheel({ chart }: { chart: NatalChart }) {
 
       {/* Degree ticks */}
       {ticks.map((t, i) => {
-        const outer = polarToXY(R_OUTER,   t.a);
-        const inner = polarToXY(t.rInner,  t.a);
-        return (
-          <line key={i} x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y}
-            stroke="var(--fg-dim)" strokeWidth="0.5" />
-        );
+        const outer = polarToXY(R_OUTER,  t.a);
+        const inner = polarToXY(t.rInner, t.a);
+        return <line key={i} x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y}
+          stroke="var(--fg-dim)" strokeWidth="0.5" />;
       })}
 
       {/* Sign boundary spokes + glyphs */}
       {signRing.map(({ sign, startOuter, startInner, midGlyph }) => (
         <g key={sign}>
-          <line
-            x1={startOuter.x} y1={startOuter.y}
-            x2={startInner.x} y2={startInner.y}
-            stroke="var(--line-chart)" strokeWidth="1"
-          />
-          <text
-            x={midGlyph.x} y={midGlyph.y}
+          <line x1={startOuter.x} y1={startOuter.y} x2={startInner.x} y2={startInner.y}
+            stroke="var(--line-chart)" strokeWidth="1" />
+          <text x={midGlyph.x} y={midGlyph.y}
             textAnchor="middle" dominantBaseline="central"
-            fontSize="12" fill="var(--fg-glyph)"
-          >
+            fontSize="12" fill="var(--fg-glyph)">
             {SIGN_GLYPH[sign]}
           </text>
         </g>
       ))}
 
-      {/* House cusp lines + numbers */}
+      {/* House cusp lines + clickable house numbers */}
       {cusps.map(({ outer, inner, num, numPt }) => (
         <g key={num}>
-          <line
-            x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y}
-            stroke="var(--fg-dim)" strokeWidth="0.8"
-          />
-          <text
-            x={numPt.x} y={numPt.y}
-            textAnchor="middle" dominantBaseline="central"
-            fontSize="9" fill="var(--fg-muted)"
-            fontFamily="var(--font-mono)"
+          <line x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y}
+            stroke="var(--fg-dim)" strokeWidth="0.8" />
+          <g
+            onClick={canInterpret ? () => onInterpret(buildHouseSection(num, chart)) : undefined}
+            onMouseEnter={canInterpret ? () => setHoveredId(`h${num}`) : undefined}
+            onMouseLeave={canInterpret ? () => setHoveredId(null) : undefined}
+            style={{ cursor: canInterpret ? 'pointer' : 'default' }}
           >
-            {num}
-          </text>
+            {/* Hit area */}
+            <circle cx={numPt.x} cy={numPt.y} r={8} fill="transparent" />
+            {/* Hover ring */}
+            <circle cx={numPt.x} cy={numPt.y} r={8}
+              fill="var(--accent)" fillOpacity={hoveredId === `h${num}` ? 0.15 : 0}
+              stroke="var(--accent)" strokeWidth="0.8"
+              strokeOpacity={hoveredId === `h${num}` ? 0.6 : 0}
+            />
+            <text x={numPt.x} y={numPt.y}
+              textAnchor="middle" dominantBaseline="central"
+              fontSize="9" fill={hoveredId === `h${num}` ? 'var(--accent)' : 'var(--fg-muted)'}
+              fontFamily="var(--font-mono)">
+              {num}
+            </text>
+          </g>
         </g>
       ))}
 
-      {/* ASC–DESC and MC–IC full diameter axes */}
+      {/* ASC–DESC and MC–IC axes */}
       <line x1={ascOut.x} y1={ascOut.y} x2={descOut.x} y2={descOut.y}
         stroke="var(--accent)" strokeWidth="1.2" />
       <line x1={mcOut.x} y1={mcOut.y} x2={icOut.x} y2={icOut.y}
         stroke="var(--fg-muted)" strokeWidth="0.8" strokeDasharray="3 2" />
 
-      {/* Planet glyphs */}
+      {/* Clickable planet glyphs */}
       {placed.map(({ id, angle, r }) => {
         const body = bodies[id as keyof typeof bodies];
         if (!body) return null;
-        const pt  = polarToXY(r, angle);
+        const pt    = polarToXY(r, angle);
         const glyph = PLANET_GLYPH[id as keyof typeof PLANET_GLYPH];
         const isRetro = body.isRetrograde;
+        const isHovered = hoveredId === id;
+
         return (
-          <g key={id}>
+          <g key={id}
+            onClick={canInterpret ? () => onInterpret(buildBodySection(id as BodyId, chart)) : undefined}
+            onMouseEnter={canInterpret ? () => setHoveredId(id) : undefined}
+            onMouseLeave={canInterpret ? () => setHoveredId(null) : undefined}
+            style={{ cursor: canInterpret ? 'pointer' : 'default' }}
+          >
             <title>{id} {body.sign} {body.signDegree.toFixed(2)}° H{body.house}{isRetro ? ' ℞' : ''}</title>
-            <text
-              x={pt.x} y={pt.y}
+            {/* Hit area + hover highlight */}
+            <circle cx={pt.x} cy={pt.y} r={10} fill="transparent" />
+            <circle cx={pt.x} cy={pt.y} r={10}
+              fill="var(--accent)" fillOpacity={isHovered ? 0.14 : 0}
+              stroke="var(--accent)" strokeWidth="0.8"
+              strokeOpacity={isHovered ? 0.5 : 0}
+            />
+            <text x={pt.x} y={pt.y}
               textAnchor="middle" dominantBaseline="central"
               fontSize="11"
-              fill={isRetro ? 'var(--retro)' : 'var(--fg-glyph)'}
+              fill={isHovered ? 'var(--accent)' : isRetro ? 'var(--retro)' : 'var(--fg-glyph)'}
             >
               {glyph}
             </text>
             {isRetro && (
-              <text
-                x={pt.x + 7} y={pt.y - 5}
-                fontSize="6" fill="var(--retro)"
-              >
-                ℞
-              </text>
+              <text x={pt.x + 7} y={pt.y - 5} fontSize="6" fill="var(--retro)">℞</text>
             )}
           </g>
         );
