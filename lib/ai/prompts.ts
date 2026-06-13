@@ -4,12 +4,16 @@ import type { DashaPeriod, DashaLord } from '@/lib/astro/dashas';
 import type { SynastryAspect } from '@/lib/astro/synastry';
 import { analyzeChart, formatChartAnalysis, bodyContext, houseContext, aspectContext } from './chartAnalysis';
 import { analyzeVedicChart, formatVedicAnalysis, vedicBodyContext, vedicHouseContext, vedicDashaContext } from './vedicAnalysis';
+import { HOUSE_FRONT_TITLES, HOUSE_MEANINGS, scoreHouseActivation } from './houseThemes';
 
 export type InterpretSection = {
   type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot';
   label: string;
   prompt: string;
   system?: 'western' | 'vedic';
+  // Front-facing UX layer — displayed in the panel header
+  frontTitle?: string;   // e.g. "Where You Come Alive"
+  anchor?: string;       // e.g. "5th House — creativity, romance, play, self-expression"
 };
 
 export type InterpretMode = 'essence' | 'deepdive' | 'astrologer';
@@ -33,20 +37,35 @@ function dashaLordToBodyId(lord: DashaLord): BodyId | null {
 
 export function buildSystemPrompt(mode: InterpretMode, lifeStageNote: string): string {
   const modeBlock = mode === 'essence'
-    ? `WRITING MODE: ESSENCE
+    ? `WRITING MODE: ESSENCE — "Tell me what it means"
 
-Write for someone who may be new to astrology or simply wants clear self-understanding without technical complexity. Keep interpretations between 100 and 200 words. Use warm, conversational language that prioritizes emotional recognizability — the reader should feel immediately understood. Focus on what the placement feels like to live, the personality patterns it creates, the relational tendencies it produces, and the practical strengths and challenges it presents. Translate any astrological term briefly in the same sentence if you use one at all. No jargon-heavy analysis. No deep technical synthesis. The goal is clarity, warmth, and self-recognition.
+Write for someone who wants clear self-understanding without technical complexity. Keep interpretations between 150 and 300 words. Use warm, conversational language — the reader should feel immediately understood. Focus on what this placement feels like to live: the patterns it creates, how it shapes relationships, where it shows up practically. Translate any astrological term briefly in the same sentence. No dense technical synthesis.
 
-The thematic title should be simple and immediately relatable — something a non-astrologer would understand and nod at.`
+The thematic title should be simple and immediately relatable — something a non-astrologer would nod at.
+
+DEVELOPMENTAL LANGUAGE: Use these phrasings naturally — do not label them as sections:
+- For the shadow: "In its protective form..." or "Under stress, this tends to..."
+- For the integrated: "As this matures..." or "When held consciously..."
+- For real-life grounding: "You may notice this when..." or "In practice, this often looks like..."`
 
     : mode === 'astrologer'
     ? `WRITING MODE: ASTROLOGER
 
 Write for someone who already understands astrology and wants the full technical picture. Keep interpretations between 500 and 850 words. Use proper astrological terminology without translation: sign, house, aspect type, orb, applying vs. separating, chart ruler, dispositor chain, domicile, exaltation, detriment, fall, angular/succedent/cadent, modality, element, sect. Include sign and house synthesis, aspect analysis with orbs, chart ruler and dispositor logic, elemental and modality balance, nodal dynamics, and timing considerations where relevant. Prioritize synthesis and interpretation over description — the reader knows what a trine is; tell them what THIS trine does in THIS chart. Avoid cookbook enumeration. Write like a consultation note from a master astrologer who has studied this chart carefully.`
 
-    : `WRITING MODE: DEEP DIVE
+    : `WRITING MODE: DEEP DIVE — "Show me the psychology"
 
-Write a rich psychological portrait for someone who wants genuine insight into how this placement shapes their inner world, relationships, and life path. Keep interpretations between 320 and 600 words. Balance psychological depth with accessibility — use astrological terms confidently but always in context. Include: the core psychological mechanism, how it shows up in relationships and daily life, the shadow and gift of the placement, the developmental arc, and what growth looks like in practice. This is the premium interpretation style — deep but never obscure.`;
+Write a rich psychological portrait for someone who wants genuine insight into how this placement shapes their inner world, relationships, and life path. Keep interpretations between 500 and 900 words. Balance psychological depth with accessibility — use astrological terms confidently but always in context.
+
+DEVELOPMENTAL LANGUAGE: Weave these naturally into the prose — do not label them as explicit sections:
+- Plain-language meaning: explain what this life area or planetary function actually means in lived terms, as if the reader has never studied astrology.
+- Chart emphasis: briefly name the strongest factors that concentrate energy here.
+- Real-life manifestations: give 2-3 specific, recognizable examples of how this shows up in behavior, relationships, or inner experience. Use "In practice..." or "You may notice this when..."
+- Protective expression: how this pattern appears under stress, fear, or early self-protection. Use "In its protective form..." or "Under stress, this tends to..."
+- Integrated expression: the mature, conscious, high-expression version. Use "When integrated..." or "As this matures..."
+- Reflection: close with a single grounded question the person can genuinely sit with. Phrase it as an open question, not a directive.
+
+This is the premium interpretation style — specific, psychologically precise, practically grounded, and never abstract.`;
 
   return `You are an elite astrologer, depth psychologist, and symbolic analyst. Your work combines evolutionary astrology's soul-level framing, Jungian archetypal depth, and the clinical precision of someone who understands how psyches adapt under pressure. You write as if the chart is a psychological X-ray — not a personality checklist, but a map of competing drives, unresolved tensions, and adaptive strategies that formed under specific conditions.
 
@@ -191,22 +210,34 @@ export function buildBodySection(bodyId: BodyId, chart: NatalChart): InterpretSe
     ? ` Aspects: ${bodyAspects.join(', ')}.`
     : '';
 
-  const name = BODY_LABEL[bodyId] ?? bodyId;
-  const analysis = analyzeChart(chart);
-  const synthCtx = bodyContext(bodyId, chart, analysis);
+  const name       = BODY_LABEL[bodyId] ?? bodyId;
+  const analysis   = analyzeChart(chart);
+  const synthCtx   = bodyContext(bodyId, chart, analysis);
+  const houseFront = body.house ? HOUSE_FRONT_TITLES[body.house] : undefined;
+  const houseMean  = body.house ? HOUSE_MEANINGS[body.house] : undefined;
+  const frontTitle = houseFront ? `${name} in ${cap(body.sign)} — ${houseFront}` : `${name} in ${cap(body.sign)}`;
+  const anchor     = body.house
+    ? `${name} in ${cap(body.sign)}${retro}${digNote} · ${body.house}${ordSuffix(body.house)} House (${houseMean})`
+    : `${name} in ${cap(body.sign)}${retro}${digNote}`;
 
   return {
-    type: 'body',
-    label: `${cap(bodyId)} in ${cap(body.sign)} · House ${body.house}`,
+    type:       'body',
+    label:      `${cap(bodyId)} in ${cap(body.sign)} · House ${body.house}`,
+    frontTitle,
+    anchor,
     prompt: `${synthCtx}
 
-Interpret ${name}${retro} in ${body.sign}${digNote}, House ${body.house}.${aspLine}
+USER-FACING CONTEXT:
+${name} sits in the ${body.house}${ordSuffix(body.house)} house — the life arena the user knows as "${houseFront ?? ''}" (${houseMean ?? ''}).
+Placement: ${name}${retro} in ${body.sign}${digNote}, House ${body.house}.${aspLine}
 
-Draw on the full chart in context. Synthesize sign + house + aspects + the nodal axis + any elemental or modality patterns you observe. What does this configuration mechanically produce in the person's psychology — not what it symbolizes in the abstract, but what internal dynamic it actually creates? What is the core tension or polarity at work: the desire structure and the fear structure, the drive toward expression and the defense against it?
+Interpret this configuration. Your thematic title (3-6 words) should name the essential psychological dynamic — specific enough that it could only belong to this placement in this chart.
 
-Trace the compensatory arc: what adaptive strategy does this placement produce, how does that strategy serve the person, and where does it break down — in relationships, in ambition, in the body, in the inner life? Show the mechanism that links the placement to the pattern.
+Then write the interpretation. In plain language, explain what ${name} fundamentally does in a chart — what function it serves, what need it represents — without assuming the reader knows astrology. Then show what ${body.sign} does to that function: the style, the motivation, the underlying drive and the defensive structure around it. Then show how House ${body.house} (${houseFront ?? ''}) gives this energy its arena — where in life it plays out, what it wants, what it fears in that domain.
 
-Do not explain what the placement means in general. Reveal what it does in this specific chart. Weight the interpretation toward the dominant themes identified in the synthesis context.`,
+Trace the compensatory arc: what adaptive strategy does this placement produce, how does that strategy serve the person, and where does it break down — in relationships, in ambition, in the body, in the inner life? Describe how it manifests under stress or self-protection ("In its protective form..." or "Under stress..."). Describe the integrated, mature version ("When integrated..." or "As this matures..."). Close with a single reflection question the person can genuinely sit with.
+
+Do not explain what the placement means in general. Reveal what it does in this specific chart. Weight toward the dominant themes in the synthesis context.`,
   };
 }
 
@@ -220,39 +251,44 @@ export function buildHouseSection(houseNum: number, chart: NatalChart): Interpre
     .map(([id]) => BODY_LABEL[id as BodyId] ?? id);
 
   const planetsNote = planetsIn.length > 0
-    ? ` Planets currently living in this house: ${planetsIn.join(', ')}.`
-    : ' This house has no natal planets in it — its themes are still very much alive, but they operate more quietly, colored primarily by the sign on the cusp and the house ruler\'s placement.';
+    ? ` Planets in this house: ${planetsIn.join(', ')}.`
+    : ' No natal planets occupy this house — its themes operate quietly, shaped primarily by the sign on the cusp and the house ruler\'s placement.';
 
-  const analysis = analyzeChart(chart);
-  const synthCtx = houseContext(houseNum, chart, analysis);
+  const analysis   = analyzeChart(chart);
+  const synthCtx   = houseContext(houseNum, chart, analysis);
+  const scored     = scoreHouseActivation(chart, analysis);
+  const thisHouse  = scored.find(h => h.house === houseNum);
+  const topHouses  = scored.slice(0, 5).map(h => `H${h.house} (${h.frontTitle}, score ${h.score.toFixed(1)})`).join(' · ');
 
-  const houseThemes: Record<number, string> = {
-    1:  'identity, appearance, how you instinctively meet the world, and the energy you lead with',
-    2:  'your relationship with money, possessions, and self-worth — what you value and how you earn',
-    3:  'the mind, communication, siblings, short journeys, and how you learn and express ideas',
-    4:  'home, family, roots, ancestry, and your emotional foundation — the private inner world',
-    5:  'creativity, joy, romance, children, and self-expression — everything you do for the love of doing it',
-    6:  'daily work, health, routines, and service — how you show up in the ordinary texture of life',
-    7:  'partnerships, marriage, and one-on-one relationships — what you seek in others and what you offer',
-    8:  'transformation, death and rebirth, sexuality, shared resources, and the deep psyche',
-    9:  'philosophy, higher education, travel, spirituality, and the search for meaning',
-    10: 'career, public reputation, vocation, and how you wish to be remembered — your legacy',
-    11: 'friends, community, social ideals, and the vision you hold for the future',
-    12: 'the unconscious, solitude, hidden matters, spirituality, and what lies beneath ordinary awareness',
-  };
+  const frontTitle = HOUSE_FRONT_TITLES[houseNum];
+  const meaning    = HOUSE_MEANINGS[houseNum];
+  const anchor     = `${houseNum}${ordSuffix(houseNum)} House — ${meaning}`;
+
+  const activationNote = thisHouse && thisHouse.reasons.length > 0
+    ? `\nActivation factors for this house: ${thisHouse.reasons.slice(0, 4).join(', ')}.`
+    : '';
 
   return {
-    type: 'house',
-    label: `House ${houseNum} · ${cap(sign)} on cusp`,
+    type:       'house',
+    label:      `House ${houseNum} · ${cap(sign)} on cusp`,
+    frontTitle,
+    anchor,
     prompt: `${synthCtx}
+Most activated life arenas in this chart: ${topHouses}${activationNote}
 
-Interpret the ${houseNum}${ordSuffix(houseNum)} house — ${houseThemes[houseNum] ?? 'this life domain'} — with ${sign} on the cusp.${planetsNote}
+USER-FACING CONTEXT:
+This section is titled "${frontTitle}" — the user knows this as the arena of ${meaning}.
+Traditional reference: ${anchor}, with ${sign} on the cusp.${planetsNote}
 
-Draw on the full chart. Analyze what this house configuration mechanically produces: how does ${sign}'s specific psychological signature shape the approach to this life domain — not just the style, but the underlying motivation, the defensive structure around it, and the growth edge? What does ${sign} want from this arena, and what does it fear? How does that tension play out in actual behavior?
+Interpret this house. Your thematic title (3-6 words) should riff on the user-facing frame "${frontTitle}" — make it specific to what this person's configuration actually does.
 
-If planets occupy the house, show how their drives interact with and complicate the sign's energy — what inner conflicts or amplifications arise? If the house is empty, trace how the ruler's placement elsewhere imports its conditions into this domain.
+Then write the interpretation. First, in plain language, explain what this life arena means without assuming astrology knowledge — speak as if the reader has never heard of the ${houseNum}${ordSuffix(houseNum)} house. Then show how ${sign}'s psychological signature shapes this arena: not just the style, but the underlying motivation, the defensive structure around it, and the growth edge. What does ${sign} want from this domain and what does it protect against?
 
-Root every observation in what is specific to this chart. Name the contradiction at the heart of it. Frame the interpretation through the dominant themes in the synthesis context.`,
+If planets occupy the house, show how their drives interact with the sign's energy. If the house is empty, trace how the ruler's placement elsewhere imports its conditions.
+
+Address how this pattern shows up in the person's actual life — in real behavior, relationships, work, or inner experience. Describe how it appears under stress or self-protection ("In its protective form..."). Describe the integrated, mature expression ("When integrated..."). Close with a single reflection question the person can genuinely sit with.
+
+Root everything in this specific chart. Frame it through the dominant themes in the synthesis context above.`,
   };
 }
 

@@ -7,7 +7,7 @@ import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
 const MODE_LABEL: Record<InterpretMode, string> = {
   essence:    'Essence',
   deepdive:   'Deep Dive',
-  astrologer: 'Astrologer',
+  astrologer: 'Astrologer Mode',
 };
 
 type Props = {
@@ -146,13 +146,28 @@ export default function InterpretationPanel({ chart, section, onClose, mode = 'd
       }}>
         {/* Header */}
         <div style={{ padding: '18px 24px 14px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-          <div>
-            <p style={{ margin: '0 0 3px', fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              AI Interpretation
-            </p>
-            <h3 style={{ margin: 0, fontSize: 13, color: 'var(--fg)', fontFamily: 'var(--font-sans)' }}>
-              {section.label}
-            </h3>
+          <div style={{ minWidth: 0 }}>
+            {section.frontTitle ? (
+              <>
+                <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600, color: 'var(--fg)', fontFamily: 'var(--font-display)', lineHeight: 1.2 }}>
+                  {section.frontTitle}
+                </h3>
+                {section.anchor && (
+                  <p style={{ margin: '0 0 2px', fontSize: 10.5, fontFamily: 'var(--font-mono)', color: 'var(--fg-muted)', letterSpacing: '0.03em', lineHeight: 1.4 }}>
+                    {section.anchor}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p style={{ margin: '0 0 3px', fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  AI Interpretation
+                </p>
+                <h3 style={{ margin: 0, fontSize: 13, color: 'var(--fg)', fontFamily: 'var(--font-sans)' }}>
+                  {section.label}
+                </h3>
+              </>
+            )}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)', fontSize: 18, padding: '2px 6px', flexShrink: 0 }}>×</button>
         </div>

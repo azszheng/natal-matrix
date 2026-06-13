@@ -12,17 +12,17 @@ const MODES: {
 }[] = [
   {
     id: 'essence',
-    name: 'Essence Mode',
-    subtitle: 'Simple, relatable, and easy to understand',
-    description: 'For users who want clear self-understanding without astrology jargon.',
-    tooltip: 'Short and clear — perfect if you\'re new to astrology or want the core insight without the complexity. 100–200 words per interpretation.',
+    name: 'Tell me what it means',
+    subtitle: 'Clear, warm, no jargon',
+    description: 'Plain language focused on how this shows up in real life.',
+    tooltip: 'Simple and emotionally grounded — explains what the placement feels like to live, what it makes easy, what it makes hard. 150–300 words.',
   },
   {
     id: 'deepdive',
-    name: 'Deep Dive Mode',
-    subtitle: 'Psychological, detailed, and personalized',
-    description: 'For users who want richer insight into patterns, relationships, growth, and life themes.',
-    tooltip: 'The full psychological portrait — how your placements shape relationships, work, creativity, and growth. Balances depth with accessibility. 320–600 words.',
+    name: 'Show me the psychology',
+    subtitle: 'Psychological depth, fully personal',
+    description: 'Traces the mechanism, the shadow, the integrated expression, and a reflection question.',
+    tooltip: 'The full psychological portrait — how the placement shapes inner life, relationships, and behavior, with protective and integrated expressions. 500–900 words.',
   },
 ];
 
