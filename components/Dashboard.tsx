@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import BirthForm from '@/components/BirthForm';
 import WesternWheel from '@/components/charts/WesternWheel';
 import NorthIndianDiamond from '@/components/charts/NorthIndianDiamond';
@@ -139,23 +139,16 @@ const SIGN_ABBR: Record<string, string> = {
 
 type PageSection = 'chart' | 'topics' | 'timing' | 'compare' | 'vedic' | 'humandesign' | 'childhood';
 
-const SECTIONS: { id: PageSection; label: string }[] = [
-  { id: 'chart',       label: 'Chart'        },
-  { id: 'topics',      label: 'Topics'       },
-  { id: 'timing',      label: 'Timing'       },
-  { id: 'compare',     label: 'Compare'      },
-  { id: 'vedic',       label: 'Vedic'        },
-  { id: 'humandesign', label: 'Human Design' },
-  { id: 'childhood',   label: 'Childhood'    },
+const TOPICS_MENU: { id: PageSection; label: string }[] = [
+  { id: 'topics',    label: 'Life Themes' },
+  { id: 'childhood', label: 'Childhood'   },
 ];
 
-const SECONDARY_SECTIONS = new Set<PageSection>(['vedic', 'humandesign', 'childhood']);
-
-function SectionNavButton({ id, label, active, secondary, onClick }: {
-  id: PageSection; label: string; active: boolean; secondary: boolean; onClick: () => void;
+function SectionNavButton({ label, active, secondary, onClick }: {
+  label: string; active: boolean; secondary?: boolean; onClick: () => void;
 }) {
   return (
-    <button key={id} onClick={onClick} style={{
+    <button onClick={onClick} style={{
       cursor: 'pointer', whiteSpace: 'nowrap',
       fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.07em',
       fontSize: secondary ? 10.5 : 11.5,
@@ -169,21 +162,51 @@ function SectionNavButton({ id, label, active, secondary, onClick }: {
 }
 
 function SectionNav({ section, onChange }: { section: PageSection; onChange: (s: PageSection) => void }) {
-  const core = SECTIONS.filter(s => !SECONDARY_SECTIONS.has(s.id));
-  const other = SECTIONS.filter(s => SECONDARY_SECTIONS.has(s.id));
+  const [topicsOpen, setTopicsOpen] = useState(false);
+  const topicsRef = useRef<HTMLDivElement>(null);
+  const topicsActive = section === 'topics' || section === 'childhood';
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (topicsRef.current && !topicsRef.current.contains(e.target as Node)) setTopicsOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
   return (
-    <nav style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '2px 2px 4px' }}>
-      <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-        {core.map(s => (
-          <SectionNavButton key={s.id} id={s.id} label={s.label} active={section === s.id} secondary={false} onClick={() => onChange(s.id)} />
-        ))}
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', padding: '2px 2px 4px' }}>
+      <SectionNavButton label="Charts" active={section === 'chart'} onClick={() => onChange('chart')} />
+
+      <div ref={topicsRef} style={{ position: 'relative' }}>
+        <SectionNavButton label="Topics" active={topicsActive} onClick={() => setTopicsOpen(o => !o)} />
+        {topicsOpen && (
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 10, minWidth: 160,
+            display: 'flex', flexDirection: 'column',
+            border: '1px solid var(--line)', background: 'var(--bg-raised)', boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
+          }}>
+            {TOPICS_MENU.map((item, i) => (
+              <button key={item.id} onClick={() => { onChange(item.id); setTopicsOpen(false); }} style={{
+                textAlign: 'left', cursor: 'pointer', whiteSpace: 'nowrap',
+                padding: '10px 14px',
+                border: 'none', borderBottom: i < TOPICS_MENU.length - 1 ? '1px solid var(--line)' : 'none',
+                background: section === item.id ? 'rgba(201,164,76,0.08)' : 'transparent',
+                fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em',
+                color: section === item.id ? 'var(--fg-glyph)' : 'var(--fg-muted)',
+              }}>{item.label}</button>
+            ))}
+          </div>
+        )}
       </div>
+
+      <SectionNavButton label="Compatibility" active={section === 'compare'} onClick={() => onChange('compare')} />
+      <SectionNavButton label="Timing" active={section === 'timing'} onClick={() => onChange('timing')} />
+
       <span style={{ width: 1, alignSelf: 'stretch', minHeight: 18, background: 'var(--line)', flexShrink: 0 }} />
-      <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-        {other.map(s => (
-          <SectionNavButton key={s.id} id={s.id} label={s.label} active={section === s.id} secondary onClick={() => onChange(s.id)} />
-        ))}
-      </div>
+
+      <SectionNavButton label="Vedic" active={section === 'vedic'} secondary onClick={() => onChange('vedic')} />
+      <SectionNavButton label="Human Design" active={section === 'humandesign'} secondary onClick={() => onChange('humandesign')} />
     </nav>
   );
 }
@@ -600,7 +623,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
 
             {section === 'compare' && (
               <>
-                <SectionHead title="Compare" note="Synastry" />
+                <SectionHead title="Compatibility" note="Synastry" />
                 <section style={{ padding: '4px 2px 0' }}>
                   <FeatureCard
                     title="Synastry"
