@@ -122,7 +122,7 @@ export default function NorthIndianDiamond({ chart }: { chart: NatalChart }) {
             key={i}
             x={pos.x} y={pos.y}
             textAnchor="middle" dominantBaseline="central"
-            fontSize="11" fill="var(--fg-glyph)"
+            fontSize="17" fill="var(--fg-glyph)"
           >
             {SIGN_GLYPH[signId]}
           </text>
@@ -135,7 +135,7 @@ export default function NorthIndianDiamond({ chart }: { chart: NatalChart }) {
           key={i}
           x={label.x} y={label.y}
           textAnchor="middle" dominantBaseline="central"
-          fontSize="8" fill="var(--fg-dim)"
+          fontSize="12" fill="var(--fg-dim)"
           fontFamily="var(--font-mono)"
         >
           {i + 1}
@@ -146,7 +146,7 @@ export default function NorthIndianDiamond({ chart }: { chart: NatalChart }) {
       <text
         x={HOUSE_DEFS[0].label.x} y={HOUSE_DEFS[0].label.y - 12}
         textAnchor="middle" dominantBaseline="central"
-        fontSize="7" fill="var(--accent)" fontFamily="var(--font-mono)"
+        fontSize="10" fill="var(--accent)" fontFamily="var(--font-mono)"
       >
         AC
       </text>
@@ -162,23 +162,23 @@ export default function NorthIndianDiamond({ chart }: { chart: NatalChart }) {
           const body = bodies[id as keyof typeof bodies];
           const glyph = PLANET_GLYPH[id as keyof typeof PLANET_GLYPH] ?? id.slice(0, 2);
           const isRetro = body?.isRetrograde ?? false;
-          const ox = (j - (ids.length - 1) / 2) * 13;
-          const oy = 14;
+          const ox = (j - (ids.length - 1) / 2) * 17;
+          const oy = 18;
           return (
             <g key={id}>
               <title>{id} {body?.sign} {body?.signDegree?.toFixed(1)}°{isRetro ? ' ℞' : ''}</title>
               <text
                 x={label.x + ox} y={label.y + oy}
                 textAnchor="middle" dominantBaseline="central"
-                fontSize="10"
+                fontSize="15"
                 fill={isRetro ? 'var(--retro)' : 'var(--fg-glyph)'}
               >
                 {glyph}
               </text>
               {isRetro && (
                 <text
-                  x={label.x + ox + 6} y={label.y + oy - 4}
-                  fontSize="5" fill="var(--retro)"
+                  x={label.x + ox + 8} y={label.y + oy - 5}
+                  fontSize="7" fill="var(--retro)"
                 >
                   ℞
                 </text>

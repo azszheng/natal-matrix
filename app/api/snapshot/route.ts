@@ -5,7 +5,7 @@ import { buildSnapshotSystemPrompt, buildSnapshotPrompt } from '@/lib/ai/prompts
 export const maxDuration = 30;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.CLAUDE_MODEL ?? 'claude-sonnet-4-6';
+const MODEL = process.env.CLAUDE_MODEL ?? 'claude-haiku-4-5-20251001';
 
 export async function POST(req: Request) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       try {
         const response = client.messages.stream({
           model: MODEL,
-          max_tokens: 350,
+          max_tokens: 550,
           system: buildSnapshotSystemPrompt(),
           messages: [{ role: 'user', content: section.prompt }],
         } as Parameters<typeof client.messages.stream>[0]);

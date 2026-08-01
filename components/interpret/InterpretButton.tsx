@@ -11,34 +11,39 @@ export default function InterpretButton({ section, onInterpret }: Props) {
   return (
     <button
       onClick={() => onInterpret(section)}
-      title="Interpret with AI"
+      title="Generate AI interpretation"
       aria-label={`Interpret ${section.label} with AI`}
       style={{
         background: 'none',
-        border: '1px solid var(--fg-dim)',
-        borderRadius: '50%',
-        width: 18,
-        height: 18,
+        border: '1px solid var(--accent)',
+        borderRadius: 4,
+        padding: '5px 11px',
         cursor: 'pointer',
-        color: 'var(--fg-dim)',
-        fontSize: 9,
+        color: 'var(--accent)',
+        fontSize: 11,
+        fontFamily: 'var(--font-mono)',
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
         display: 'inline-flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 0,
+        gap: 5,
         flexShrink: 0,
-        transition: 'border-color 0.15s, color 0.15s',
+        whiteSpace: 'nowrap',
+        transition: 'background 0.15s, color 0.15s',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--accent)';
-        (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)';
+        const btn = e.currentTarget as HTMLButtonElement;
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#fff';
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--fg-dim)';
-        (e.currentTarget as HTMLButtonElement).style.color = 'var(--fg-dim)';
+        const btn = e.currentTarget as HTMLButtonElement;
+        btn.style.background = 'none';
+        btn.style.color = 'var(--accent)';
       }}
     >
-      ◌
+      <span style={{ fontSize: 12, lineHeight: 1 }}>✦</span>
+      Interpret
     </button>
   );
 }

@@ -5,9 +5,16 @@ import type { NatalChart } from '@/lib/astro/types';
 
 type Props = {
   chart: NatalChart;
+  savedText?: string;
+  onPersist?: (text: string) => void;
 };
 
-export default function ChartSnapshot({ chart }: Props) {
+function snapshotCacheKey(chart: NatalChart): string {
+  const { date, time, lat, lng } = chart.input;
+  return `snapshot_v1_${date}_${time}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
+}
+
+export default function ChartSnapshot({ chart, savedText, onPersist }: Props) {
   const [text,    setText]    = useState('');
   const [loading, setLoading] = useState(true);
   const [done,    setDone]    = useState(false);
@@ -21,8 +28,30 @@ export default function ChartSnapshot({ chart }: Props) {
     setDone(false);
     setError(null);
 
+    // Supabase-persisted snapshot takes highest priority — zero AI cost
+    if (savedText) {
+      setText(savedText);
+      setLoading(false);
+      setDone(true);
+      return;
+    }
+
+    // localStorage cache next — same birth data, same device
+    const cacheKey = snapshotCacheKey(chart);
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setText(cached);
+        setLoading(false);
+        setDone(true);
+        return;
+      }
+    } catch { /* localStorage unavailable (SSR / private mode) */ }
+
     const controller = new AbortController();
     abortRef.current = controller;
+
+    let accumulated = '';
 
     (async () => {
       try {
@@ -57,11 +86,19 @@ export default function ChartSnapshot({ chart }: Props) {
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue;
             const payload = line.slice(6).trim();
-            if (payload === '[DONE]') { setDone(true); return; }
+            if (payload === '[DONE]') {
+              try { localStorage.setItem(cacheKey, accumulated); } catch { /* ignore */ }
+              onPersist?.(accumulated); // also save to Supabase if chart is saved
+              setDone(true);
+              return;
+            }
             try {
               const { token, error: e } = JSON.parse(payload);
               if (e) { setError(e); return; }
-              if (token) setText(prev => prev + token);
+              if (token) {
+                accumulated += token;
+                setText(prev => prev + token);
+              }
             } catch { /* ignore malformed line */ }
           }
         }
@@ -74,7 +111,7 @@ export default function ChartSnapshot({ chart }: Props) {
     })();
 
     return () => controller.abort();
-  }, [chart]);
+  }, [chart, savedText]);
 
   // Parse title from first line; split drop cap from body
   const newlineIdx = text.indexOf('\n');
@@ -86,15 +123,6 @@ export default function ChartSnapshot({ chart }: Props) {
 
   return (
     <section style={{ padding: '8px 2px 8px', position: 'relative' }}>
-      {/* "Free reading" tag — top right */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
-        <span style={{
-          fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
-          fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)',
-          border: '1px solid var(--line)', padding: '3px 9px',
-        }}>Free reading</span>
-      </div>
-
       {/* Loading state */}
       {loading && (
         <p style={{ margin: 0, fontSize: 12, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>

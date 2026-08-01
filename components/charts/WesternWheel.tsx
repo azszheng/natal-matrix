@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { NatalChart, AspectKind, BodyId } from '@/lib/astro/types';
+import type { NatalChart, AspectKind, BodyId, SignId } from '@/lib/astro/types';
 import { SIGNS } from '@/lib/astro/types';
 import {
   CX, CY, R_OUTER, R_SIGN_IN, R_HOUSE_IN, R_PLANET, R_CORE,
@@ -10,6 +10,44 @@ import {
 import { PLANET_GLYPH, SIGN_GLYPH, WHEEL_BODIES } from './glyphs';
 import type { InterpretSection } from '@/lib/ai/prompts';
 import { buildBodySection, buildHouseSection } from '@/lib/ai/prompts';
+import SignInfoPanel from './SignInfoPanel';
+import HouseInfoPanel from './HouseInfoPanel';
+
+function signSectorPath(signIdx: number, ascLon: number): string {
+  const startLon = signIdx * 30;
+  const startA = lonToAngle(startLon, ascLon);
+  const endA   = lonToAngle(startLon + 30, ascLon);
+  const sO = polarToXY(R_OUTER,   startA);
+  const eO = polarToXY(R_OUTER,   endA);
+  const sI = polarToXY(R_SIGN_IN, startA);
+  const eI = polarToXY(R_SIGN_IN, endA);
+  return [
+    `M ${sO.x.toFixed(2)} ${sO.y.toFixed(2)}`,
+    `A ${R_OUTER} ${R_OUTER} 0 0 0 ${eO.x.toFixed(2)} ${eO.y.toFixed(2)}`,
+    `L ${eI.x.toFixed(2)} ${eI.y.toFixed(2)}`,
+    `A ${R_SIGN_IN} ${R_SIGN_IN} 0 0 1 ${sI.x.toFixed(2)} ${sI.y.toFixed(2)}`,
+    'Z',
+  ].join(' ');
+}
+
+function houseSectorPath(startLon: number, endLon: number, ascLon: number): string {
+  const startA = lonToAngle(startLon, ascLon);
+  const endA   = lonToAngle(endLon,   ascLon);
+  const sO = polarToXY(R_SIGN_IN, startA);
+  const eO = polarToXY(R_SIGN_IN, endA);
+  const sI = polarToXY(R_CORE,    startA);
+  const eI = polarToXY(R_CORE,    endA);
+  // CCW angular span in SVG space (since increasing longitude → decreasing SVG angle)
+  const ccwSpan = ((startA - endA) + 360) % 360;
+  const laf = ccwSpan > 180 ? 1 : 0;
+  return [
+    `M ${sO.x.toFixed(2)} ${sO.y.toFixed(2)}`,
+    `A ${R_SIGN_IN} ${R_SIGN_IN} 0 ${laf} 0 ${eO.x.toFixed(2)} ${eO.y.toFixed(2)}`,
+    `L ${eI.x.toFixed(2)} ${eI.y.toFixed(2)}`,
+    `A ${R_CORE} ${R_CORE} 0 ${laf} 1 ${sI.x.toFixed(2)} ${sI.y.toFixed(2)}`,
+    'Z',
+  ].join(' ');
+}
 
 const ASPECT_COLOR: Record<AspectKind, string> = {
   trine:       'var(--aspect-harmonious)',
@@ -54,7 +92,11 @@ type Props = {
 };
 
 export default function WesternWheel({ chart, onInterpret }: Props) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hoveredId,     setHoveredId]     = useState<string | null>(null);
+  const [hoveredSign,   setHoveredSign]   = useState<SignId | null>(null);
+  const [selectedSign,  setSelectedSign]  = useState<SignId | null>(null);
+  const [hoveredHouse,  setHoveredHouse]  = useState<number | null>(null);
+  const [selectedHouse, setSelectedHouse] = useState<number | null>(null);
 
   const asc = chart.western.houses.asc;
   const { bodies, houses, aspects } = chart.western;
@@ -105,6 +147,13 @@ export default function WesternWheel({ chart, onInterpret }: Props) {
   const canInterpret = !!onInterpret;
 
   return (
+    <>
+    {selectedSign && (
+      <SignInfoPanel signId={selectedSign} onClose={() => setSelectedSign(null)} />
+    )}
+    {selectedHouse && (
+      <HouseInfoPanel houseNum={selectedHouse} onClose={() => setSelectedHouse(null)} />
+    )}
     <svg
       viewBox="0 0 460 460"
       width="460"
@@ -147,42 +196,83 @@ export default function WesternWheel({ chart, onInterpret }: Props) {
           stroke="var(--fg-dim)" strokeWidth="0.5" />;
       })}
 
+      {/* Sign sectors — hover highlight + click */}
+      {SIGNS.map((sign, i) => (
+        <path
+          key={`sector-${sign}`}
+          d={signSectorPath(i, asc)}
+          fill="var(--fg-glyph)"
+          fillOpacity={hoveredSign === sign ? 0.12 : 0}
+          stroke="none"
+          style={{ cursor: 'pointer', transition: 'fill-opacity 0.12s' }}
+          onMouseEnter={() => setHoveredSign(sign)}
+          onMouseLeave={() => setHoveredSign(null)}
+          onClick={() => setSelectedSign(sign)}
+        />
+      ))}
+
       {/* Sign boundary spokes + glyphs */}
       {signRing.map(({ sign, startOuter, startInner, midGlyph }) => (
-        <g key={sign}>
+        <g
+          key={sign}
+          style={{ cursor: 'pointer' }}
+          onMouseEnter={() => setHoveredSign(sign as SignId)}
+          onMouseLeave={() => setHoveredSign(null)}
+          onClick={() => setSelectedSign(sign as SignId)}
+        >
           <line x1={startOuter.x} y1={startOuter.y} x2={startInner.x} y2={startInner.y}
             stroke="var(--line-chart)" strokeWidth="1" />
           <text x={midGlyph.x} y={midGlyph.y}
             textAnchor="middle" dominantBaseline="central"
-            fontSize="12" fill="var(--fg-glyph)">
+            fontSize="12"
+            fill={hoveredSign === sign ? 'var(--accent)' : 'var(--fg-glyph)'}
+            style={{ transition: 'fill 0.12s' }}>
             {SIGN_GLYPH[sign]}
           </text>
         </g>
       ))}
 
-      {/* House cusp lines + clickable house numbers */}
+      {/* House sector hover highlights */}
+      {cusps.map(({ num }) => {
+        const startLon = houses.cusps[num - 1];
+        const endLon   = houses.cusps[num % 12];
+        return (
+          <path
+            key={`house-sector-${num}`}
+            d={houseSectorPath(startLon, endLon, asc)}
+            fill="var(--accent)"
+            fillOpacity={hoveredHouse === num ? 0.08 : 0}
+            stroke="none"
+            style={{ cursor: 'pointer', transition: 'fill-opacity 0.12s' }}
+            onMouseEnter={() => setHoveredHouse(num)}
+            onMouseLeave={() => setHoveredHouse(null)}
+            onClick={() => setSelectedHouse(num)}
+          />
+        );
+      })}
+
+      {/* House cusp lines + house number labels */}
       {cusps.map(({ outer, inner, num, numPt }) => (
         <g key={num}>
           <line x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y}
             stroke="var(--fg-dim)" strokeWidth="0.8" />
           <g
-            onClick={canInterpret ? () => onInterpret(buildHouseSection(num, chart)) : undefined}
-            onMouseEnter={canInterpret ? () => setHoveredId(`h${num}`) : undefined}
-            onMouseLeave={canInterpret ? () => setHoveredId(null) : undefined}
-            style={{ cursor: canInterpret ? 'pointer' : 'default' }}
+            style={{ cursor: 'pointer' }}
+            onMouseEnter={() => setHoveredHouse(num)}
+            onMouseLeave={() => setHoveredHouse(null)}
+            onClick={() => setSelectedHouse(num)}
           >
-            {/* Hit area */}
             <circle cx={numPt.x} cy={numPt.y} r={8} fill="transparent" />
-            {/* Hover ring */}
             <circle cx={numPt.x} cy={numPt.y} r={8}
-              fill="var(--accent)" fillOpacity={hoveredId === `h${num}` ? 0.15 : 0}
+              fill="var(--accent)" fillOpacity={hoveredHouse === num ? 0.18 : 0}
               stroke="var(--accent)" strokeWidth="0.8"
-              strokeOpacity={hoveredId === `h${num}` ? 0.6 : 0}
+              strokeOpacity={hoveredHouse === num ? 0.6 : 0}
             />
             <text x={numPt.x} y={numPt.y}
               textAnchor="middle" dominantBaseline="central"
-              fontSize="9" fill={hoveredId === `h${num}` ? 'var(--accent)' : 'var(--fg-muted)'}
-              fontFamily="var(--font-mono)">
+              fontSize="9" fill={hoveredHouse === num ? 'var(--accent)' : 'var(--fg-muted)'}
+              fontFamily="var(--font-mono)"
+              style={{ transition: 'fill 0.12s' }}>
               {num}
             </text>
           </g>
@@ -253,5 +343,6 @@ export default function WesternWheel({ chart, onInterpret }: Props) {
         );
       })()}
     </svg>
+    </>
   );
 }

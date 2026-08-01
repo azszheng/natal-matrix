@@ -14,9 +14,6 @@ export default async function Home() {
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 500, color: 'var(--fg)', letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
               Natal Matrix
             </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>
-              Advanced Astrology
-            </span>
           </div>
           <AuthHeader initialUser={user} />
         </div>

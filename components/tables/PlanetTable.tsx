@@ -40,7 +40,6 @@ export default function PlanetTable({ chart, onInterpret }: { chart: NatalChart;
             <th style={th}><Tooltip text="The zodiac sign the planet occupies at birth. The sign acts like a lens that colors how the planet's energy expresses itself. Mars in Aries is bold and aggressive; Mars in Libra is indirect and diplomatic. The sign describes the 'how' — the style and manner.">Sign</Tooltip></th>
             <th style={{ ...th, fontFamily: 'var(--font-mono)' }}><Tooltip text="The exact position within the sign, in degrees° minutes' seconds″. Each sign spans 30°. 0° is the very start of the sign; 29° is the final degree. 'R' indicates retrograde — the planet appeared to move backward in the sky from Earth's perspective, turning its energy more inward and reflective.">Position</Tooltip></th>
             <th style={th}><Tooltip text="Which of the 12 houses (life areas) this planet occupies. 1st: identity/body, 2nd: money/values, 3rd: communication/siblings, 4th: home/roots, 5th: creativity/romance, 6th: health/daily work, 7th: partnerships/marriage, 8th: transformation/death/shared resources, 9th: philosophy/travel/higher learning, 10th: career/public status, 11th: friends/community, 12th: unconscious/spirituality/hidden matters." align="center">House</Tooltip></th>
-            <th style={{ ...th, fontFamily: 'var(--font-mono)' }}><Tooltip text="How fast the planet is moving in degrees per day. Positive = direct (forward) motion; negative = retrograde (backward). The Moon moves ~13°/day; the Sun ~1°/day; Saturn ~0.03°/day; Pluto less than 0.04°/day. Slower-moving planets create longer-lasting influences in your life.">Speed</Tooltip></th>
             <th style={th}><Tooltip text="Whether the planet is in a sign that supports or challenges its natural energy. Domicile: the planet rules this sign — most comfortable and powerful. Exaltation: honored guest — very effective. Detriment: opposite of domicile — uncomfortable, energy expressed awkwardly. Fall: opposite of exaltation — most challenged. Peregrine: no special relationship — neutral expression." align="right">Dignity</Tooltip></th>
             {onInterpret && <th style={{ ...th, width: 72, textAlign: 'center' }}><Tooltip align="right" text="Click the circle on any row to generate an AI interpretation for that placement.">Read</Tooltip></th>}
           </tr>
@@ -54,9 +53,6 @@ export default function PlanetTable({ chart, onInterpret }: { chart: NatalChart;
             const glyph = PLANET_GLYPH[id] ?? '';
             const name = BODY_NAME[id] ?? id;
             const digLabel = dig?.label;
-            const noSpeed = id === 'asc' || id === 'mc' || id === 'partOfFortune' || id === 'southNode';
-            const speed = body.speedLongitude;
-
             return (
               <tr key={id} style={{ borderBottom: '1px solid var(--line)', color: 'var(--fg)' }}>
                 {/* Body */}
@@ -72,10 +68,6 @@ export default function PlanetTable({ chart, onInterpret }: { chart: NatalChart;
                 {/* House */}
                 <td style={{ ...td, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)', textAlign: 'center' }}>
                   {body.house}
-                </td>
-                {/* Speed */}
-                <td style={{ ...td, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>
-                  {noSpeed ? '—' : `${speed >= 0 ? '+' : ''}${speed.toFixed(2)}°/d`}
                 </td>
                 {/* Dignity */}
                 <td style={{ ...td, color: digLabel ? DIGNITY_COLOR[digLabel] : 'var(--fg-dim)' }}>

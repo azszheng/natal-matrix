@@ -125,12 +125,25 @@ function formatBirthLine(chart: NatalChart): string {
 
 export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
   const [atmo, setAtmo] = useState<BirthAtmosphere | null>(null);
+  const [skyW, setSkyW] = useState(1600);
+  const [skyH, setSkyH] = useState(380);
 
   useEffect(() => {
     let cancelled = false;
     computeAtmosphere(chart).then(a => { if (!cancelled) setAtmo(a); }).catch(() => {});
     return () => { cancelled = true; };
   }, [chart.input.utc]);
+
+  useEffect(() => {
+    function update() {
+      const narrow = window.innerWidth < 720;
+      setSkyW(narrow ? 490 : 1600);
+      setSkyH(narrow ? 220 : 380);
+    }
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   // Apply day/night CSS tokens to document root
   useEffect(() => {
@@ -156,22 +169,24 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
       <div className="am-hero-pad" style={{ maxWidth: 1040, margin: '0 auto', padding: '26px 28px 22px' }}>
         <div className="am-hero-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 28, flexWrap: 'wrap' }}>
           {/* Left: kicker + headline + birth line */}
-          <div style={{ flex: '1 1 340px', minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>
+          <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+            <p className="am-hero-kicker" style={{ margin: 0, fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>
               Natal Atmosphere
             </p>
             <h1 className="am-h1" style={{ margin: '12px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.16, color: textColor, letterSpacing: '0.005em' }}>
               The sky at the moment of your birth
             </h1>
-            <p style={{ margin: '9px 0 0', fontSize: 12.5, fontFamily: 'var(--font-mono)', color: labelColor, letterSpacing: '0.02em' }}>
+            <p className="am-hero-birthline" style={{ margin: '9px 0 0', fontSize: 12.5, fontFamily: 'var(--font-mono)', color: labelColor, letterSpacing: '0.02em' }}>
               {formatBirthLine(chart)}
             </p>
           </div>
 
           {/* Right: weather + moon readout */}
           <div className="am-readout" style={{ display: 'flex', gap: 26, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-              <WeatherIcon cat={atmo.weatherCategory} size={46} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="am-readout-icon" style={{ width: 46, height: 46, flexShrink: 0 }}>
+                <WeatherIcon cat={atmo.weatherCategory} size={46} />
+              </div>
               <div>
                 <p style={{ margin: 0, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>Weather</p>
                 <p style={{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: textColor, whiteSpace: 'nowrap', fontFamily: 'var(--font-sans)' }}>
@@ -179,8 +194,10 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
                 </p>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-              <MoonSVG phase={atmo.moonPhase} size={46} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="am-readout-icon" style={{ width: 46, height: 46, flexShrink: 0 }}>
+                <MoonSVG phase={atmo.moonPhase} size={46} />
+              </div>
               <div>
                 <p style={{ margin: 0, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>Moon</p>
                 <p style={{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: textColor, whiteSpace: 'nowrap', fontFamily: 'var(--font-sans)' }}>
@@ -196,7 +213,7 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
       </div>
 
       {/* Celestial band — fully unobstructed */}
-      <SkyBand chart={chart} atmo={atmo} theme={theme} height={380} />
+      <SkyBand chart={chart} atmo={atmo} theme={theme} width={skyW} height={skyH} />
 
     </section>
   );

@@ -144,6 +144,15 @@ export default function AuthPage() {
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
           <a href="/" style={{ color: 'var(--accent)', textDecoration: 'none' }}>← Back to chart</a>
         </p>
+
+        <p style={{
+          marginTop: 24, fontSize: 10.5, lineHeight: 1.75,
+          color: 'var(--fg-dim)', fontFamily: 'var(--font-sans)',
+          textAlign: 'center', maxWidth: 380, margin: '24px auto 0',
+        }}>
+          <strong style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Disclaimer</strong>
+          This platform is designed to support self-reflection and personal growth through symbolic astrological interpretations. The insights provided are intended to highlight potential patterns, strengths, challenges, and areas for exploration, not to predict specific events or define your identity or future. Astrology is an interpretive framework, and its value lies in how it encourages personal insight alongside your own experiences, judgment, and free will. The content on this platform should not be considered medical, psychological, legal, financial, or other professional advice, and should not be used as the sole basis for important life decisions. Use these interpretations with curiosity, discernment, and an open mind.
+        </p>
       </div>
     </main>
   );

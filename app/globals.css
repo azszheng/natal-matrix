@@ -66,21 +66,28 @@ body {
 
 @media (max-width: 720px) {
   /* Tighter gutters on main column and masthead */
-  .am-main    { padding-left: 18px !important; padding-right: 18px !important; }
-  .am-masthead { padding-left: 18px !important; padding-right: 18px !important; }
+  .am-main    { padding-left: 14px !important; padding-right: 14px !important; }
+  .am-masthead { padding-left: 14px !important; padding-right: 14px !important; }
 
-  /* Hero strip: title left column + weather/moon right → stacked */
-  .am-hero-pad { padding-left: 18px !important; padding-right: 18px !important; }
-  .am-hero-row { flex-direction: column !important; align-items: flex-start !important; gap: 22px !important; }
+  /* Hero strip: collapse vertical space before the sky band */
+  .am-hero-pad { padding: 10px 14px 10px !important; }
+  .am-hero-row { flex-direction: row !important; align-items: center !important; gap: 10px !important; flex-wrap: wrap !important; }
 
-  /* Shrink the hero h1 so it doesn't overflow */
-  .am-h1 { font-size: 25px !important; }
+  /* Hide verbose heading on mobile — birth line + readout is enough */
+  .am-hero-kicker { display: none !important; }
+  .am-h1          { display: none !important; }
+  /* Birth line sits directly at top of left column on mobile (no h1 above it) */
+  .am-hero-birthline { margin-top: 0 !important; }
 
   /* Reading-style / BigThree 3-column grids → single column */
   .am-grid-3 { grid-template-columns: 1fr !important; }
 
   /* Weather+moon readout row: tighter gap */
-  .am-readout { gap: 18px !important; }
+  .am-readout { gap: 14px !important; flex-wrap: nowrap !important; }
+
+  /* Shrink weather/moon icons on mobile */
+  .am-readout-icon { width: 32px !important; height: 32px !important; overflow: hidden; flex-shrink: 0; }
+  .am-readout-icon svg { width: 32px !important; height: 32px !important; }
 }
 
 @media (max-width: 460px) {

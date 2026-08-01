@@ -1,13 +1,22 @@
 import type { NatalChart, BodyId, Aspect, TransitAspect, ProgressedAspect, BodyPosition } from '@/lib/astro/types';
+import type { ScoredTheme } from '@/lib/ai/childhoodImprints';
 import { SIGNS } from '@/lib/astro/types';
 import type { DashaPeriod, DashaLord } from '@/lib/astro/dashas';
 import type { SynastryAspect } from '@/lib/astro/synastry';
+// New synastry prompt builders — re-exported for backward compat
+export {
+  buildSynastryAspectSection,
+  buildSynastryOverlaySection,
+  buildSynastryThemeSection,
+  buildSharedPatternSection,
+  buildSynastryRelationshipSummarySection,
+} from './synastryPrompts';
 import { analyzeChart, formatChartAnalysis, bodyContext, houseContext, aspectContext } from './chartAnalysis';
 import { analyzeVedicChart, formatVedicAnalysis, vedicBodyContext, vedicHouseContext, vedicDashaContext } from './vedicAnalysis';
 import { HOUSE_FRONT_TITLES, HOUSE_MEANINGS, scoreHouseActivation } from './houseThemes';
 
 export type InterpretSection = {
-  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot';
+  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot' | 'topic';
   label: string;
   prompt: string;
   system?: 'western' | 'vedic';
@@ -109,9 +118,13 @@ Banned phrases: "at its core," "at the end of the day," "in the realm of," "spea
 
 Banned transitions: "Firstly," "Secondly," "Finally," (as list anchors mid-paragraph).
 
+TONE:
+
+Write with authority and precision. Never perform warmth through playfulness. Be direct, specific, and psychologically serious — the reader should feel seen, not charmed. Never use self-corrections mid-sentence ("— correction:", "I mean,", "actually,"). Never interrupt a statement to undercut or revise it in a jokey way. Never use an em dash for comedic interjection or mock surprise. These are stylistic tics that make interpretation feel cute rather than true.
+
 PUNCTUATION DISCIPLINE:
 
-Em dashes (—): use at most once per paragraph, only when a grammatical appositive genuinely requires it. Never use an em dash to introduce a dramatic restatement or to create a fake pause for rhetorical effect. If a sentence needs an em dash to land, rewrite it as two sentences instead.
+Em dashes (—): use at most once per paragraph, only when a grammatical appositive genuinely requires it. Never use an em dash to introduce a dramatic restatement, a fake pause for rhetorical effect, or a self-correction. If a sentence needs an em dash to land, rewrite it as two sentences instead.
 
 Hyphens in compound adjectives: avoid hyphenating unless the hyphen genuinely prevents misreading. Do not write "hard-won," "deeply-rooted," "emotionally-charged," "deeply-felt," "well-developed," "ever-present," "long-held," "self-aware" — write "hard won," "deeply rooted," "emotionally charged," etc. The hyphenated compound adjective is a major AI stylistic tell.
 
@@ -457,7 +470,8 @@ Reference the dominant Vedic themes from the synthesis context. Note which yogas
   };
 }
 
-export function buildSynastryAspectSection(
+/** @deprecated use buildSynastryAspectSection from synastryPrompts instead */
+function _legacySynastryAspectSection(
   asp: SynastryAspect,
   chartA: NatalChart,
   chartB: NatalChart,
@@ -491,6 +505,94 @@ Consider what each person's wound or strength in this area calls forth from the 
   };
 }
 
+// ── Childhood & Lineage Imprints ─────────────────────────────────────────────
+
+export function buildChildhoodSection(
+  theme: ScoredTheme,
+  chart: NatalChart,
+  isMinor: boolean,
+  mode: InterpretMode,
+): InterpretSection {
+  const sun   = chart.western.bodies.sun;
+  const moon  = chart.western.bodies.moon;
+  const asc   = chart.western.bodies.asc;
+  const coreLine = [
+    sun  ? `Sun ${sun.sign} H${sun.house}`   : '',
+    moon ? `Moon ${moon.sign} H${moon.house}` : '',
+    asc  ? `${asc.sign} rising`               : '',
+  ].filter(Boolean).join(' · ');
+
+  const indicatorBlock = [
+    ...theme.tropicalIndicators,
+    ...theme.vedicIndicators,
+  ].slice(0, 8).join('\n  — ');
+
+  const modeInstr = mode === 'essence'
+    ? `Length: 180–280 words. Style: warm, accessible, psychologically specific. No astrological jargon without immediate translation. The reader should feel genuinely understood — not lectured.`
+    : mode === 'astrologer'
+    ? `Length: 500–750 words. Style: full technical precision. Include sign-house synthesis, aspect mechanism, dignity notes, and dispositor logic where relevant. Write for a practitioner who wants the exact configuration analyzed, not translated.`
+    : `Length: 400–600 words. Style: psychological depth with accessibility. Use astrological terms in context. Trace the adaptive mechanism and the developmental arc. Ground every abstract observation in lived specificity.`;
+
+  const safetyBlock = isMinor
+    ? `MINOR CHART SAFETY:
+This is a chart for someone who is currently under 18. You are writing for a parent or caregiver, not for the child to read. Use supportive, possibility-language framing throughout:
+- "This pattern suggests a possible sensitivity to..." not "you experienced..."
+- "Your child may benefit from..." not "your child suffered..."
+- Never claim what happened. Speak to what might support their development.
+- Never describe the child as defined by this pattern.
+- End with a specific, actionable parenting support note.`
+    : `SAFETY FRAMING:
+This is for adult self-reflection. Use symbolic, possibility-based language — these are psychological potentials and adaptive patterns, not certainties about what happened.
+- Use phrases like "This configuration points toward...", "This may have shaped...", "When this pattern is present..."
+- Never state that events occurred. Never diagnose.
+- Protective patterns and adaptive responses are intelligent responses to early environments — honor the intelligence before naming the cost.
+- End with a single open reflection question the person can genuinely sit with.`;
+
+  const prompt = `CHILDHOOD IMPRINT THEME — ${isMinor ? 'PARENT REFLECTION MODE' : 'ADULT SELF-REFLECTION'}
+
+THEME: ${isMinor ? theme.minorTitle : theme.adultTitle}
+STRENGTH: ${theme.strength}
+
+CHART SUMMARY:
+${coreLine}
+Birth: ${chart.input.date}
+
+NATAL INDICATORS FOR THIS THEME:
+  — ${indicatorBlock}
+
+${safetyBlock}
+
+THEMATIC CONTEXT (do NOT reproduce this text — use it to inform your interpretation):
+Protective adaptation pattern: ${theme.protectiveAdaptation}
+Integrated expression: ${theme.integratedGift}
+${isMinor ? `Supportive response: ${theme.minorSupportResponse}` : `Anti-projection note: ${theme.antiProjection}`}
+Archetypal threads: ${theme.archetypes.join(', ')}
+
+INSTRUCTIONS:
+${modeInstr}
+
+Begin with a thematic title (3–6 words). Then a blank line. Then the interpretation.
+
+The first sentence must name the specific psychological mechanism or structural tension created by the indicators listed above — not a general statement about the theme. The indicators are the evidence; name what they collectively create.
+
+${isMinor
+  ? `Write as if speaking to a thoughtful parent who is curious and not defensive. Help them understand what their child might need — not what has gone wrong. Close with a concrete, actionable parenting note.`
+  : `Trace the adaptive strategy these indicators suggest: what it once served, how it shows under pressure, and what becomes available when held consciously rather than enacted automatically. Close with a reflection question specific to this configuration.`
+}
+
+Apply all forbidden-language and style rules from the main system prompt. No bullets. No headers within the body.`;
+
+  const frontTitle = isMinor ? theme.minorTitle : theme.adultTitle;
+
+  return {
+    type:       'topic',
+    label:      frontTitle,
+    frontTitle: `${frontTitle} · ${theme.strength}`,
+    anchor:     `${theme.strength} — chart indicators: ${theme.tropicalIndicators.slice(0, 3).join(', ')}`,
+    prompt,
+  };
+}
+
 function ordSuffix(n: number): string {
   if (n === 1) return 'st';
   if (n === 2) return 'nd';
@@ -506,16 +608,22 @@ export function buildSnapshotSystemPrompt(): string {
 Write for someone who may be new to astrology. Plain language. If you use an astrological term, briefly translate it in the same sentence. Warm, soulful, and intelligent — like a perceptive friend who understands charts deeply. Psychologically specific: avoid generic horoscope language. The reader should feel "you are describing me," not "this could apply to anyone."
 
 FORMAT:
-A thematic title on its own line — 3 to 6 words, no punctuation, no planet or sign names in the title. Then a blank line. Then a single paragraph of 120–180 words.
+A thematic title on its own line — 3 to 6 words, no punctuation, no planet or sign names in the title. Then a blank line. Then a single paragraph of 220–300 words.
+
+ELEMENTAL AND MODAL LENS — THIS IS THE PARAGRAPH'S BACKBONE:
+Before writing a single sentence, absorb the dominant element and modality from the data. These are not facts to mention once and move on — they are the atmosphere, texture, and behavioral style through which every other observation is expressed. A water-fixed chart does not merely "have" those qualities; every sentence should feel like it was written from inside that psyche. Name the element and modality explicitly early in the paragraph, translate each in plain language (water = depth, emotional intelligence, the need to understand underneath; fixed = commitment, intensity, the tendency to go all the way in), and then sustain that register throughout.
 
 CONTENT REQUIREMENTS (incorporate naturally — do not list, do not enumerate):
-1. Dominant elemental tone — translate into how this feels to live (not just a label)
-2. Dominant modality — translate into behavioral or relational style
-3. Main archetypal signature — the 1-2 convergent themes with the highest score
-4. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
-5. Final sentence: open a curiosity gap — hint that the full reading reveals how these patterns shape specific areas of life, without naming them all
+1. Open by naming the dominant element and modality — translate each into how it actually feels to live in that combination, in behavioral and relational terms, not astrological labels
+2. Name all three of Sun sign, Moon sign, and Rising sign at least once — work them into the prose naturally, not as a list
+3. Weave in Saturn's sign and house as a theme — where the chart's discipline, delay, and long-term maturation plays out
+4. Weave in Chiron's sign and house as a theme — the chart's primary wound and healing axis, described as a lived pattern not a label
+5. Touch on Part of Fortune — describe it as the domain where the person feels most coherently themselves, where their Sun/Moon/Ascendant nature resolves rather than strains; use concrete behavioral language, not "luck" or fortune-cookie framing; never say "your luck lives here" or "where luck is found"
+6. Main archetypal signature — the 1-2 convergent themes with the highest score
+7. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
+8. End naturally after your main observations — do not write a closing summary sentence or call to action
 
-Do not mention every placement. Focus on 2–3 convergent patterns. Never use fatalistic language. Never say "this placement means…" — describe lived experience instead. Always complete the paragraph before stopping.
+Do not enumerate placements. Fold everything into a flowing portrait. Never use fatalistic language. Never say "this placement means…" — describe lived experience instead. Always complete the paragraph before stopping.
 
 FORBIDDEN LANGUAGE — NEVER USE:
 
@@ -525,9 +633,13 @@ Banned words: delve, tapestry, nuanced (as filler), multifaceted, intricate (as 
 
 Banned phrases: "at its core," "at the end of the day," "in the realm of," "speaks to," "it's worth noting," "deep dive," "dance between," "holding space," "lean into," "sit with," "show up," "your authentic self," "the universe is calling you to," "you are meant to," "your soul's purpose is," "the cosmos are guiding you," "furthermore," "moreover," "in conclusion," "that said," "certainly," "absolutely," "what emerges is," "what arises is," "the key here is," "put simply," "in other words," "a kind of," "a sort of," "in a way," "in some sense."
 
+TONE:
+
+Write with authority and precision. Do not perform warmth through playfulness — be direct, specific, and psychologically serious. The reader should feel seen, not charmed. Never use self-corrections mid-sentence ("— correction:", "I mean,", "actually,"). Never interrupt a statement to undercut or revise it in a jokey way. Never use an em dash for comedic interjection or mock surprise. These are stylistic tics that make interpretation feel cute rather than true.
+
 PUNCTUATION DISCIPLINE:
 
-Em dashes (—): use at most once per paragraph, only when grammatically necessary. Never use an em dash to introduce a dramatic restatement or fake rhetorical pause. Rewrite those as normal sentences.
+Em dashes (—): use at most once per paragraph, only when grammatically necessary. Never use an em dash to introduce a dramatic restatement, a fake rhetorical pause, or a self-correction. Rewrite those as normal sentences.
 
 Hyphens in compound adjectives: avoid unless the hyphen genuinely prevents misreading. Write "hard won" not "hard-won," "deeply rooted" not "deeply-rooted," "emotionally charged" not "emotionally-charged." The hyphenated compound adjective is a major AI stylistic tell.
 
@@ -569,9 +681,13 @@ export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
     .join('\n');
 
   // Key chart facts (Sun/Moon/ASC + chart ruler)
-  const sun  = chart.western.bodies.sun;
-  const moon = chart.western.bodies.moon;
-  const asc  = chart.western.bodies.asc;
+  const sun    = chart.western.bodies.sun;
+  const moon   = chart.western.bodies.moon;
+  const asc    = chart.western.bodies.asc;
+  const saturn = chart.western.bodies.saturn;
+  const chiron = chart.western.bodies.chiron;
+  const pof    = chart.western.bodies.partOfFortune;
+
   const coreLine = [
     sun  ? `Sun in ${sun.sign} H${sun.house}`   : '',
     moon ? `Moon in ${moon.sign} H${moon.house}` : '',
@@ -587,6 +703,10 @@ export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
     ? `Major configurations: ${analysis.configurations.map(c => c.type).join(', ')}`
     : '';
 
+  const saturnLine  = saturn ? `Saturn in ${saturn.sign} H${saturn.house} — where the chart's main discipline, delay, and long-term maturation theme is located` : '';
+  const chironLine  = chiron ? `Chiron in ${chiron.sign} H${chiron.house} — the chart's primary wound/healing axis` : '';
+  const pofLine     = pof    ? `Part of Fortune in ${pof.sign} H${pof.house} — the domain where the chart's Sun/Moon/Ascendant relationship resolves into wholeness; where the person feels most coherently themselves and where engagement tends to feel integrating rather than draining` : '';
+
   const prompt = `SNAPSHOT REQUEST
 
 Key chart signature: ${coreLine}
@@ -595,11 +715,11 @@ ${elementLine}
 ${modalityLine}
 Sun-Moon relationship: ${Math.round(analysis.sunMoonRelationship.angle)}° apart — ${analysis.sunMoonRelationship.phaseDescription}
 Chart shape: ${analysis.chartShape.split(' — ')[0]}
-
+${saturnLine ? saturnLine + '\n' : ''}${chironLine ? chironLine + '\n' : ''}${pofLine ? pofLine + '\n' : ''}
 TOP CONVERGENT THEMES (highest-scoring archetypal patterns across the whole chart):
 ${topThemes}
 
-Write the snapshot now. Title first (3–6 words, no punctuation), blank line, then a single 120–180 word paragraph. Use plain language. No bullet points. No jargon without translation. End the paragraph on a complete sentence.`;
+Write the snapshot now. Title first (3–6 words, no punctuation), blank line, then a single 220–300 word paragraph. Use plain language. No bullet points. No jargon without translation. End the paragraph on a complete sentence.`;
 
   return {
     type: 'snapshot',

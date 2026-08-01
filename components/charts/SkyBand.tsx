@@ -111,14 +111,15 @@ const G = PLANET_GLYPH as Record<string, string>;
 type Props = {
   chart: NatalChart;
   atmo: BirthAtmosphere;
+  width?: number;
   height?: number;
   speed?: number;
   theme: 'night' | 'day';
   sizeMode?: 'equal' | 'brightness';
 };
 
-export default function SkyBand({ chart, atmo, height = 380, speed = 4, theme, sizeMode = 'equal' }: Props) {
-  const W = 1600, H = height;
+export default function SkyBand({ chart, atmo, width = 1600, height = 380, speed = 4, theme, sizeMode = 'equal' }: Props) {
+  const W = width, H = height;
   const mid = H * 0.54;
   const amp = H * 0.30;
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
+import type { InterpretationProvider } from '@/lib/ai/interpretationInput';
 
 const MODE_LABEL: Record<InterpretMode, string> = {
   essence:    'Essence',
@@ -15,6 +16,7 @@ type Props = {
   section: InterpretSection;
   onClose: () => void;
   mode?: InterpretMode;
+  provider?: InterpretationProvider;
   cachedText?: string;
   onCached?: (text: string) => void;
 };
@@ -33,7 +35,7 @@ function SimpleMarkdown({ text }: { text: string }) {
   );
 }
 
-export default function InterpretationPanel({ chart, section, onClose, mode = 'deepdive', cachedText, onCached }: Props) {
+export default function InterpretationPanel({ chart, section, onClose, mode = 'deepdive', provider = 'claude', cachedText, onCached }: Props) {
   const [text,    setText]    = useState('');
   const [loading, setLoading] = useState(true);
   const [done,    setDone]    = useState(false);
@@ -61,7 +63,7 @@ export default function InterpretationPanel({ chart, section, onClose, mode = 'd
         const res = await fetch('/api/interpret', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chart, section, mode }),
+          body: JSON.stringify({ chart, section, mode, provider }),
           signal: controller.signal,
         });
 
@@ -232,7 +234,7 @@ export default function InterpretationPanel({ chart, section, onClose, mode = 'd
             </button>
           )}
           <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
-            {MODE_LABEL[mode]} · {done ? `${text.split(/\s+/).filter(Boolean).length} words` : loading ? '…' : 'streaming'}
+            {provider !== 'claude' && <>{provider.toUpperCase()} · </>}{MODE_LABEL[mode]} · {done ? `${text.split(/\s+/).filter(Boolean).length} words` : loading ? '…' : 'streaming'}
           </span>
         </div>
       </div>
