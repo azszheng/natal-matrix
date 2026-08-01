@@ -151,24 +151,39 @@ const SECTIONS: { id: PageSection; label: string }[] = [
 
 const SECONDARY_SECTIONS = new Set<PageSection>(['vedic', 'humandesign', 'childhood']);
 
-function SectionNav({ section, onChange }: { section: PageSection; onChange: (s: PageSection) => void }) {
+function SectionNavButton({ id, label, active, secondary, onClick }: {
+  id: PageSection; label: string; active: boolean; secondary: boolean; onClick: () => void;
+}) {
   return (
-    <nav style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--line)', overflowX: 'auto' }}>
-      {SECTIONS.map(s => {
-        const active = section === s.id;
-        const secondary = SECONDARY_SECTIONS.has(s.id);
-        return (
-          <button key={s.id} onClick={() => onChange(s.id)} style={{
-            background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-            padding: '14px 16px',
-            fontSize: secondary ? 10.5 : 11.5, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.07em',
-            borderBottom: active ? '2px solid var(--fg-glyph)' : '2px solid transparent',
-            marginBottom: -1,
-            color: active ? 'var(--fg-glyph)' : 'var(--fg-muted)',
-            opacity: secondary && !active ? 0.65 : 1,
-          }}>{s.label}</button>
-        );
-      })}
+    <button key={id} onClick={onClick} style={{
+      cursor: 'pointer', whiteSpace: 'nowrap',
+      fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.07em',
+      fontSize: secondary ? 10.5 : 11.5,
+      padding: secondary ? '7px 13px' : '9px 15px',
+      borderRadius: 1,
+      border: `1px solid ${active ? 'var(--fg-glyph)' : 'var(--line)'}`,
+      background: active ? 'rgba(201,164,76,0.08)' : 'transparent',
+      color: active ? 'var(--fg-glyph)' : (secondary ? 'var(--fg-dim)' : 'var(--fg-muted)'),
+    }}>{label}</button>
+  );
+}
+
+function SectionNav({ section, onChange }: { section: PageSection; onChange: (s: PageSection) => void }) {
+  const core = SECTIONS.filter(s => !SECONDARY_SECTIONS.has(s.id));
+  const other = SECTIONS.filter(s => SECONDARY_SECTIONS.has(s.id));
+  return (
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '2px 2px 4px' }}>
+      <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+        {core.map(s => (
+          <SectionNavButton key={s.id} id={s.id} label={s.label} active={section === s.id} secondary={false} onClick={() => onChange(s.id)} />
+        ))}
+      </div>
+      <span style={{ width: 1, alignSelf: 'stretch', minHeight: 18, background: 'var(--line)', flexShrink: 0 }} />
+      <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+        {other.map(s => (
+          <SectionNavButton key={s.id} id={s.id} label={s.label} active={section === s.id} secondary onClick={() => onChange(s.id)} />
+        ))}
+      </div>
     </nav>
   );
 }
