@@ -5,11 +5,19 @@
  * Scores each of the 14 life-area topics from actual chart indicators
  * (houses, rulers, aspects, dignity, stelliums, nodes) and builds
  * topic-specific AI prompts grounded only in supported factors.
+ *
+ * Vedic factors are layered in as a secondary, corroborating signal —
+ * same house numbers (Western and Vedic houses carry the same life-area
+ * significations; only the cusping math differs), scored at reduced
+ * weight, and kept in a separate anchor list so a topic with no genuine
+ * Vedic support (no relevant yoga, no notably strong/placed house lord)
+ * simply gets none. Nothing is invented to force a Vedic angle.
  */
 
 import type { NatalChart, BodyId, SignId } from '@/lib/astro/types';
 import { SIGNS } from '@/lib/astro/types';
 import type { InterpretSection } from './prompts';
+import { analyzeVedicChart, type VedicAnalysis } from './vedicAnalysis';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -30,7 +38,8 @@ export type ScoredTopic = {
   subtitle: string;
   relevanceScore: number;
   relevanceLabel: RelevanceLabel;
-  chartAnchors: string[];    // up to 5 specific indicators for display
+  chartAnchors: string[];    // up to 5 Western indicators for display
+  vedicAnchors: string[];    // up to 4 corroborating Vedic indicators, if any
 };
 
 // ── Internal definitions ──────────────────────────────────────────────────────
@@ -206,6 +215,16 @@ const SCORE_BODIES: BodyId[] = [
   'uranus','neptune','pluto','trueNode','chiron',
 ];
 
+// Classical Vedic grahas only — Uranus/Neptune/Pluto/Chiron have no
+// traditional dignity/yoga rules and are excluded from Vedic scoring.
+const VEDIC_SCORE_BODIES: BodyId[] = [
+  'sun','moon','mercury','venus','mars','jupiter','saturn','trueNode','southNode',
+];
+
+const VEDIC_STRONG_DIGNITY = new Set(['exaltation', 'moolatrikona', 'own']);
+const VEDIC_STRONG_HOUSE   = new Set(['kendra', 'trikona', 'both']);
+const YOGA_STRENGTH_W: Record<string, number> = { strong: 2, moderate: 1.2, weak: 0.6 };
+
 function lbl(id: BodyId): string  { return PLANET_LABEL[id] ?? id; }
 function cap(s: string): string   { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -245,18 +264,25 @@ function computeScore(
   chart: NatalChart,
   def: TopicDef,
   stelliums: Map<number, BodyId[]>,
-): { score: number; anchors: string[] } {
+  vedic: VedicAnalysis,
+): { score: number; anchors: string[]; vedicAnchors: string[] } {
   let score = 0;
   const anchors: string[] = [];
-  const seenA = new Set<string>();
+  const vedicAnchors: string[] = [];
+  const seenA  = new Set<string>();
+  const seenVA = new Set<string>();
 
   const bodies    = chart.western.bodies;
   const dignities = chart.western.dignities;
   const aspects   = chart.western.aspects;
   const cusps     = chart.western.houses.cusps;
+  const vBodies   = chart.vedic.bodies;
 
   function addA(s: string) {
     if (!seenA.has(s) && anchors.length < 5) { seenA.add(s); anchors.push(s); }
+  }
+  function addVA(s: string) {
+    if (!seenVA.has(s) && vedicAnchors.length < 4) { seenVA.add(s); vedicAnchors.push(s); }
   }
 
   // 1. Planets in primary houses
@@ -344,7 +370,41 @@ function computeScore(
     if (def.supportingSigns.includes(body.sign)) score += 0.4;
   }
 
-  return { score: Math.round(score * 10) / 10, anchors };
+  // 9. Vedic — classical grahas in the same primary houses (whole sign).
+  // Weighted at half of the Western equivalent: a corroborating signal,
+  // not a second vote. House numbers carry the same life-area meaning in
+  // both systems, only the cusping math differs — sidereal placement can
+  // land a planet here even when its Western counterpart didn't.
+  for (const id of VEDIC_SCORE_BODIES) {
+    const vb = vBodies[id];
+    if (!vb || !def.houses.includes(vb.house)) continue;
+    const w = ((PLANET_W[id] ?? 0.3) / 2);
+    score += w;
+    addVA(`Vedic: ${lbl(id)} in H${vb.house} (${cap(vb.sign)})`);
+  }
+
+  // 10. Vedic — house lord of each primary house: strength and placement.
+  for (const h of def.houses) {
+    const hl = vedic.houseLords[h];
+    if (!hl) continue;
+    if (hl.lordDignity && VEDIC_STRONG_DIGNITY.has(hl.lordDignity)) {
+      score += 1.5;
+      addVA(`Vedic: H${h} lord (${lbl(hl.lord)}) ${hl.lordDignity} in ${hl.lordSign ? cap(hl.lordSign) : ''}`.trim());
+    }
+    if (VEDIC_STRONG_HOUSE.has(hl.lordHouseGroup)) {
+      score += 1.5;
+      addVA(`Vedic: H${h} lord (${lbl(hl.lord)}) placed in H${hl.lordHouse} (${hl.lordHouseGroup})`);
+    }
+  }
+
+  // 11. Vedic — yogas whose affected houses overlap this topic's houses.
+  for (const yoga of vedic.yogas) {
+    if (!yoga.affectedHouses.some(h => def.houses.includes(h))) continue;
+    score += YOGA_STRENGTH_W[yoga.strength] ?? 0.6;
+    addVA(`Vedic yoga: ${yoga.name} (${yoga.strength})`);
+  }
+
+  return { score: Math.round(score * 10) / 10, anchors, vedicAnchors };
 }
 
 // ── Relevance label ───────────────────────────────────────────────────────────
@@ -359,7 +419,7 @@ function scoreToLabel(score: number): RelevanceLabel {
 
 // ── AI prompt builder ─────────────────────────────────────────────────────────
 
-function buildTopicPrompt(def: TopicDef, anchors: string[], label: RelevanceLabel): string {
+function buildTopicPrompt(def: TopicDef, anchors: string[], vedicAnchors: string[], label: RelevanceLabel): string {
   const weak = label === 'Subtle influence' || label === 'Not heavily emphasized';
   const anchorBlock = anchors.length > 0
     ? anchors.map(a => `• ${a}`).join('\n')
@@ -369,15 +429,24 @@ function buildTopicPrompt(def: TopicDef, anchors: string[], label: RelevanceLabe
     ? `\nIMPORTANT FRAMING: This is not one of the loudest areas of this chart. Open the interpretation by acknowledging this honestly — something like "This is not one of the louder areas of your chart, but what IS present suggests..." Do not overstate what the chart supports.\n`
     : '';
 
+  const vedicBlock = vedicAnchors.length > 0
+    ? `\nVEDIC (SIDEREAL) CHART INDICATORS FOR THIS TOPIC:\n${vedicAnchors.map(a => `• ${a}`).join('\n')}\n`
+    : '';
+
+  const vedicNote = vedicAnchors.length > 0
+    ? `\nVEDIC USE: The Vedic indicators above are real, chart-derived corroboration from the sidereal system — not decoration. Weave in the one or two most telling ones naturally, inside the sections below, wherever they sharpen or add a genuine nuance to what the Western indicators already show. Do not give Vedic astrology its own separate paragraph, and do not force all of it in — use only what earns its place. If a Vedic and Western indicator point the same direction, that convergence is worth naming plainly.`
+    : `\nVEDIC USE: No Vedic indicators were found for this topic — do not mention Vedic/sidereal astrology, nakshatras, or house lords anywhere in this interpretation.`;
+
   return `Interpret this person's ${def.title} through their natal chart.
 
 RELEVANCE: ${label}
 
 CHART INDICATORS FOR THIS TOPIC:
 ${anchorBlock}
-
+${vedicBlock}
 TRADITIONAL ASTROLOGY SCOPE: ${def.subtitle}
-${weakNote}
+${weakNote}${vedicNote}
+
 Write a rich psychological interpretation of ${def.title} for this person, grounded only in the indicators listed above. Every paragraph must trace back to a specific chart factor — no generic sign or house descriptions.
 
 Cover in flowing prose (no headers, no bullet points, no section labels):
@@ -394,10 +463,11 @@ Close with a single, genuine open question the person can sit with — something
 
 export function computeTopics(chart: NatalChart): ScoredTopic[] {
   const stelliums = detectStelliums(chart);
+  const vedic = analyzeVedicChart(chart);
 
   return TOPICS
     .map(def => {
-      const { score, anchors } = computeScore(chart, def, stelliums);
+      const { score, anchors, vedicAnchors } = computeScore(chart, def, stelliums, vedic);
       const relevanceLabel = scoreToLabel(score);
       return {
         id: def.id,
@@ -406,6 +476,7 @@ export function computeTopics(chart: NatalChart): ScoredTopic[] {
         relevanceScore: score,
         relevanceLabel,
         chartAnchors: anchors,
+        vedicAnchors,
       };
     })
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
@@ -414,8 +485,9 @@ export function computeTopics(chart: NatalChart): ScoredTopic[] {
 export function topicToSection(topic: ScoredTopic, chart: NatalChart): InterpretSection {
   const def = TOPICS.find(d => d.id === topic.id)!;
   const stelliums = detectStelliums(chart);
-  const { anchors } = computeScore(chart, def, stelliums);
-  const prompt = buildTopicPrompt(def, anchors, topic.relevanceLabel);
+  const vedic = analyzeVedicChart(chart);
+  const { anchors, vedicAnchors } = computeScore(chart, def, stelliums, vedic);
+  const prompt = buildTopicPrompt(def, anchors, vedicAnchors, topic.relevanceLabel);
 
   return {
     type: 'topic',
