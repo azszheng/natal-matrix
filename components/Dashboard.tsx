@@ -179,7 +179,8 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', padding: '2px 2px 4px' }}>
-      <SectionNavButton label="Charts" active={section === 'chart'} onClick={() => onChange('chart')} />
+      <SectionNavButton label="Tropical" active={section === 'chart'} onClick={() => onChange('chart')} />
+      <SectionNavButton label="Vedic" active={section === 'vedic'} onClick={() => onChange('vedic')} />
 
       <div ref={topicsRef} style={{ position: 'relative' }}>
         <SectionNavButton label="Topics" active={topicsActive} onClick={() => setTopicsOpen(o => !o)} />
@@ -204,11 +205,7 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
       </div>
 
       <SectionNavButton label="Compatibility" active={section === 'compare'} onClick={() => onChange('compare')} />
-
-      <span style={{ width: 1, alignSelf: 'stretch', minHeight: 18, background: 'var(--line)', flexShrink: 0 }} />
-
-      <SectionNavButton label="Vedic" active={section === 'vedic'} secondary onClick={() => onChange('vedic')} />
-      <SectionNavButton label="Human Design" active={section === 'humandesign'} secondary onClick={() => onChange('humandesign')} />
+      <SectionNavButton label="Human Design" active={section === 'humandesign'} onClick={() => onChange('humandesign')} />
     </nav>
   );
 }
@@ -616,8 +613,11 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
             {section === 'vedic' && (
               <>
                 <SectionHead title="Vedic Astrology" note="Sidereal · Lahiri ayanamsa · Whole Sign houses" />
-                <p style={{ margin: '4px 2px 14px', fontSize: 13, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
-                  Vedic astrology (Jyotisha) is the astrological tradition native to the Indian subcontinent, developed alongside — and predating much of — the Western system. The key difference is the zodiac itself: Western tropical astrology anchors 0° Aries to the spring equinox, so it moves with the seasons, while Vedic astrology anchors the zodiac to the actual, observable constellations (the <strong>sidereal</strong> zodiac). Because Earth&apos;s axis slowly wobbles over centuries (a motion called precession), the two zodiacs have drifted roughly 24° apart, which is why a planet often lands in a different sign here than on your tropical chart. Vedic astrology also uses Whole Sign houses rather than Placidus, and adds <strong>Nakshatras</strong> — 27 lunar constellations, each spanning 13°20′ — as a finer layer of detail on top of each planet&apos;s sign. Think of this as a complementary lens on the same birth moment, not a contradiction of your tropical reading.
+                <p style={{ margin: '4px 2px 10px', fontSize: 13, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                  Vedic astrology (Jyotisha) is the astrological tradition native to the Indian subcontinent, developed alongside — and predating much of — the Western system. The key difference is the zodiac itself: Western tropical astrology anchors 0° Aries to the spring equinox, so it moves with the seasons, while Vedic astrology anchors the zodiac to the actual, observable constellations (the <strong>sidereal</strong> zodiac). Because Earth&apos;s axis slowly wobbles over centuries (a motion called precession), the two zodiacs have drifted roughly 24° apart, which is why a planet often lands in a different sign here than on your tropical chart. Vedic astrology also uses Whole Sign houses rather than Placidus, and adds <strong>Nakshatras</strong> — 27 lunar constellations, each spanning 13°20′ — as a finer layer of detail on top of each planet&apos;s sign.
+                </p>
+                <p style={{ margin: '0 2px 14px', fontSize: 13, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                  In practice, the two traditions are often used for different things. Western astrology — especially its modern form — leans psychological, oriented around self-understanding, personality, and inner patterns. Vedic astrology has historically leaned more predictive and practical: its signature technique, the <strong>Vimshottari Dasha</strong> system, sequences planetary periods across a lifetime to time when specific events are likely to unfold, not just describe general tendencies. It&apos;s also the basis for <strong>muhurta</strong> (electional astrology), used to select auspicious timing for weddings, ceremonies, and major decisions, and for <strong>kundli matching</strong>, where two birth charts are compared before marriage to assess compatibility — still a common practice across South Asia and its diaspora. Where Western astrology tends to ask &ldquo;who are you,&rdquo; Vedic astrology has traditionally asked &ldquo;what will happen, and when&rdquo; — complementary questions about the same chart.
                 </p>
                 <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
                   <div style={{ padding: '16px 22px 6px' }}>
