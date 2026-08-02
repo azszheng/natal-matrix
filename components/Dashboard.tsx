@@ -137,7 +137,7 @@ const SIGN_ABBR: Record<string, string> = {
 
 // ── Top-level section nav ────────────────────────────────────────────────────
 
-type PageSection = 'chart' | 'topics' | 'timing' | 'compare' | 'vedic' | 'humandesign' | 'childhood';
+type PageSection = 'chart' | 'topics' | 'compare' | 'vedic' | 'humandesign' | 'childhood';
 
 const TOPICS_MENU: { id: PageSection; label: string }[] = [
   { id: 'topics',    label: 'Life Themes' },
@@ -148,15 +148,18 @@ function SectionNavButton({ label, active, secondary, onClick }: {
   label: string; active: boolean; secondary?: boolean; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={onClick} className="am-nav-btn" style={{
       cursor: 'pointer', whiteSpace: 'nowrap',
       fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.07em',
-      fontSize: secondary ? 10.5 : 11.5,
-      padding: secondary ? '7px 13px' : '9px 15px',
-      borderRadius: 1,
-      border: `1px solid ${active ? 'var(--fg-glyph)' : 'var(--line)'}`,
-      background: active ? 'rgba(201,164,76,0.08)' : 'transparent',
+      fontSize: secondary ? 12 : 13,
+      padding: secondary ? '8px 14px' : '9px 16px',
+      borderRadius: 4,
+      border: `1px solid ${active ? 'var(--fg-glyph)' : 'var(--line-chart)'}`,
+      background: active ? 'rgba(201,164,76,0.14)' : 'var(--bg-raised)',
       color: active ? 'var(--fg-glyph)' : (secondary ? 'var(--fg-dim)' : 'var(--fg-muted)'),
+      fontWeight: active ? 600 : 400,
+      boxShadow: active ? '0 0 0 1px rgba(201,164,76,0.25)' : 'none',
+      transition: 'color 0.12s, border-color 0.12s, background 0.12s',
     }}>{label}</button>
   );
 }
@@ -201,7 +204,6 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
       </div>
 
       <SectionNavButton label="Compatibility" active={section === 'compare'} onClick={() => onChange('compare')} />
-      <SectionNavButton label="Timing" active={section === 'timing'} onClick={() => onChange('timing')} />
 
       <span style={{ width: 1, alignSelf: 'stretch', minHeight: 18, background: 'var(--line)', flexShrink: 0 }} />
 
@@ -211,7 +213,7 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
   );
 }
 
-// ── Feature card (Timing / Compare / Other Systems) ──────────────────────────
+// ── Feature card (Compare / Other Systems) ────────────────────────────────────
 
 function FeatureCard({
   title, tag, description, tags, ctaLabel, onOpen,
@@ -596,29 +598,6 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               </>
             )}
 
-            {section === 'timing' && (
-              <>
-                <SectionHead title="Timing" note="Where your chart is headed" />
-                <section style={{ padding: '4px 2px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <FeatureCard
-                    title="Transits"
-                    description="What's happening in the sky right now, mapped against your natal placements — today's weather, not just your climate."
-                    onOpen={() => setModal('transits')}
-                  />
-                  <FeatureCard
-                    title="Progressions"
-                    description="Your chart advanced one symbolic day per year of life — the slow, internal evolution of who you're becoming."
-                    onOpen={() => setModal('progressions')}
-                  />
-                  <FeatureCard
-                    title="Dashas"
-                    tag="Vedic timing"
-                    description={`Vimshottari planetary periods — the Vedic system's own timeline of which planet is "running" your life right now.`}
-                    onOpen={() => setModal('dashas')}
-                  />
-                </section>
-              </>
-            )}
 
             {section === 'compare' && (
               <>
@@ -637,10 +616,13 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
             {section === 'vedic' && (
               <>
                 <SectionHead title="Vedic Astrology" note="Sidereal · Lahiri ayanamsa · Whole Sign houses" />
+                <p style={{ margin: '4px 2px 14px', fontSize: 13, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                  Vedic astrology (Jyotisha) is the astrological tradition native to the Indian subcontinent, developed alongside — and predating much of — the Western system. The key difference is the zodiac itself: Western tropical astrology anchors 0° Aries to the spring equinox, so it moves with the seasons, while Vedic astrology anchors the zodiac to the actual, observable constellations (the <strong>sidereal</strong> zodiac). Because Earth&apos;s axis slowly wobbles over centuries (a motion called precession), the two zodiacs have drifted roughly 24° apart, which is why a planet often lands in a different sign here than on your tropical chart. Vedic astrology also uses Whole Sign houses rather than Placidus, and adds <strong>Nakshatras</strong> — 27 lunar constellations, each spanning 13°20′ — as a finer layer of detail on top of each planet&apos;s sign. Think of this as a complementary lens on the same birth moment, not a contradiction of your tropical reading.
+                </p>
                 <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
                   <div style={{ padding: '16px 22px 6px' }}>
-                    <Disclosure label="About the Vedic view">
-                      The sidereal view, tied to the actual constellations rather than the seasons — usually one sign earlier than Western. Each planet also falls in a Nakshatra, one of 27 lunar mansions that add fine-grained nuance.
+                    <Disclosure label="Ayanamsa & Nakshatras, in more detail">
+                      The <strong>ayanamsa</strong> is the angular offset between the tropical and sidereal zodiacs for a given date — this chart uses the Lahiri ayanamsa, the most widely used standard in Vedic astrology. Each planet&apos;s <strong>Nakshatra</strong> (lunar mansion) and <strong>pada</strong> (quarter-division) refine its placement further, and each Nakshatra has its own ruling planet, much like signs have ruling planets in the Western system.
                     </Disclosure>
                   </div>
                   <p style={{ margin: '0 22px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>

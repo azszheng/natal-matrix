@@ -54,6 +54,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Section nav buttons ────────────────────────────────────────────────────── */
+
+.am-nav-btn:hover {
+  border-color: var(--fg-muted) !important;
+  color: var(--fg) !important;
+  background: rgba(201,164,76,0.06) !important;
+}
+
 /* ── Responsive — am-* utility classes ─────────────────────────────────────── */
 
 /* Wheel SVG always scales to container */
