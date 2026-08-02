@@ -492,7 +492,6 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               {saveStatus === 'saved' && (
                 <span style={{ ...barBtn(false), cursor: 'default', opacity: 0.6 }}>✓ Saved</span>
               )}
-              <button style={barBtn(false)}>Export PDF</button>
               <button onClick={() => setFormOpen(true)} style={barBtn(false)}>Edit</button>
             </div>
           </section>

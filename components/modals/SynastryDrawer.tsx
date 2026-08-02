@@ -636,7 +636,10 @@ export default function SynastryDrawer({ chart: chartA, onClose, onInterpret, mo
   useEffect(() => {
     fetch('/api/charts')
       .then(r => r.ok ? r.json() : [])
-      .then((data: SavedChart[]) => setSavedProfiles(data))
+      .then((data: SavedChart[]) => {
+        data.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+        setSavedProfiles(data);
+      })
       .catch(() => {});
   }, []);
 

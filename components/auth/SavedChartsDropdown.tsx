@@ -20,7 +20,10 @@ export default function SavedChartsDropdown() {
 
   async function fetchCharts() {
     const res = await fetch('/api/charts');
-    if (res.ok) setCharts(await res.json());
+    if (!res.ok) return;
+    const data: SavedChart[] = await res.json();
+    data.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+    setCharts(data);
   }
 
   useEffect(() => { fetchCharts(); }, []);
