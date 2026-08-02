@@ -71,6 +71,31 @@ const TAB_DESC: Record<TableTab, string> = {
   dignities: 'Each planet has signs where it is at home (Domicile, Exaltation) and signs where it struggles (Detriment, Fall). This shapes how cleanly its energy expresses — not better or worse, just easier or harder.',
 };
 
+// Educational copy for the Vedic tab's "Learn More" disclosure — kept as data
+// so it can be edited without touching the component that renders it.
+const VEDIC_LEARN_MORE = {
+  heading: 'What makes Vedic astrology different?',
+  intro: [
+    'Vedic astrology uses a different zodiac system and interpretive framework from Western astrology. Because of this, some of your planetary signs may differ between the two charts. These differences are not necessarily contradictions; each system organizes and interprets the chart through a distinct symbolic lens.',
+    'Western astrology often emphasizes personality, inner psychology, emotional patterns, identity, and personal development. Vedic astrology places greater emphasis on how different areas of life are structured, which planetary influences are stronger or more challenged, and how major life themes may unfold over time.',
+  ],
+  listIntro: 'Vedic astrology commonly examines:',
+  items: [
+    { term: 'The Ascendant and its ruler', description: 'These help describe your overall life direction, temperament, physical expression, and the way you approach the world.' },
+    { term: 'House rulers', description: 'Vedic astrology closely follows where the ruler of each house is placed. This helps connect different areas of life, such as relationships, career, family, health, creativity, and finances.' },
+    { term: 'Planetary strength', description: 'A planet may be strengthened or challenged by its sign, house placement, relationships with other planets, and other conditions in the chart.' },
+    { term: 'Nakshatras', description: 'These lunar constellations add another layer of detail to the Moon, Ascendant, planets, motivations, instincts, and emotional patterns.' },
+    { term: 'Yogas', description: 'These are meaningful planetary combinations that may reinforce talents, responsibilities, opportunities, challenges, or recurring life themes.' },
+    { term: 'Planetary periods, or dashas', description: 'These long-term cycles help identify which planetary themes may become more prominent during different chapters of life.' },
+    { term: 'Divisional charts', description: 'Additional charts may be used to explore specific areas such as relationships, maturity, career, family, and spiritual development in greater depth.' },
+    { term: 'Dharma and life direction', description: 'Vedic astrology often explores the responsibilities, lessons, and forms of growth that may become central throughout a person’s life.' },
+  ],
+  outro: [
+    'Rather than replacing your Western chart, Vedic astrology offers a complementary perspective. Western astrology may help you understand your psychological makeup and personal expression, while Vedic astrology may offer additional insight into life structure, timing, planetary strength, and the development of major life themes.',
+    'Both systems should be approached as interpretive tools for reflection rather than fixed statements about destiny.',
+  ],
+};
+
 const MODALS: { id: ModalId; label: string; phase: number }[] = [
   { id: 'transits',     label: 'Transits',     phase: 6 },
   { id: 'progressions', label: 'Progressions', phase: 7 },
@@ -179,7 +204,7 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
 
   return (
     <nav style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', padding: '2px 2px 4px' }}>
-      <SectionNavButton label="Tropical" active={section === 'chart'} onClick={() => onChange('chart')} />
+      <SectionNavButton label="Western" active={section === 'chart'} onClick={() => onChange('chart')} />
       <SectionNavButton label="Vedic" active={section === 'vedic'} onClick={() => onChange('vedic')} />
 
       <div ref={topicsRef} style={{ position: 'relative' }}>
@@ -613,19 +638,42 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
             {section === 'vedic' && (
               <>
                 <SectionHead title="Vedic Astrology" note="Sidereal · Lahiri ayanamsa · Whole Sign houses" />
-                <p style={{ margin: '4px 2px 10px', fontSize: 13, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                <p style={{ margin: '4px 2px 10px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
                   Vedic astrology offers a complementary lens to your birth chart, focusing on how your life&apos;s deeper patterns unfold over time. While Western astrology primarily explores your personality, inner psychology, motivations, and potential, Vedic astrology places greater emphasis on life direction, karmic lessons, planetary strength, and the timing of significant periods of growth and change. It also analyzes unique techniques such as house rulers, nakshatras (lunar constellations), yogas (powerful planetary combinations), and planetary cycles to provide additional insight into areas such as relationships, career, purpose, and spiritual development.
                 </p>
-                <p style={{ margin: '0 2px 14px', fontSize: 13, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                <p style={{ margin: '0 2px 14px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
                   Rather than replacing your Western chart, Vedic astrology adds another layer of understanding. Together, these two traditions offer complementary perspectives—one helping you understand <em>who you are</em>, and the other illuminating <em>how your life&apos;s journey may unfold</em>.
                 </p>
+
+                <div style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', padding: '14px 18px', margin: '0 0 16px' }}>
+                  <Disclosure label="Learn More About Vedic Astrology">
+                    <p style={{ margin: '0 0 12px', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 15, color: 'var(--fg)' }}>
+                      {VEDIC_LEARN_MORE.heading}
+                    </p>
+                    {VEDIC_LEARN_MORE.intro.map((para, i) => (
+                      <p key={i} style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.7 }}>{para}</p>
+                    ))}
+                    <p style={{ margin: '0 0 8px', fontSize: 13, lineHeight: 1.7 }}>{VEDIC_LEARN_MORE.listIntro}</p>
+                    <ul style={{ margin: '0 0 16px', padding: '0 0 0 18px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                      {VEDIC_LEARN_MORE.items.map(item => (
+                        <li key={item.term} style={{ fontSize: 13, lineHeight: 1.7 }}>
+                          <strong>{item.term}:</strong> {item.description}
+                        </li>
+                      ))}
+                    </ul>
+                    {VEDIC_LEARN_MORE.outro.map((para, i) => (
+                      <p key={i} style={{ margin: i === 0 ? '0 0 12px' : 0, fontSize: 13, lineHeight: 1.7 }}>{para}</p>
+                    ))}
+                  </Disclosure>
+                </div>
+
                 <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
                   <div style={{ padding: '16px 22px 6px' }}>
                     <Disclosure label="Ayanamsa & Nakshatras, in more detail">
                       The <strong>ayanamsa</strong> is the angular offset between the tropical and sidereal zodiacs for a given date — this chart uses the Lahiri ayanamsa, the most widely used standard in Vedic astrology. Each planet&apos;s <strong>Nakshatra</strong> (lunar mansion) and <strong>pada</strong> (quarter-division) refine its placement further, and each Nakshatra has its own ruling planet, much like signs have ruling planets in the Western system.
                     </Disclosure>
                   </div>
-                  <p style={{ margin: '0 22px 4px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>
+                  <p style={{ margin: '0 22px 4px', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>
                     Lahiri ayanamsa {chart.vedic.ayanamsa.toFixed(4)}°
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '8px 16px 16px' }}>

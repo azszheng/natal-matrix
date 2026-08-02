@@ -62,6 +62,12 @@ body {
   background: rgba(201,164,76,0.06) !important;
 }
 
+/* ── Disclosure expand/collapse ────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .am-disclosure-panel { transition: none !important; }
+}
+
 /* ── Responsive — am-* utility classes ─────────────────────────────────────── */
 
 /* Wheel SVG always scales to container */

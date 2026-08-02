@@ -25,7 +25,7 @@ export default function VedicRashiTable({ chart, onInterpret }: { chart: NatalCh
 
   return (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--line)', color: 'var(--fg-muted)', fontFamily: 'var(--font-mono)', textAlign: 'left' }}>
             <th style={th}><Tooltip text="The Vedic grahas (planets). Rahu (North Node) and Ketu (South Node) are shadow bodies — the points where the Moon's orbit crosses the ecliptic. They are not physical planets but carry immense karmic weight. Rahu represents worldly desire and the path forward; Ketu represents past-life mastery, spiritual gifts, and renunciation.">Planet</Tooltip></th>
@@ -83,5 +83,5 @@ export default function VedicRashiTable({ chart, onInterpret }: { chart: NatalCh
   );
 }
 
-const th: React.CSSProperties = { padding: '6px 10px', fontWeight: 500, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' };
-const td: React.CSSProperties = { padding: '5px 10px', verticalAlign: 'middle' };
+const th: React.CSSProperties = { padding: '9px 12px', fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' };
+const td: React.CSSProperties = { padding: '9px 12px', verticalAlign: 'middle' };
