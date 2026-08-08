@@ -24,6 +24,7 @@ import HumanDesignDrawer from '@/components/modals/HumanDesignDrawer';
 import TopicsPanel from '@/components/TopicsPanel';
 import ChildhoodImprintsSection from '@/components/childhood/ChildhoodImprintsSection';
 import Disclosure from '@/components/ui/Disclosure';
+import PinGate from '@/components/ui/PinGate';
 import { SIGN_GLYPH, PLANET_GLYPH } from '@/components/charts/glyphs';
 import { createClient } from '@/lib/supabase/client';
 import type { ResolvedBirth, NatalChart } from '@/lib/astro/types';
@@ -134,7 +135,7 @@ function BigThree({ chart }: { chart: NatalChart }) {
   return (
     <div className="am-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
       {cards.map((c, i) => (
-        <div key={c.role} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 22px', borderLeft: i === 0 ? 'none' : '1px solid var(--line)' }}>
+        <div key={c.role} className={`am-big3-cell am-big3-cell-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 22px', borderLeft: i === 0 ? 'none' : '1px solid var(--line)' }}>
           <span style={{ fontSize: 44, color: 'var(--fg-glyph)', fontFamily: 'serif', lineHeight: 1 }}>
             {SIGN_GLYPH[c.body.sign]}
           </span>
@@ -586,7 +587,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                 <SectionHead title="The Tables" note="Ephemeris data" />
                 <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
                   {/* Tab bar */}
-                  <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', padding: '0 8px' }}>
+                  <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', padding: '0 8px', overflowX: 'auto' }}>
                     {TABS.map(t => (
                       <button key={t.id} onClick={() => setTab(t.id)} style={{
                         background: 'none', border: 'none', cursor: 'pointer', padding: '14px 16px',
@@ -676,8 +677,8 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                   <p style={{ margin: '0 22px 4px', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>
                     Lahiri ayanamsa {chart.vedic.ayanamsa.toFixed(4)}°
                   </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '8px 16px 16px' }}>
-                    <div style={{ maxWidth: 420 }}>
+                  <div style={{ padding: '8px 16px 16px' }}>
+                    <div style={{ maxWidth: 420, margin: '0 auto' }}>
                       <NorthIndianDiamond chart={chart} />
                     </div>
                   </div>
@@ -692,13 +693,15 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               <>
                 <SectionHead title="Human Design" />
                 <section style={{ padding: '4px 2px 0' }}>
-                  <FeatureCard
-                    title="Human Design"
-                    description="A synthesis of astrology, the I Ching, and the chakra system that maps your energy type, decision-making authority, and life purpose — calculated from your exact birth data."
-                    tags={['Energy Type', 'Inner Authority', 'Profile', 'Bodygraph', 'Gates']}
-                    ctaLabel="Open Chart →"
-                    onOpen={() => setHdDrawerOpen(true)}
-                  />
+                  <PinGate storageKey="natal:hd-unlocked" pin="8420" title="Human Design is under testing — enter code to continue">
+                    <FeatureCard
+                      title="Human Design"
+                      description="A synthesis of astrology, the I Ching, and the chakra system that maps your energy type, decision-making authority, and life purpose — calculated from your exact birth data."
+                      tags={['Energy Type', 'Inner Authority', 'Profile', 'Bodygraph', 'Gates']}
+                      ctaLabel="Open Chart →"
+                      onOpen={() => setHdDrawerOpen(true)}
+                    />
+                  </PinGate>
                 </section>
               </>
             )}

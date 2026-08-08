@@ -1,7 +1,6 @@
 import type { NatalChart, BodyId } from '@/lib/astro/types';
 import { toDMS, signLabel, ASPECT_COLOR } from './tableUtils';
 import { PLANET_GLYPH } from '@/components/charts/glyphs';
-import InterpretButton from '@/components/interpret/InterpretButton';
 import { buildBodySection, type InterpretSection } from '@/lib/ai/prompts';
 import Tooltip from '@/components/ui/Tooltip';
 
@@ -41,7 +40,7 @@ export default function PlanetTable({ chart, onInterpret }: { chart: NatalChart;
             <th style={{ ...th, fontFamily: 'var(--font-mono)' }}><Tooltip text="The exact position within the sign, in degrees° minutes' seconds″. Each sign spans 30°. 0° is the very start of the sign; 29° is the final degree. 'R' indicates retrograde — the planet appeared to move backward in the sky from Earth's perspective, turning its energy more inward and reflective.">Position</Tooltip></th>
             <th style={th}><Tooltip text="Which of the 12 houses (life areas) this planet occupies. 1st: identity/body, 2nd: money/values, 3rd: communication/siblings, 4th: home/roots, 5th: creativity/romance, 6th: health/daily work, 7th: partnerships/marriage, 8th: transformation/death/shared resources, 9th: philosophy/travel/higher learning, 10th: career/public status, 11th: friends/community, 12th: unconscious/spirituality/hidden matters." align="center">House</Tooltip></th>
             <th style={th}><Tooltip text="Whether the planet is in a sign that supports or challenges its natural energy. Domicile: the planet rules this sign — most comfortable and powerful. Exaltation: honored guest — very effective. Detriment: opposite of domicile — uncomfortable, energy expressed awkwardly. Fall: opposite of exaltation — most challenged. Peregrine: no special relationship — neutral expression." align="right">Dignity</Tooltip></th>
-            {onInterpret && <th style={{ ...th, width: 72, textAlign: 'center' }}><Tooltip align="right" text="Click the circle on any row to generate an AI interpretation for that placement.">Read</Tooltip></th>}
+            {onInterpret && <th style={{ ...th, width: 48, textAlign: 'right', paddingRight: 14 }}></th>}
           </tr>
         </thead>
         <tbody>
@@ -53,8 +52,14 @@ export default function PlanetTable({ chart, onInterpret }: { chart: NatalChart;
             const glyph = PLANET_GLYPH[id] ?? '';
             const name = BODY_NAME[id] ?? id;
             const digLabel = dig?.label;
+            const section = onInterpret ? buildBodySection(id, chart) : null;
             return (
-              <tr key={id} style={{ borderBottom: '1px solid var(--line)', color: 'var(--fg)' }}>
+              <tr
+                key={id}
+                className={onInterpret ? 'am-planet-row' : undefined}
+                onClick={onInterpret && section ? () => onInterpret(section) : undefined}
+                style={{ borderBottom: '1px solid var(--line)', color: 'var(--fg)', cursor: onInterpret ? 'pointer' : undefined }}
+              >
                 {/* Body */}
                 <td style={{ ...td, color: isRetro ? 'var(--retro)' : 'var(--fg-glyph)', whiteSpace: 'nowrap' }}>
                   {isRetro ? '℞ ' : ''}{glyph} {name}
@@ -74,8 +79,8 @@ export default function PlanetTable({ chart, onInterpret }: { chart: NatalChart;
                   {digLabel ? digLabel.charAt(0).toUpperCase() + digLabel.slice(1) : '—'}
                 </td>
                 {onInterpret && (
-                  <td style={{ ...td, textAlign: 'center' }}>
-                    <InterpretButton section={buildBodySection(id, chart)} onInterpret={onInterpret} />
+                  <td style={{ ...td, textAlign: 'right', paddingRight: 14, color: 'var(--fg-dim)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                    →
                   </td>
                 )}
               </tr>

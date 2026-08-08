@@ -88,10 +88,8 @@ export default function NorthIndianDiamond({ chart }: { chart: NatalChart }) {
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      width={W}
-      height={H}
       aria-label="North Indian Vedic chart diamond"
-      style={{ fontFamily: 'var(--font-sans)' }}
+      style={{ fontFamily: 'var(--font-sans)', width: '100%', height: 'auto', maxWidth: W, display: 'block' }}
     >
       <title>Vedic Natal Chart — {chart.input.name || 'Chart'}</title>
 

@@ -82,7 +82,7 @@ export default function TransitsDrawer({ chart, onClose, onInterpret }: Props) {
 
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: 'min(60vw, 520px)',
+        width: 'min(90vw, 520px)',
         background: 'var(--bg-raised)',
         borderLeft: '1px solid var(--line)',
         zIndex: 50,

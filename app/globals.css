@@ -54,6 +54,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Clickable planet rows ───────────────────────────────────────────────────── */
+
+.am-planet-row:hover {
+  background: rgba(201,164,76,0.06) !important;
+}
+
 /* ── Section nav buttons ────────────────────────────────────────────────────── */
 
 .am-nav-btn:hover {
@@ -95,6 +101,13 @@ body {
 
   /* Reading-style / BigThree 3-column grids → single column */
   .am-grid-3 { grid-template-columns: 1fr !important; }
+
+  /* BigThree: when stacked vertically, replace left-border dividers with top borders */
+  .am-big3-cell-1 { border-left: none !important; border-top: 1px solid var(--line) !important; }
+  .am-big3-cell-2 { border-left: none !important; border-top: 1px solid var(--line) !important; }
+
+  /* Nav buttons: tighter padding so 5 buttons wrap to 2 rows gracefully */
+  .am-nav-btn { font-size: 11px !important; padding: 7px 10px !important; }
 
   /* Weather+moon readout row: tighter gap */
   .am-readout { gap: 14px !important; flex-wrap: nowrap !important; }

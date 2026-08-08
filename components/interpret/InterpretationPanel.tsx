@@ -140,7 +140,7 @@ export default function InterpretationPanel({ chart, section, onClose, mode = 'd
       {/* Panel */}
       <div style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: 'min(55vw, 500px)',
+        width: 'min(max(55vw, 320px), 500px)',
         background: 'var(--bg-raised)',
         borderLeft: '1px solid var(--line)',
         zIndex: 70,
