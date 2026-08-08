@@ -626,12 +626,14 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               <>
                 <SectionHead title="Compatibility" note="Synastry" />
                 <section style={{ padding: '4px 2px 0' }}>
-                  <FeatureCard
-                    title="Synastry"
-                    description="Add a second birth chart to see how your placements interact — overlapping houses, cross-aspects, and where the friction and ease actually sit."
-                    ctaLabel="Add a second chart →"
-                    onOpen={() => setModal('synastry')}
-                  />
+                  <PinGate storageKey="natal:wip-unlocked" pin="8420" title="Compatibility is under testing — enter code to continue">
+                    <FeatureCard
+                      title="Synastry"
+                      description="Add a second birth chart to see how your placements interact — overlapping houses, cross-aspects, and where the friction and ease actually sit."
+                      ctaLabel="Add a second chart →"
+                      onOpen={() => setModal('synastry')}
+                    />
+                  </PinGate>
                 </section>
               </>
             )}
@@ -693,7 +695,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               <>
                 <SectionHead title="Human Design" />
                 <section style={{ padding: '4px 2px 0' }}>
-                  <PinGate storageKey="natal:hd-unlocked" pin="8420" title="Human Design is under testing — enter code to continue">
+                  <PinGate storageKey="natal:wip-unlocked" pin="8420" title="Human Design is under testing — enter code to continue">
                     <FeatureCard
                       title="Human Design"
                       description="A synthesis of astrology, the I Ching, and the chakra system that maps your energy type, decision-making authority, and life purpose — calculated from your exact birth data."
