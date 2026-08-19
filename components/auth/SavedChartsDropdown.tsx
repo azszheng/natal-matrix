@@ -16,7 +16,9 @@ export default function SavedChartsDropdown() {
   const [charts, setCharts]   = useState<SavedChart[]>([]);
   const [open, setOpen]       = useState(false);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   async function fetchCharts() {
     const res = await fetch('/api/charts');
@@ -56,6 +58,26 @@ export default function SavedChartsDropdown() {
     return () => document.removeEventListener('mousedown', onOutside);
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !btnRef.current) return;
+    function place() {
+      const rect = btnRef.current!.getBoundingClientRect();
+      const width = Math.min(300, window.innerWidth - 28);
+      const left = Math.min(
+        Math.max(rect.right - width, 14),
+        window.innerWidth - width - 14,
+      );
+      setPanelPos({ top: rect.bottom + 6, left, width });
+    }
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [open]);
+
   function loadChart(c: SavedChart) {
     window.dispatchEvent(new CustomEvent('natal:load-chart', { detail: c }));
     setActiveId(c.id);
@@ -83,17 +105,16 @@ export default function SavedChartsDropdown() {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)} style={btnStyle}>
+      <button ref={btnRef} onClick={() => setOpen(o => !o)} style={btnStyle}>
         Profiles{' '}
         <span style={{ color: 'var(--accent)' }}>({charts.length})</span>
       </button>
 
-      {open && (
+      {open && panelPos && (
         <div style={{
-          position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+          position: 'fixed', top: panelPos.top, left: panelPos.left, width: panelPos.width,
           background: 'var(--bg-raised)', border: '1px solid var(--line)',
           borderRadius: 6, padding: 6,
-          width: 'min(300px, calc(100vw - 28px))', maxWidth: 300,
           maxHeight: 'min(420px, calc(100vh - 120px))', overflowY: 'auto',
           boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 200,
           display: 'flex', flexDirection: 'column', gap: 3,
