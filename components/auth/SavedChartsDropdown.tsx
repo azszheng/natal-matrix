@@ -92,7 +92,9 @@ export default function SavedChartsDropdown() {
         <div style={{
           position: 'absolute', top: 'calc(100% + 6px)', right: 0,
           background: 'var(--bg-raised)', border: '1px solid var(--line)',
-          borderRadius: 6, padding: 6, minWidth: 220, maxWidth: 300,
+          borderRadius: 6, padding: 6,
+          width: 'min(300px, calc(100vw - 28px))', maxWidth: 300,
+          maxHeight: 'min(420px, calc(100vh - 120px))', overflowY: 'auto',
           boxShadow: '0 4px 16px rgba(0,0,0,0.18)', zIndex: 200,
           display: 'flex', flexDirection: 'column', gap: 3,
         }}>
