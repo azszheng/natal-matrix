@@ -123,3 +123,40 @@ body {
   /* Hide the sky-band caption text — too cramped */
   .am-band-cap { display: none !important; }
 }
+
+/* ── PDF export (window.print) ─────────────────────────────────────────────── */
+
+.am-print-only { display: none; }
+
+/* Light, ink-friendly palette for the printed report — independent of the
+   app's night theme so text stays legible whether or not the browser's
+   "print background graphics" option is enabled. */
+.am-print-report {
+  --bg: #ffffff;
+  --bg-raised: #ffffff;
+  --bg-chart: #ffffff;
+  --line: #d8d2c4;
+  --line-chart: #c7bfa8;
+  --fg: #1c1810;
+  --fg-muted: #55503f;
+  --fg-dim: #78715c;
+  --fg-glyph: #8a6d1f;
+  --accent: #8a6d1f;
+  --aspect-harmonious: #3d6b7a;
+  --aspect-dynamic: #a8452e;
+  --aspect-neutral: #6b6350;
+  --aspect-minor: #8a6d1f;
+  --retro: #a8452e;
+  background: #fff;
+  color: var(--fg);
+}
+
+@media print {
+  body.am-printing .am-app-shell { display: none !important; }
+  body.am-printing .am-print-only { display: block !important; }
+
+  .am-print-report { padding: 0 6px; }
+  .am-print-block { break-inside: avoid; }
+
+  @page { margin: 14mm 12mm; }
+}

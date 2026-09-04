@@ -9,6 +9,7 @@ import HouseTable from '@/components/tables/HouseTable';
 import AspectTable from '@/components/tables/AspectTable';
 import DignityTable from '@/components/tables/DignityTable';
 import VedicRashiTable from '@/components/tables/VedicRashiTable';
+import { PrintReportTropical, PrintReportVedic } from '@/components/PrintReport';
 import PlaceholderModal from '@/components/modals/PlaceholderModal';
 import TransitsDrawer from '@/components/modals/TransitsDrawer';
 import ProgressionsDrawer from '@/components/modals/ProgressionsDrawer';
@@ -112,12 +113,27 @@ const SIGN_NAME: Record<string, string> = {
 
 // ── Section header (almanac style) ───────────────────────────────────────────
 
-function SectionHead({ title, note }: { title: string; note?: string }) {
+function SectionHead({ title, note, action }: { title: string; note?: string; action?: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, margin: '20px 2px 2px' }}>
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, margin: '20px 2px 2px', flexWrap: 'wrap' }}>
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>{title}</span>
-      {note && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>{note}</span>}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginLeft: 'auto' }}>
+        {note && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>{note}</span>}
+        {action}
+      </div>
     </div>
+  );
+}
+
+function PdfExportButton({ onClick, busy }: { onClick: () => void; busy: boolean }) {
+  return (
+    <button onClick={onClick} disabled={busy} style={{
+      fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em',
+      color: 'var(--fg-muted)', background: 'none', border: '1px solid var(--line)', borderRadius: 1,
+      padding: '5px 10px', cursor: busy ? 'default' : 'pointer', whiteSpace: 'nowrap', opacity: busy ? 0.6 : 1,
+    }}>
+      {busy ? 'Preparing…' : '⭳ Export PDF'}
+    </button>
   );
 }
 
@@ -313,6 +329,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
   const [saveStatus,   setSaveStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedChartId, setSavedChartId] = useState<number | null>(null);
   const [savedCharts,  setSavedCharts]  = useState<SavedChart[]>([]);
+  const [printTarget,  setPrintTarget]  = useState<'tropical' | 'vedic' | null>(null);
 
   async function loadChartInterpretations(chartId: number) {
     try {
@@ -406,6 +423,24 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
     };
   }, []);
 
+  // Export PDF: render the requested report into the print-only container,
+  // mark <body> so app chrome is hidden for the print media query, then hand
+  // off to the browser's native print dialog ("Save as PDF").
+  useEffect(() => {
+    if (!printTarget) return;
+    document.body.classList.add('am-printing');
+    const raf = requestAnimationFrame(() => window.print());
+    function reset() {
+      document.body.classList.remove('am-printing');
+      setPrintTarget(null);
+    }
+    window.addEventListener('afterprint', reset);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('afterprint', reset);
+    };
+  }, [printTarget]);
+
   async function saveChart() {
     if (!chart || !birth) return;
     setSaveStatus('saving');
@@ -484,7 +519,8 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
   });
 
   return (
-    <div className="flex-1 w-full" style={{ display: 'flex', flexDirection: 'column' }}>
+    <>
+    <div className="flex-1 w-full am-app-shell" style={{ display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Full-bleed Hero (atmosphere + sky band) ── */}
       {chart && <BirthAtmosphereHero chart={chart} />}
@@ -552,7 +588,11 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                 </section>
 
                 {/* Chart Wheel */}
-                <SectionHead title="The Chart Wheel" note="Western · Tropical · Placidus" />
+                <SectionHead
+                  title="The Chart Wheel"
+                  note="Western · Tropical · Placidus"
+                  action={<PdfExportButton busy={printTarget === 'tropical'} onClick={() => setPrintTarget('tropical')} />}
+                />
                 <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', overflow: 'hidden' }}>
                   <div style={{ padding: '22px 22px 16px' }}>
                     <p style={{ margin: '0 0 14px', textAlign: 'center', fontSize: 11, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
@@ -640,7 +680,11 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
 
             {section === 'vedic' && (
               <>
-                <SectionHead title="Vedic Astrology" note="Sidereal · Lahiri ayanamsa · Whole Sign houses" />
+                <SectionHead
+                  title="Vedic Astrology"
+                  note="Sidereal · Lahiri ayanamsa · Whole Sign houses"
+                  action={<PdfExportButton busy={printTarget === 'vedic'} onClick={() => setPrintTarget('vedic')} />}
+                />
                 <p style={{ margin: '4px 2px 10px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
                   Vedic astrology offers a complementary lens to your birth chart, focusing on how your life&apos;s deeper patterns unfold over time. While Western astrology primarily explores your personality, inner psychology, motivations, and potential, Vedic astrology places greater emphasis on life direction, karmic lessons, planetary strength, and the timing of significant periods of growth and change. It also analyzes unique techniques such as house rulers, nakshatras (lunar constellations), yogas (powerful planetary combinations), and planetary cycles to provide additional insight into areas such as relationships, career, purpose, and spiritual development.
                 </p>
@@ -792,5 +836,12 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
         })()}
       </main>
     </div>
+
+    {/* ── PDF export report (hidden on screen, shown only for window.print) ── */}
+    <div className="am-print-only">
+      {printTarget === 'tropical' && chart && <PrintReportTropical chart={chart} />}
+      {printTarget === 'vedic'    && chart && <PrintReportVedic    chart={chart} />}
+    </div>
+    </>
   );
 }
