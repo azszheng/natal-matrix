@@ -46,6 +46,12 @@ const SIGN_MODALITY: Record<SignId, 'cardinal' | 'fixed' | 'mutable'> = {
 
 const PERSONAL_BODIES: BodyId[] = ['sun', 'moon', 'mercury', 'venus', 'mars', 'asc', 'mc'];
 
+// A chart's own Ascendant is always in its own house 1, and its own Midheaven
+// always in its own house 10 — that's true for every chart by construction,
+// so comparing "same house" for these two bodies across two people is a
+// tautology (it would always match) rather than a real shared signal.
+const HOUSE_COMPARABLE_BODIES = PERSONAL_BODIES.filter(b => b !== 'asc' && b !== 'mc');
+
 function dominantElement(chart: NatalChart): ('fire' | 'earth' | 'air' | 'water') | null {
   const counts = { fire: 0, earth: 0, air: 0, water: 0 };
   for (const id of PERSONAL_BODIES) {
@@ -177,7 +183,7 @@ export function detectSharedPatterns(
 
   // 2. Same planet in same house (requires house data)
   if (hasHouseData) {
-    for (const bodyId of PERSONAL_BODIES) {
+    for (const bodyId of HOUSE_COMPARABLE_BODIES) {
       const bA = chartA.western.bodies[bodyId];
       const bB = chartB.western.bodies[bodyId];
       if (!bA || !bB || bA.house !== bB.house) continue;
