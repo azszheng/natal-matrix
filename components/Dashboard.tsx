@@ -743,6 +743,15 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                   title="Vibrational Astrology"
                   note="Harmonic charts · D. Cochrane"
                 />
+                <p style={{ margin: '4px 2px 10px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                  Vibrational astrology — also called harmonic astrology — retunes your birth chart to a specific numeric frequency and asks a simple question: at this frequency, which planets line up? Doing this reveals concentrated pockets of energy that are invisible in a standard chart reading but resolve into an exact, tight conjunction once the chart is viewed through the right harmonic. Where your Western chart maps the overall architecture of your personality and your Vedic chart traces how your life&apos;s themes unfold over time, harmonic astrology zooms in on specific frequencies to show <em>where</em> your energy concentrates most intensely.
+                </p>
+                <p style={{ margin: '0 2px 10px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                  This section focuses on six frequencies the researcher David Cochrane identified as especially significant: the 5th (creativity &amp; play), 7th (discipline &amp; devotion), 8th (drive &amp; intensity), 9th (belonging &amp; integration), 11th (innovation &amp; restlessness), and 13th (transformation &amp; mastery). People use this technique to surface innate talents and drives that a standard reading can miss entirely — someone with no obvious creative emphasis elsewhere in their chart may still carry an exceptionally tight 5th-harmonic conjunction pointing to a real, specific creative gift.
+                </p>
+                <p style={{ margin: '0 2px 14px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                  This is not a replacement for your Western or Vedic chart — it&apos;s an additional, more specialized lens for going deeper into where your energy is genuinely concentrated, rather than a full personality or life-path reading on its own. Not every harmonic will show a strong hit in every chart, and that&apos;s expected: this method is built to surface real, concentrated energy where it exists, not to force a reading onto every frequency.
+                </p>
                 <VibrationalPanel chart={chart} mode={interpMode} onInterpret={setInterpSection} />
               </>
             )}

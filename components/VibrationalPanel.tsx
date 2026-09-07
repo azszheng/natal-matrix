@@ -112,7 +112,6 @@ export default function VibrationalPanel({ chart, mode, onInterpret }: Props) {
         display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
       }}>
         <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--fg-muted)', lineHeight: 1.6, maxWidth: 620 }}>
-          Harmonic astrology multiplies each planet&apos;s exact degree to reveal hidden aspect patterns as tight conjunctions.
           This is real, exact math — computed from the same ephemeris data as the rest of your chart, not a metaphor.
         </p>
         {dominant && dominant.strength > 0 && (
@@ -123,15 +122,12 @@ export default function VibrationalPanel({ chart, mode, onInterpret }: Props) {
       </div>
 
       <div style={{ padding: '14px 20px' }}>
-        <Disclosure label="What is Vibrational (harmonic) astrology?">
+        <Disclosure label="How the math works">
           <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.7 }}>
             Harmonic astrology was pioneered by John Addey and later developed into &ldquo;Vibrational Astrology&rdquo; by David Cochrane. The technique is simple to state and exact to compute: take every planet&apos;s ecliptic longitude, multiply it by a whole number N (the &ldquo;harmonic&rdquo;), and reduce the result modulo 360°. Any aspect of order N in your natal chart — a trine in the 3rd harmonic, a quintile in the 5th — collapses into an exact <strong>conjunction</strong> in that harmonic chart. A tight conjunction there means two planets share a genuine, precise Nth-harmonic relationship in your birth data.
           </p>
-          <p style={{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.7 }}>
-            This section focuses on six harmonics Cochrane&apos;s research treats as especially significant — 5, 7, 8, 9, 11, and 13 — each associated with a distinct quality, from creativity (5th) to drive (8th) to innovation (11th). A tighter orb represents a stronger &ldquo;current&rdquo;; not every harmonic will show a strong hit in every chart, and that&apos;s expected — this method surfaces concentrated energy where it genuinely exists rather than forcing a reading onto every frequency.
-          </p>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7 }}>
-            This is an additional, specialized lens — not a replacement for your Western or Vedic chart.
+            A tighter orb represents a stronger &ldquo;current.&rdquo; There&apos;s no single universally published orb standard for harmonic conjunctions — practitioners vary this by preference — so this reading uses a conservative, flat 3° orb across all six harmonics rather than presenting one convention as an absolute rule.
           </p>
         </Disclosure>
       </div>
