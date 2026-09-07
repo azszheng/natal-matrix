@@ -18,10 +18,15 @@ export * from './humandesign-constants';
 
 const DEG_PER_GATE = 360 / 64;
 const DEG_PER_LINE = DEG_PER_GATE / 6;
-// 273.9° empirically calibrated: gives correct profile (6/3), authority (Sacral),
-// and definition (Split) for verified chart (Oct 26 1986, 1:15 AM, Fuzhou CN).
-// 274.0° gave profile 6/2 and Single definition (pNorthNode was at Gate 2 boundary).
-const MANDALA_START = 273.9;
+// Gate 41 (the first gate in GATE_SEQUENCE) begins at exactly 2°00' Aquarius =
+// 302.0° tropical longitude — independently cross-referenced against multiple
+// published Human Design gate/degree tables, which also confirm the wheel
+// runs in increasing-longitude order (Gate 41 -> 19 -> 13 -> 49 -> 30 -> ...,
+// matching GATE_SEQUENCE exactly). Previously this was 273.9°, tuned by trial
+// and error against a single hand-checked chart — off by exactly 5 gate
+// widths (28.125°), which shifted every gate/line for every planet in every
+// chart this feature has ever computed.
+const MANDALA_START = 302.0;
 
 export function lonToGateLine(lon: number): { gate: number; line: number } {
   const normalized = ((lon % 360) + 360) % 360;
@@ -73,8 +78,13 @@ function computeHdActivations(jd: number): HdActivation[] {
 }
 
 function findDesignJD(birthJD: number, birthSunLon: number): number {
-  // 87.5° offset: verified against known chart (see MANDALA_START comment above).
-  const targetLon = ((birthSunLon - 87.5) + 360) % 360;
+  // The Design (unconscious) activations are calculated at the moment the
+  // Sun was exactly 88° of solar arc before birth — a documented, widely
+  // agreed constant in Human Design, not tuned per-chart. (Previously 87.5°,
+  // also a leftover from single-chart trial-and-error calibration; a 0.5°
+  // error here shifts the Design JD by roughly half a day, enough to flip
+  // fast-moving bodies like the Moon to the wrong gate or line.)
+  const targetLon = ((birthSunLon - 88.0) + 360) % 360;
   let jd = birthJD - 89.3;
 
   for (let i = 0; i < 50; i++) {

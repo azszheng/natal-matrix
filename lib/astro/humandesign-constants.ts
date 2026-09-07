@@ -76,6 +76,7 @@ export const CHANNELS: readonly Channel[] = [
   { a:  8, b:  1, name: 'Inspiration',    description: 'Individual creative contribution; inspiring others through unique self-expression and creative authenticity' },
   { a: 31, b:  7, name: 'The Alpha',      description: 'Leadership by election; the voice chosen to speak for others; the collective spokesperson' },
   { a: 20, b: 10, name: 'Awakening',      description: 'Behavior as authentic self-demonstration; living one\'s design as a waking practice in every action' },
+  { a: 10, b: 57, name: 'Perfected Form', description: 'Intuition guiding self-behavior; the body\'s instinctive knowing of how to authentically be itself, moment to moment' },
   { a: 12, b: 22, name: 'Openness',       description: 'Social grace and perfect timing; moving through emotional waves toward the right moment to speak' },
   { a: 35, b: 36, name: 'Transitoriness', description: 'Seeking new experience; emotional burnout and renewal; the wisdom of having been there and done that' },
   { a: 45, b: 21, name: 'Money Line',     description: 'Tribal resources and territory; the manager of material goods and community assets' },
