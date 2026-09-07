@@ -119,3 +119,34 @@ describe('computeHumanDesignChart — structural sanity', () => {
     expect(chart.definition).toBe('Split');
   });
 });
+
+describe('computeHumanDesignChart — external ground truth (Ra Uru Hu)', () => {
+  // Ra Uru Hu, founder of Human Design — the single most independently
+  // documented chart in the entire field. Birth data (April 9, 1948, 00:05,
+  // Montreal) from astro.com's Astrodatabank; Type/Authority/Profile/
+  // Definition/Incarnation Cross independently cross-referenced across three
+  // separate Human Design sources (flowwithhumandesign.com,
+  // humandesignchart.org, humandesign.zone), all agreeing exactly:
+  // Manifestor, Splenic authority, profile 5/1, Single definition,
+  // Left Angle Cross of the Clarion (Personality 51/57, Design 61/62).
+  //
+  // Local time zone for Montreal that day (EST vs EDT) is verified both ways
+  // since it doesn't change the result — confirming the match isn't a
+  // coincidence of one specific UTC guess.
+  it.each([
+    ['EST (UTC-5)', '1948-04-09T05:05:00Z'],
+    ['EDT (UTC-4)', '1948-04-09T04:05:00Z'],
+  ])('matches the published chart exactly under %s', (_label, utc) => {
+    const chart = computeHumanDesignChart({
+      name: 'Ra Uru Hu', date: '1948-04-09', time: '00:05',
+      city: 'Montreal', region: 'Quebec', country: 'Canada',
+      lat: 45.5019, lng: -73.5674, timezone: 'America/Toronto',
+      utc, julianDayUT: 0,
+    });
+    expect(chart.type).toBe('Manifestor');
+    expect(chart.authority).toBe('Splenic');
+    expect(chart.profile).toBe('5/1');
+    expect(chart.definition).toBe('Single');
+    expect(chart.crossGates).toEqual([51, 57, 61, 62]);
+  });
+});
