@@ -16,7 +16,7 @@ import { analyzeVedicChart, formatVedicAnalysis, vedicBodyContext, vedicHouseCon
 import { HOUSE_FRONT_TITLES, HOUSE_MEANINGS, scoreHouseActivation } from './houseThemes';
 
 export type InterpretSection = {
-  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot' | 'topic';
+  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot' | 'topic' | 'vibrational';
   label: string;
   prompt: string;
   system?: 'western' | 'vedic';

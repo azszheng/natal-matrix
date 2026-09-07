@@ -23,6 +23,7 @@ import ChartSnapshot from '@/components/interpret/ChartSnapshot';
 import BirthAtmosphereHero from '@/components/BirthAtmosphere';
 import HumanDesignDrawer from '@/components/modals/HumanDesignDrawer';
 import TopicsPanel from '@/components/TopicsPanel';
+import VibrationalPanel from '@/components/VibrationalPanel';
 import ChildhoodImprintsSection from '@/components/childhood/ChildhoodImprintsSection';
 import Disclosure from '@/components/ui/Disclosure';
 import PinGate from '@/components/ui/PinGate';
@@ -179,7 +180,7 @@ const SIGN_ABBR: Record<string, string> = {
 
 // ── Top-level section nav ────────────────────────────────────────────────────
 
-type PageSection = 'chart' | 'topics' | 'compare' | 'vedic' | 'humandesign' | 'childhood';
+type PageSection = 'chart' | 'topics' | 'compare' | 'vedic' | 'vibrational' | 'humandesign' | 'childhood';
 
 const TOPICS_MENU: { id: PageSection; label: string }[] = [
   { id: 'topics',    label: 'Life Themes' },
@@ -223,6 +224,7 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
     <nav style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', padding: '2px 2px 4px' }}>
       <SectionNavButton label="Western" active={section === 'chart'} onClick={() => onChange('chart')} />
       <SectionNavButton label="Vedic" active={section === 'vedic'} onClick={() => onChange('vedic')} />
+      <SectionNavButton label="Vibrational" active={section === 'vibrational'} onClick={() => onChange('vibrational')} />
 
       <div ref={topicsRef} style={{ position: 'relative' }}>
         <SectionNavButton label="Topics" active={topicsActive} onClick={() => setTopicsOpen(o => !o)} />
@@ -732,6 +734,16 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                     <VedicRashiTable chart={chart} onInterpret={setInterpSection} />
                   </div>
                 </section>
+              </>
+            )}
+
+            {section === 'vibrational' && (
+              <>
+                <SectionHead
+                  title="Vibrational Astrology"
+                  note="Harmonic charts · D. Cochrane"
+                />
+                <VibrationalPanel chart={chart} mode={interpMode} onInterpret={setInterpSection} />
               </>
             )}
 
