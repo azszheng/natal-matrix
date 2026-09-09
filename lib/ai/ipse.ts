@@ -342,9 +342,9 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
     styles: [
       { id: 'researchInvestigator', label: 'Research-oriented investigator', vibrationalPair: ['mercury', 'pluto'], westernIndicators: [A('mercury', 'pluto'), H('mercury', 8), HE(8), S('mercury', 'scorpio')] },
       { id: 'systemsThinker', label: 'Systems thinker', vibrationalPair: ['mercury', 'uranus'], westernIndicators: [A('mercury', 'uranus'), S('mercury', 'aquarius'), HE(11)] },
-      { id: 'technicalRigorousThinker', label: 'Technical / rigorous thinker', vibrationalPair: ['mercury', 'saturn'], westernIndicators: [A('mercury', 'saturn'), S('mercury', 'capricorn'), S('mercury', 'virgo')] },
+      { id: 'technicalRigorousThinker', label: 'Technical / rigorous thinker', vibrationalPair: ['mercury', 'saturn'], westernIndicators: [A('mercury', 'saturn'), S('mercury', 'capricorn'), S('mercury', 'virgo'), HE(6)] },
       { id: 'philosophicalSynthesizer', label: 'Philosophical synthesizer', vibrationalPair: ['mercury', 'jupiter'], westernIndicators: [A('mercury', 'jupiter'), H('mercury', 9), HE(9)] },
-      { id: 'symbolicImaginalThinker', label: 'Symbolic / imaginal thinker', vibrationalPair: ['mercury', 'neptune'], westernIndicators: [A('mercury', 'neptune'), H('mercury', 12), S('mercury', 'pisces')] },
+      { id: 'symbolicImaginalThinker', label: 'Symbolic / imaginal thinker', vibrationalPair: ['mercury', 'neptune'], westernIndicators: [A('mercury', 'neptune'), H('mercury', 12), S('mercury', 'pisces'), HE(12)] },
       { id: 'tacticalFastProcessor', label: 'Tactical fast-processor', vibrationalPair: ['mercury', 'mars'], westernIndicators: [A('mercury', 'mars'), S('mercury', 'aries'), HE(3)] },
     ],
   },
@@ -354,7 +354,7 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
     styles: [
       { id: 'strategicExecutor', label: 'Strategic executor', vibrationalPair: ['mars', 'saturn'], westernIndicators: [A('mars', 'saturn', false), A('sun', 'saturn'), HE(10), SE('capricorn')] },
       { id: 'systemsImplementer', label: 'Systems implementer', vibrationalPair: ['mercury', 'saturn'], westernIndicators: [A('mercury', 'saturn'), H('mercury', 6), HE(6)] },
-      { id: 'crisisManager', label: 'Crisis manager', vibrationalPair: ['mars', 'pluto'], westernIndicators: [A('mars', 'pluto'), H('mars', 8), S('mars', 'scorpio')] },
+      { id: 'crisisManager', label: 'Crisis manager', vibrationalPair: ['mars', 'pluto'], westernIndicators: [A('mars', 'pluto'), H('mars', 8), S('mars', 'scorpio'), HE(8)] },
       { id: 'resourceManager', label: 'Resource manager', vibrationalPair: ['venus', 'saturn'], westernIndicators: [HE(2), A('venus', 'saturn'), SE('taurus')] },
       { id: 'pressureDrivenBuilder', label: 'Pressure-driven builder', vibrationalPair: ['mars', 'saturn'], westernIndicators: [AFF('saturn'), A('mars', 'saturn', true), H('saturn', 6)] },
     ],
@@ -367,8 +367,8 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
       { id: 'occultInvestigator', label: 'Occult investigator', vibrationalPair: ['mercury', 'pluto'], westernIndicators: [A('mercury', 'pluto'), HE(8), SE('scorpio')] },
       { id: 'philosophicalSeeker', label: 'Philosophical seeker', vibrationalPair: ['mercury', 'jupiter'], westernIndicators: [H('jupiter', 9), A('mercury', 'jupiter'), SE('sagittarius')] },
       { id: 'visionary', label: 'Visionary', vibrationalPair: ['uranus', 'neptune'], westernIndicators: [A('uranus', 'neptune'), A('jupiter', 'neptune')] },
-      { id: 'contemplativePractitioner', label: 'Contemplative practitioner', vibrationalPair: ['saturn', 'neptune'], westernIndicators: [A('saturn', 'neptune'), H('saturn', 12)] },
-      { id: 'ancestralKarmicProcessor', label: 'Ancestral / karmic processor', vibrationalPair: ['moon', 'pluto'], westernIndicators: [A('moon', 'pluto'), H('southNode', 4), H('southNode', 8)] },
+      { id: 'contemplativePractitioner', label: 'Contemplative practitioner', vibrationalPair: ['saturn', 'neptune'], westernIndicators: [A('saturn', 'neptune'), H('saturn', 12), HE(12)] },
+      { id: 'ancestralKarmicProcessor', label: 'Ancestral / karmic processor', vibrationalPair: ['moon', 'pluto'], westernIndicators: [A('moon', 'pluto'), H('southNode', 4), H('southNode', 8), HE(4)] },
     ],
   },
   emotional: {
@@ -380,7 +380,7 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
       { id: 'emotionalTranslator', label: 'Emotional translator', vibrationalPair: ['moon', 'mercury'], westernIndicators: [A('moon', 'mercury'), H('mercury', 4), H('moon', 3)] },
       { id: 'relationalHarmonizer', label: 'Relational harmonizer', vibrationalPair: ['moon', 'venus'], westernIndicators: [A('moon', 'venus'), H('venus', 7), SE('libra')] },
       { id: 'loyalProtector', label: 'Loyal protector', vibrationalPair: ['moon', 'saturn'], westernIndicators: [A('moon', 'saturn'), A('venus', 'saturn'), H('saturn', 4)] },
-      { id: 'boundaryLearner', label: 'Boundary learner', vibrationalPair: ['venus', 'neptune'], westernIndicators: [A('moon', 'neptune', true), A('venus', 'neptune', true), H('neptune', 7)] },
+      { id: 'boundaryLearner', label: 'Boundary learner', vibrationalPair: ['venus', 'neptune'], westernIndicators: [A('moon', 'neptune', true), A('venus', 'neptune', true), H('neptune', 7), HE(7)] },
     ],
   },
 };
