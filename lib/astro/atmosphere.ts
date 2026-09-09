@@ -37,6 +37,22 @@ function sunAltitudeDeg(lat: number, lon: number, utcMs: number): number {
 
 type WeatherCat = BirthAtmosphere['weatherCategory'];
 
+// WMO defines "trace" precipitation as an amount too small to reliably
+// measure — below the standard 0.1-0.2mm gauge resolution, not zero but
+// not meaningfully "rain" either. Thresholds below this band (this module
+// previously used 0.05mm / 0.01cm) misclassify a stray hundredth-of-a-
+// millimeter ERA5 grid-cell average as "Rainy"/"Snow" for a place and
+// moment that was, in reality, dry — verified against a real
+// trace-precipitation false positive (Phoenix, AZ, monsoon-onset day,
+// 0.1mm/hr grid average, no actual rain at that specific point).
+export function categorizeWeather(precip: number, snow: number, cloud: number): WeatherCat {
+  if (precip < 0 && snow < 0 && cloud < 0) return 'unknown';
+  if (snow   >= 0.1)  return 'snow';
+  if (precip >= 0.2)  return 'rain';
+  if (cloud  > 60)    return 'cloudy';
+  return 'clear';
+}
+
 // ERA5 reanalysis: global coverage, every point on Earth, 1940-present.
 // Requests physical components (precip, cloud_cover, snowfall) which are
 // directly available in ERA5 — more reliable than derived weather codes.
@@ -58,11 +74,7 @@ async function fetchFromERA5(lat: number, lon: number, dateISO: string, utcHour:
     const precip  = h.precipitation?.[utcHour]  ?? -1;
     const snow    = h.snowfall?.[utcHour]        ?? -1;
     const cloud   = h.cloud_cover?.[utcHour]     ?? -1;
-    if (precip < 0 && snow < 0 && cloud < 0) return 'unknown';
-    if (snow   > 0.01)  return 'snow';
-    if (precip > 0.05)  return 'rain';
-    if (cloud  > 60)    return 'cloudy';
-    return 'clear';
+    return categorizeWeather(precip, snow, cloud);
   } catch {
     return 'unknown';
   }
