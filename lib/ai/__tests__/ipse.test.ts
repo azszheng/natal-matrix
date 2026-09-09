@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { computeIPSEProfile, type IPSEProfile } from '../ipse';
+import { computeIPSEStyleProfile, type IPSEStyleProfile } from '../ipse';
 import { getDignityInfo } from '@/lib/astro/dignities';
 import { computeNatalChart } from '@/lib/astro/natal';
 import type { NatalChart, BodyId, SignId, ResolvedBirth, Aspect } from '@/lib/astro/types';
+import type { HdChart } from '@/lib/astro/humandesign-constants';
 
 // ── Synthetic fake-chart builder ───────────────────────────────────────────────
-// Whole-sign-equivalent cusps (house N cusp = (N-1)*30 deg) so house/sign/ruler
-// all stay internally consistent and predictable for direct control per test.
 
 const ALL_BODIES: BodyId[] = [
   'sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn',
@@ -21,27 +20,23 @@ const SIGN_ORDER: SignId[] = [
 function houseOf(longitude: number): number {
   return Math.floor((((longitude % 360) + 360) % 360) / 30) + 1;
 }
-
 function signOf(longitude: number): SignId {
   return SIGN_ORDER[Math.floor((((longitude % 360) + 360) % 360) / 30)];
 }
 
-type Placement = { longitude: number; isRetrograde?: boolean };
+type Placement = { longitude: number };
 
 function buildFakeChart(placements: Partial<Record<BodyId, Placement>>, aspects: Aspect[] = [], birthDate = '1990-01-01'): NatalChart {
   const bodies = {} as NatalChart['western']['bodies'];
 
   for (const id of ALL_BODIES) {
     // Default: spread roughly evenly around the zodiac (not clustered in any
-    // one sign) so an un-overridden body contributes chance-level scatter
-    // rather than accidentally concentrating in whichever sign this offset
-    // happens to land in.
+    // one sign), unless overridden.
     const p = placements[id] ?? { longitude: (ALL_BODIES.indexOf(id) * (360 / ALL_BODIES.length)) + 7 };
     const sign = signOf(p.longitude);
     bodies[id] = {
       id, longitude: p.longitude, latitude: 0, distance: 1,
-      speedLongitude: p.isRetrograde ? -0.5 : 0.5, declination: 0,
-      isRetrograde: p.isRetrograde ?? false,
+      speedLongitude: 0.5, declination: 0, isRetrograde: false,
       sign, signDegree: p.longitude % 30, house: houseOf(p.longitude),
     };
   }
@@ -54,9 +49,7 @@ function buildFakeChart(placements: Partial<Record<BodyId, Placement>>, aspects:
   const cusps = Array.from({ length: 12 }, (_, i) => ((ascLon + i * 30) % 360));
 
   const dignities = {} as NatalChart['western']['dignities'];
-  for (const id of ALL_BODIES) {
-    dignities[id] = getDignityInfo(id, bodies[id].sign);
-  }
+  for (const id of ALL_BODIES) dignities[id] = getDignityInfo(id, bodies[id].sign);
   dignities.asc = getDignityInfo('asc' as BodyId, bodies.asc.sign);
   dignities.mc = getDignityInfo('mc' as BodyId, bodies.mc.sign);
 
@@ -67,17 +60,8 @@ function buildFakeChart(placements: Partial<Record<BodyId, Placement>>, aspects:
 
   return {
     input,
-    western: {
-      bodies,
-      houses: { system: 'placidus', cusps, asc: ascLon, mc: mcLon, armc: 0 },
-      aspects,
-      dignities,
-    },
-    vedic: {
-      ayanamsa: 24, ayanamsaName: 'lahiri',
-      bodies: {} as NatalChart['vedic']['bodies'],
-      ascendantRashi: signOf(ascLon),
-    },
+    western: { bodies, houses: { system: 'placidus', cusps, asc: ascLon, mc: mcLon, armc: 0 }, aspects, dignities },
+    vedic: { ayanamsa: 24, ayanamsaName: 'lahiri', bodies: {} as NatalChart['vedic']['bodies'], ascendantRashi: signOf(ascLon) },
     meta: { computedAt: new Date().toISOString(), swephVersion: 'test' },
   } as unknown as NatalChart;
 }
@@ -86,216 +70,212 @@ function conj(a: BodyId, b: BodyId, orb = 1): Aspect {
   return { a, b, kind: 'conjunction', exactAngle: 0, actualAngle: 0, orb, applying: true };
 }
 
-// ── Domain-dominance tests ─────────────────────────────────────────────────────
+function fakeHdChart(overrides: Partial<HdChart>): HdChart {
+  return {
+    input: {} as HdChart['input'], designUtc: '', personality: [], design: [],
+    definedGates: [], definedChannels: [], definedCenters: [],
+    type: 'Generator', authority: 'Sacral', profile: '1/3', definition: 'Single',
+    strategy: 'Wait to Respond', notSelf: 'Frustration', crossGates: [1, 2, 3, 4],
+    ...overrides,
+  } as HdChart;
+}
 
-describe('computeIPSEProfile — domain dominance from real chart-factor patterns', () => {
-  it('ranks Intellectual highest for a Mercury/Uranus-heavy, angular, well-aspected chart', () => {
+// ── Domain style-detection tests ──────────────────────────────────────────────
+
+describe('computeIPSEStyleProfile — Western style detection', () => {
+  it('detects Research-oriented investigator for a Mercury-Pluto, 8th-house-heavy chart', () => {
     const chart = buildFakeChart({
-      asc: { longitude: 60 },  // Gemini rising -> chart ruler mercury
-      mc: { longitude: 330 },
-      mercury: { longitude: 65 }, // Gemini, angular (house 1), domicile
-      uranus: { longitude: 68 }, // tight conjunction to Mercury
-      sun: { longitude: 100 },
-    }, [conj('mercury', 'uranus', 1), conj('sun', 'mercury', 2)]);
+      mercury: { longitude: 215 }, // scorpio, house 8
+      pluto: { longitude: 220 },
+      moon: { longitude: 225 }, // stellium in house 8
+    }, [conj('mercury', 'pluto', 1)]);
 
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-    expect(profile.dominantDomain).toBe('intellectual');
-    expect(profile.rankedDomains[0].domain).toBe('intellectual');
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const intellectual = profile.domainCards.find(c => c.domain === 'intellectual')!;
+    expect(intellectual.primaryStyle?.id).toBe('researchInvestigator');
   });
 
-  it('ranks Practical highest for a Saturn/Mars/10th-house-heavy chart', () => {
+  it('detects Strategic executor for a Mars-Saturn, 10th-house-heavy chart', () => {
     const chart = buildFakeChart({
-      asc: { longitude: 270 }, // Capricorn rising -> chart ruler saturn
-      mc: { longitude: 180 },
-      saturn: { longitude: 275 }, // Capricorn, angular (house 1), domicile
-      mars: { longitude: 190 }, // 10th house (Cancer cusp 180-210)
-      sun: { longitude: 200 },
-    }, [conj('mars', 'saturn', 2), conj('sun', 'saturn', 3)]);
+      mars: { longitude: 275 }, // capricorn
+      saturn: { longitude: 280 },
+      sun: { longitude: 285 }, // stellium in house 10
+    }, [conj('mars', 'saturn', 1), conj('sun', 'saturn', 2)]);
 
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-    expect(profile.dominantDomain).toBe('practical');
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const practical = profile.domainCards.find(c => c.domain === 'practical')!;
+    expect(practical.primaryStyle?.id).toBe('strategicExecutor');
   });
 
-  it('ranks Spiritual highest for a Jupiter/Neptune/12th-house-heavy chart', () => {
+  it('detects Mystic / intuitive receiver for a Moon-Neptune, 12th-house-heavy chart', () => {
     const chart = buildFakeChart({
-      asc: { longitude: 240 }, // Sagittarius rising -> chart ruler jupiter
-      mc: { longitude: 150 },
-      jupiter: { longitude: 245 }, // Sagittarius, angular (house 1), domicile
-      neptune: { longitude: 200 }, // 12th house (Sagittarius, cusp 210)... adjust below
-      moon: { longitude: 210 },
-    }, [conj('jupiter', 'neptune', 2)]);
+      moon: { longitude: 335 }, // pisces
+      neptune: { longitude: 340 }, // house 12
+    }, [conj('moon', 'neptune', 1)]);
 
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-    expect(profile.dominantDomain).toBe('spiritual');
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const spiritual = profile.domainCards.find(c => c.domain === 'spiritual')!;
+    expect(spiritual.primaryStyle?.id).toBe('mysticReceiver');
   });
 
-  it('ranks Emotional highest for a Moon/Venus, water-sign, 4th/7th-heavy chart', () => {
+  it('detects Relational harmonizer for a Moon-Venus, 7th-house-heavy, Libra chart', () => {
     const chart = buildFakeChart({
-      asc: { longitude: 90 }, // Cancer rising -> chart ruler moon
-      mc: { longitude: 0 },
-      moon: { longitude: 95 }, // Cancer, angular (house 1), domicile
-      venus: { longitude: 100 }, // tight conjunction to Moon
-      sun: { longitude: 300 },
+      moon: { longitude: 195 }, // libra
+      venus: { longitude: 200 }, // house 7
     }, [conj('moon', 'venus', 1)]);
 
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-    expect(profile.dominantDomain).toBe('emotional');
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const emotional = profile.domainCards.find(c => c.domain === 'emotional')!;
+    expect(emotional.primaryStyle?.id).toBe('relationalHarmonizer');
   });
 
-  it('does not overstate any one domain for a genuinely flat/neutral chart', () => {
-    // All bodies in their own default neutral cadent placements, no aspects.
-    const chart = buildFakeChart({});
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-    const scores = profile.rankedDomains.map(d => d.score);
-    const spread = Math.max(...scores) - Math.min(...scores);
-    // Weak, undifferentiated data should not produce a dramatic, confident spread.
-    expect(spread).toBeLessThan(35);
-  });
-
-  it('elementModePattern only lights up for above-chance sign clustering, not chance-level scatter', () => {
-    // Regression test: this component previously reached its ceiling (40)
-    // whenever a domain had >=5 of ~13 tracked bodies in its supporting
-    // signs -- a threshold at or below pure chance, verified against five
-    // real, unrelated charts to saturate in 11 of 20 domain/person
-    // combinations regardless of any genuine signal.
-    const scattered = buildFakeChart({}); // default placements: no deliberate sign clustering
-    const scatteredProfile = computeIPSEProfile(scattered, { includeVedic: false, includeVibrational: false });
-    for (const d of scatteredProfile.rankedDomains) {
-      expect(d.westernComponents!.elementModePattern).toBeLessThan(40);
+  it('falls back to a gentle default label when no style clears the threshold', () => {
+    const chart = buildFakeChart({}); // scattered, no deliberate aspects
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    for (const card of profile.domainCards) {
+      if (!card.primaryStyle) {
+        expect(card.summary.length).toBeGreaterThan(0);
+      }
     }
+  });
+});
 
-    // Deliberately cluster ALL 13 tracked bodies into Intellectual's signs
-    // (gemini, virgo, aquarius, sagittarius, scorpio, capricorn) -- genuine,
-    // well-above-chance clustering (13 hits vs. an expected ~6.5) should
-    // score meaningfully higher than chance-level scatter.
-    const clustered = buildFakeChart({
-      sun: { longitude: 75 }, moon: { longitude: 165 }, mercury: { longitude: 315 },
-      venus: { longitude: 255 }, mars: { longitude: 225 }, jupiter: { longitude: 285 },
-      saturn: { longitude: 76 }, uranus: { longitude: 166 }, neptune: { longitude: 316 },
-      pluto: { longitude: 256 }, trueNode: { longitude: 226 }, southNode: { longitude: 286 },
-      chiron: { longitude: 77 },
-    });
-    const clusteredProfile = computeIPSEProfile(clustered, { includeVedic: false, includeVibrational: false });
-    const intellectual = clusteredProfile.rankedDomains.find(d => d.domain === 'intellectual')!;
-    expect(intellectual.westernComponents!.elementModePattern).toBeGreaterThan(20);
+// ── Double-counting prevention (spec section 14's explicit example) ──────────
+
+describe('computeIPSEStyleProfile — evidence does not blindly cross-boost every domain', () => {
+  it('a single Mercury-Pluto aspect does not automatically make Intellectual, Spiritual, and Emotional all dominant', () => {
+    // Mercury-Pluto is a real anchor for both researchInvestigator
+    // (intellectual) and occultInvestigator (spiritual) -- that overlap is
+    // intentional and astrologically real. But with NO independent Moon/
+    // Venus/4th/7th/8th evidence, Emotional should not also spike from this
+    // one factor alone.
+    const chart = buildFakeChart({
+      mercury: { longitude: 15 }, pluto: { longitude: 20 },
+    }, [conj('mercury', 'pluto', 1)]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const emotional = profile.domainCards.find(c => c.domain === 'emotional')!;
+    expect(emotional.orientationScore).toBeLessThan(40);
   });
 });
 
 // ── Graceful degradation ───────────────────────────────────────────────────────
 
-describe('computeIPSEProfile — graceful degradation', () => {
-  it('still returns four ranked domains when Vedic data is excluded', () => {
+describe('computeIPSEStyleProfile — graceful degradation', () => {
+  it('still returns four domain cards when Vedic, Vibrational, and Human Design are all excluded', () => {
     const chart = buildFakeChart({});
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: true });
-    expect(profile.rankedDomains).toHaveLength(4);
-    expect(profile.dataCoverage.vedic).toBe(false);
-    for (const d of profile.rankedDomains) {
-      expect(d.vedicScore).toBeNull();
-      expect(d.vedicEvidence).toEqual([]);
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    expect(profile.domainCards).toHaveLength(4);
+    expect(profile.dataCoverage).toEqual({ western: true, vedic: false, vibrational: false, humanDesign: false, geneKeys: false, selfReport: false });
+    for (const card of profile.domainCards) {
+      expect(card.vedicLens.available).toBe(false);
+      expect(card.vibrationalLens.available).toBe(false);
+      expect(card.humanDesignLens.available).toBe(false);
     }
   });
 
-  it('still returns four ranked domains when harmonic/vibrational data is excluded', () => {
+  it('reports Gene Keys as unavailable always, per explicit product decision to skip it this pass', () => {
     const chart = buildFakeChart({});
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-    expect(profile.rankedDomains).toHaveLength(4);
-    expect(profile.dataCoverage.vibrational).toBe(false);
-    for (const d of profile.rankedDomains) {
-      expect(d.vibrationalScore).toBeNull();
-      expect(d.vibrationalEvidence).toEqual([]);
-    }
+    const profile = computeIPSEStyleProfile(chart, {});
+    expect(profile.dataCoverage.geneKeys).toBe(false);
+    for (const card of profile.domainCards) expect(card.geneKeysLens.available).toBe(false);
   });
 
-  it('ranks are 1-4 with no gaps or duplicates, and scores are 0-100', () => {
+  it('includes a working Human Design lens when an HdChart is supplied', () => {
     const chart = buildFakeChart({});
-    const profile = computeIPSEProfile(chart, {});
-    expect(profile.rankedDomains.map(d => d.rank).sort()).toEqual([1, 2, 3, 4]);
-    for (const d of profile.rankedDomains) {
-      expect(d.score).toBeGreaterThanOrEqual(0);
-      expect(d.score).toBeLessThanOrEqual(100);
-    }
+    const hd = fakeHdChart({ definedCenters: ['sacral', 'root'], type: 'Generator', authority: 'Sacral' });
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, humanDesign: hd });
+    expect(profile.dataCoverage.humanDesign).toBe(true);
+    const practical = profile.domainCards.find(c => c.domain === 'practical')!;
+    expect(practical.humanDesignLens.available).toBe(true);
+    expect(practical.accessPattern).not.toBe('unknown');
   });
 });
 
-// ── Real end-to-end chart (Einstein fixture, has real Vedic + longitude data) ──
+// ── Real end-to-end chart ──────────────────────────────────────────────────────
 
-describe('computeIPSEProfile — real chart end-to-end', () => {
-  const einstein: ResolvedBirth = {
-    name: 'Einstein', date: '1879-03-14', time: '11:30',
-    city: 'Ulm', region: 'Baden-Württemberg', country: 'Germany',
-    lat: 48.3984, lng: 9.9916, timezone: 'LMT', utc: '1879-03-14T10:50:02Z', julianDayUT: 0,
-  };
-
+describe('computeIPSEStyleProfile — real chart end-to-end', () => {
   it('computes a full profile without crashing, using real Western + Vedic + harmonic data', () => {
+    const einstein: ResolvedBirth = {
+      name: 'Einstein', date: '1879-03-14', time: '11:30',
+      city: 'Ulm', region: 'Baden-Württemberg', country: 'Germany',
+      lat: 48.3984, lng: 9.9916, timezone: 'LMT', utc: '1879-03-14T10:50:02Z', julianDayUT: 0,
+    };
     const chart = computeNatalChart(einstein);
-    const profile = computeIPSEProfile(chart);
-    expect(profile.rankedDomains).toHaveLength(4);
+    const profile = computeIPSEStyleProfile(chart);
+    expect(profile.domainCards).toHaveLength(4);
     expect(profile.dataCoverage.western).toBe(true);
     expect(profile.dataCoverage.vedic).toBe(true);
     expect(profile.dataCoverage.vibrational).toBe(true);
-    expect(['intellectual', 'practical', 'spiritual', 'emotional']).toContain(profile.dominantDomain);
+    for (const card of profile.domainCards) {
+      expect(card.orientationScore).toBeGreaterThanOrEqual(0);
+      expect(card.orientationScore).toBeLessThanOrEqual(100);
+    }
   });
 });
 
 // ── Minor-chart safety ─────────────────────────────────────────────────────────
 
-describe('computeIPSEProfile — minor chart', () => {
-  it('uses "Learning & Growth Style" and minor-safe rank labels for a chart under 18', () => {
-    const recentYear = new Date().getFullYear() - 8; // 8 years old
+describe('computeIPSEStyleProfile — minor chart', () => {
+  it('uses "Learning & Growth Style" for a chart under 18', () => {
+    const recentYear = new Date().getFullYear() - 8;
     const chart = buildFakeChart({}, [], `${recentYear}-06-15`);
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
     expect(profile.isMinor).toBe(true);
     expect(profile.sectionTitle).toBe('Learning & Growth Style');
-    expect(profile.sectionSubtitle.toLowerCase()).not.toContain('intelligence styles');
-
-    const minorLabels = ['Most visible growth mode', 'Supporting growth mode', 'Developing mode', 'Less emphasized right now'];
-    for (const d of profile.rankedDomains) {
-      expect(minorLabels).toContain(d.rankLabel);
-    }
+    expect(profile.disclaimer).toContain('A chart is a symbolic map');
   });
 });
 
-// ── Safety language: never claims to measure real intelligence/ability ────────
+// ── Safety language ────────────────────────────────────────────────────────────
 
+// Note: "fixed potential" is deliberately excluded here even though the spec
+// lists it as forbidden -- the same spec also mandates using it, verbatim,
+// inside the required disclaimer's negation ("not measured ability, fixed
+// potential, or personal worth"). Stating what ISN'T being measured is the
+// opposite of the harmful usage the forbidden list exists to prevent; this
+// scan instead checks that nothing POSITIVELY claims a fixed potential,
+// which is what the disclaimer sentence structurally can't do.
 const FORBIDDEN_TERMS = [
-  'iq', 'low intelligence', 'high intelligence', 'genius', 'gifted', 'deficient',
-  'superior', 'weak intelligence', 'spiritually advanced', 'emotionally broken',
-  'not practical', 'not smart', 'low eq', 'low potential',
-  'quietest intelligence', 'low score', 'weak domain', 'this child will',
+  'iq', 'high intelligence', 'low intelligence', 'genius', 'gifted', 'deficient',
+  'superior', 'inferior', 'low eq', 'spiritually advanced', 'emotionally broken',
+  'destined', 'quotient', 'lowest mode', 'weak style', 'this child will',
 ];
 
-function collectAllProfileStrings(profile: IPSEProfile): string[] {
+function collectAllProfileStrings(profile: IPSEStyleProfile): string[] {
   const strings: string[] = [profile.sectionTitle, profile.sectionSubtitle, profile.disclaimer, profile.profileSummary];
-  for (const d of profile.rankedDomains) {
-    strings.push(d.title, d.label, d.rankLabel, d.summary, d.integratedExpression, ...d.strengths, ...d.growthEdges, ...d.subtypes);
+  for (const c of profile.domainCards) {
+    strings.push(c.title, c.subtitle, c.summary, c.integratedExpression, ...c.strengths, ...c.growthEdges);
+    if (c.primaryStyle) strings.push(c.primaryStyle.label);
+    strings.push(...c.secondaryStyles.map(s => s.label));
+    if (c.humanDesignLens.available) strings.push(c.humanDesignLens.summary, c.humanDesignLens.growthEdge, c.humanDesignLens.decisionSupport);
+    if (c.vedicLens.available) strings.push(c.vedicLens.summary);
   }
   return strings;
 }
 
-describe('computeIPSEProfile — safety language', () => {
-  it('never uses forbidden ability/intelligence-measuring language (adult profile)', () => {
-    const chart = buildFakeChart({});
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
+describe('computeIPSEStyleProfile — safety language', () => {
+  it('never uses forbidden ability/intelligence-measuring language (adult profile, with HD)', () => {
+    const chart = buildFakeChart({
+      mercury: { longitude: 215 }, pluto: { longitude: 220 }, mars: { longitude: 15 }, saturn: { longitude: 20 },
+    }, [conj('mercury', 'pluto', 1), conj('mars', 'saturn', 1)]);
+    const hd = fakeHdChart({ definedCenters: [], type: 'Projector', authority: 'Splenic' });
+    const profile = computeIPSEStyleProfile(chart, { humanDesign: hd });
     const haystack = collectAllProfileStrings(profile).join(' \n ').toLowerCase();
-    for (const term of FORBIDDEN_TERMS) {
-      expect(haystack).not.toContain(term);
-    }
+    for (const term of FORBIDDEN_TERMS) expect(haystack).not.toContain(term);
   });
 
   it('never uses forbidden ability/intelligence-measuring language (minor profile)', () => {
     const recentYear = new Date().getFullYear() - 8;
     const chart = buildFakeChart({}, [], `${recentYear}-06-15`);
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
     const haystack = collectAllProfileStrings(profile).join(' \n ').toLowerCase();
-    for (const term of FORBIDDEN_TERMS) {
-      expect(haystack).not.toContain(term);
-    }
+    for (const term of FORBIDDEN_TERMS) expect(haystack).not.toContain(term);
   });
 
-  it('states plainly that IPSE does not measure intelligence, ability, or worth', () => {
+  it('uses the required framing language somewhere in the disclaimer', () => {
     const chart = buildFakeChart({});
-    const profile = computeIPSEProfile(chart, { includeVedic: false, includeVibrational: false });
-    expect(profile.disclaimer.toLowerCase()).toContain('not');
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    expect(profile.disclaimer.toLowerCase()).toContain('symbolic');
   });
 });

@@ -787,15 +787,20 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               return (
                 <>
                   <SectionHead
-                    title={isMinor ? 'Learning & Growth Style' : 'IPSE Profile'}
+                    title={isMinor ? 'Learning & Growth Style' : 'IPSE Style Profile'}
                     note="Intellectual · Practical · Spiritual · Emotional"
                   />
-                  <p style={{ margin: '4px 2px 14px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                  <p style={{ margin: '4px 2px 6px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
                     {isMinor
-                      ? "IPSE ranks four symbolic ways a person tends to process life — Intellectual, Practical, Spiritual, and Emotional — from most to least emphasized in the chart. For a child's chart, this becomes a supportive Learning & Growth Style read: gentle insight into how a child may naturally learn, feel, and grow, never a measure of ability, giftedness, or potential."
-                      : 'IPSE ranks four symbolic intelligence styles — Intellectual, Practical, Spiritual, and Emotional — from most to least emphasized in your chart. It describes symbolic emphasis and processing style, not measured IQ, EQ, competence, or spiritual attainment. A quieter domain is a quieter symbolic current here, not a weakness.'}
+                      ? "Supportive insight into a child's natural learning, feeling, and growth patterns — not a measure of ability or potential."
+                      : 'A symbolic map of how your intelligence expresses through thought, action, meaning, and emotion.'}
                   </p>
-                  <IPSEPanel chart={chart} mode={interpMode} />
+                  <p style={{ margin: '0 2px 14px', fontSize: 13, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', lineHeight: 1.65, maxWidth: 640 }}>
+                    {isMinor
+                      ? 'A chart is a symbolic map. A child is a living person. Always trust the child in front of you more than any interpretation.'
+                      : 'IPSE reflects symbolic intelligence style and processing patterns, not measured ability, fixed potential, or personal worth.'}
+                  </p>
+                  <IPSEPanel chart={chart} mode={interpMode} hdChart={hdChart} />
                 </>
               );
             })()}
