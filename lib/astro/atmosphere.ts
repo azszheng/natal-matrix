@@ -142,9 +142,18 @@ function selectTheme(
 }
 
 export async function computeAtmosphere(chart: NatalChart): Promise<BirthAtmosphere> {
-  const { lat, lng, utc, date } = chart.input;
+  const { lat, lng, utc } = chart.input;
   const utcMs   = new Date(utc).getTime();
   const utcHour = new Date(utc).getUTCHours();
+  // The weather archive is indexed by UTC calendar date + UTC hour, so the
+  // date queried must be the UTC date of the birth instant -- NOT
+  // chart.input.date, which is the LOCAL birth date. For any birth time
+  // where the local date and UTC date fall on different calendar days
+  // (anyone born in the hours around local midnight, in effectively any
+  // timezone with a nonzero UTC offset -- a large fraction of all births),
+  // using the local date here fetched an entirely different day's weather,
+  // silently off by one calendar day.
+  const utcDateISO = new Date(utc).toISOString().slice(0, 10);
 
   const sunAlt   = sunAltitudeDeg(lat, lng, utcMs);
   const isDaytime = sunAlt > -0.833; // standard civil definition
@@ -153,7 +162,7 @@ export async function computeAtmosphere(chart: NatalChart): Promise<BirthAtmosph
   const moonLon = chart.western.bodies.moon?.longitude ?? 0;
   const moonPhase = ((moonLon - sunLon) % 360 + 360) % 360;
 
-  const weatherCategory = await fetchWeatherCategory(lat, lng, date, utcHour);
+  const weatherCategory = await fetchWeatherCategory(lat, lng, utcDateISO, utcHour);
 
   const theme = selectTheme(isDaytime, sunAlt, moonPhase, weatherCategory);
 
