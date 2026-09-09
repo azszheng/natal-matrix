@@ -1040,14 +1040,41 @@ const DOMAIN_COPY: Record<IPSEDomainId, { strengths: string[]; growthEdges: stri
 
 // ── Summary generation (deterministic; safe to surface as-is) ────────────────
 
+// Varied by rank (not just domain name) so the four domain cards don't read
+// as the same sentence with nouns swapped. The "this isn't a measure of
+// ability" framing is stated once, prominently, at the section level
+// (IPSEProfile.disclaimer) — repeating it verbatim in all four cards was
+// the main source of the repetitiveness, so here it only resurfaces where
+// it matters most: the quietest/least-emphasized mode, where a reader is
+// likeliest to misread "quieter" as "weaker."
+
 function generateDomainSummary(domain: IPSEDomainResult, isMinor: boolean): string {
   const subtypeText = domain.subtypes.join(', ');
+  const title = domain.title;
 
   if (isMinor) {
-    return `${domain.title} appears as a ${domain.rankLabel.toLowerCase()} in this child's growth profile. This does not measure ability or potential. It suggests this mode may be expressed through ${subtypeText}. Use this as a support cue, not a fixed label.`;
+    switch (domain.rank) {
+      case 1:
+        return `${title} is currently the most visible way this child seems to learn, feel, and grow — showing up through ${subtypeText}. Use this as a support cue, not a fixed description of who they are.`;
+      case 2:
+        return `${title} shows up as a steady supporting mode, often working alongside their more visible pattern above — through ${subtypeText}.`;
+      case 3:
+        return `${title} appears as a developing mode right now, expressed through ${subtypeText} when the moment calls for it.`;
+      default:
+        return `${title} is less emphasized in this reading, though that can shift with time, environment, and experience — it may still show up through ${subtypeText} in quieter ways. This does not measure ability or potential.`;
+    }
   }
 
-  return `${domain.title} is your ${domain.rankLabel.toLowerCase()} in the IPSE Profile. This does not measure ability; it shows symbolic chart emphasis. This mode appears through ${subtypeText}, suggesting that this is one of the ways you naturally process life, growth, and experience.`;
+  switch (domain.rank) {
+    case 1:
+      return `${title} leads your IPSE Profile — the most emphasized of the four modes in this chart. It shows up through ${subtypeText}, and it's likely one of the most natural ways you meet life, learn, and grow.`;
+    case 2:
+      return `${title} runs close behind as a strong supporting current, often working alongside your dominant mode. Look for it through ${subtypeText} — a mode you can lean on even when it isn't leading.`;
+    case 3:
+      return `${title} sits further in the background here — present but quieter, expressed through ${subtypeText} when called on. A background mode isn't absent, just less symbolically emphasized in this particular chart.`;
+    default:
+      return `${title} is the quietest of the four modes in this chart, showing up through ${subtypeText} in subtler ways. This reflects symbolic emphasis only — not a limit on what you can develop or access.`;
+  }
 }
 
 function generateIPSEProfileSummary(ranked: IPSEDomainResult[], balancePattern: IPSEBalancePattern, isMinor: boolean): string {
