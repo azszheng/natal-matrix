@@ -24,6 +24,8 @@ import BirthAtmosphereHero from '@/components/BirthAtmosphere';
 import HumanDesignDrawer from '@/components/modals/HumanDesignDrawer';
 import TopicsPanel from '@/components/TopicsPanel';
 import VibrationalPanel from '@/components/VibrationalPanel';
+import IPSEPanel from '@/components/IPSEPanel';
+import { isMinorChart } from '@/lib/ai/childhoodImprints';
 import ChildhoodImprintsSection from '@/components/childhood/ChildhoodImprintsSection';
 import Disclosure from '@/components/ui/Disclosure';
 import PinGate from '@/components/ui/PinGate';
@@ -180,7 +182,7 @@ const SIGN_ABBR: Record<string, string> = {
 
 // ── Top-level section nav ────────────────────────────────────────────────────
 
-type PageSection = 'chart' | 'topics' | 'compare' | 'vedic' | 'vibrational' | 'humandesign' | 'childhood';
+type PageSection = 'chart' | 'topics' | 'compare' | 'vedic' | 'vibrational' | 'humandesign' | 'childhood' | 'ipse';
 
 const TOPICS_MENU: { id: PageSection; label: string }[] = [
   { id: 'topics',    label: 'Life Themes' },
@@ -207,10 +209,11 @@ function SectionNavButton({ label, active, secondary, onClick }: {
   );
 }
 
-function SectionNav({ section, onChange }: { section: PageSection; onChange: (s: PageSection) => void }) {
+function SectionNav({ section, onChange, chart }: { section: PageSection; onChange: (s: PageSection) => void; chart: NatalChart }) {
   const [topicsOpen, setTopicsOpen] = useState(false);
   const topicsRef = useRef<HTMLDivElement>(null);
   const topicsActive = section === 'topics' || section === 'childhood';
+  const ipseLabel = isMinorChart(chart.input.date) ? 'Learning & Growth Style' : 'IPSE Profile';
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -233,16 +236,21 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
             display: 'flex', flexDirection: 'column',
             border: '1px solid var(--line)', background: 'var(--bg-raised)', boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
           }}>
-            {TOPICS_MENU.map((item, i) => (
-              <button key={item.id} onClick={() => { onChange(item.id); setTopicsOpen(false); }} style={{
-                textAlign: 'left', cursor: 'pointer', whiteSpace: 'nowrap',
-                padding: '10px 14px',
-                border: 'none', borderBottom: i < TOPICS_MENU.length - 1 ? '1px solid var(--line)' : 'none',
-                background: section === item.id ? 'rgba(201,164,76,0.08)' : 'transparent',
-                fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em',
-                color: section === item.id ? 'var(--fg-glyph)' : 'var(--fg-muted)',
-              }}>{item.label}</button>
-            ))}
+            {TOPICS_MENU.map((item, i) => {
+              const isSelected = section === item.id;
+              return (
+                <button key={item.id} onClick={() => { onChange(item.id); setTopicsOpen(false); }} style={{
+                  textAlign: 'left', cursor: 'pointer', whiteSpace: 'nowrap',
+                  padding: '10px 14px',
+                  borderTop: 'none', borderRight: 'none', borderBottom: i < TOPICS_MENU.length - 1 ? '1px solid var(--line)' : 'none',
+                  borderLeft: isSelected ? '3px solid var(--fg-glyph)' : '3px solid transparent',
+                  background: isSelected ? 'rgba(201,164,76,0.18)' : 'transparent',
+                  fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em',
+                  fontWeight: isSelected ? 700 : 400,
+                  color: isSelected ? 'var(--fg-glyph)' : 'var(--fg-muted)',
+                }}>{item.label}</button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -250,6 +258,7 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
       <SectionNavButton label="Compatibility" active={section === 'compare'} onClick={() => onChange('compare')} />
       <SectionNavButton label="Human Design" active={section === 'humandesign'} onClick={() => onChange('humandesign')} />
       <SectionNavButton label="Vibrational" active={section === 'vibrational'} onClick={() => onChange('vibrational')} />
+      <SectionNavButton label={ipseLabel} active={section === 'ipse'} onClick={() => onChange('ipse')} />
     </nav>
   );
 }
@@ -567,7 +576,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
 
         {chart && (
           <>
-            <SectionNav section={section} onChange={setSection} />
+            <SectionNav section={section} onChange={setSection} chart={chart} />
 
             {section === 'chart' && (
               <>
@@ -772,6 +781,24 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                 <VibrationalPanel chart={chart} mode={interpMode} onInterpret={setInterpSection} />
               </>
             )}
+
+            {section === 'ipse' && (() => {
+              const isMinor = isMinorChart(chart.input.date);
+              return (
+                <>
+                  <SectionHead
+                    title={isMinor ? 'Learning & Growth Style' : 'IPSE Profile'}
+                    note="Intellectual · Practical · Spiritual · Emotional"
+                  />
+                  <p style={{ margin: '4px 2px 14px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
+                    {isMinor
+                      ? "IPSE ranks four symbolic ways a person tends to process life — Intellectual, Practical, Spiritual, and Emotional — from most to least emphasized in the chart. For a child's chart, this becomes a supportive Learning & Growth Style read: gentle insight into how a child may naturally learn, feel, and grow, never a measure of ability, giftedness, or potential."
+                      : 'IPSE ranks four symbolic intelligence styles — Intellectual, Practical, Spiritual, and Emotional — from most to least emphasized in your chart. It describes symbolic emphasis and processing style, not measured IQ, EQ, competence, or spiritual attainment. A quieter domain is a quieter symbolic current here, not a weakness.'}
+                  </p>
+                  <IPSEPanel chart={chart} mode={interpMode} />
+                </>
+              );
+            })()}
 
             {section === 'childhood' && (
               <>
