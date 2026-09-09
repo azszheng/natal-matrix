@@ -224,7 +224,6 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
     <nav style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', padding: '2px 2px 4px' }}>
       <SectionNavButton label="Western" active={section === 'chart'} onClick={() => onChange('chart')} />
       <SectionNavButton label="Vedic" active={section === 'vedic'} onClick={() => onChange('vedic')} />
-      <SectionNavButton label="Vibrational" active={section === 'vibrational'} onClick={() => onChange('vibrational')} />
 
       <div ref={topicsRef} style={{ position: 'relative' }}>
         <SectionNavButton label="Topics" active={topicsActive} onClick={() => setTopicsOpen(o => !o)} />
@@ -250,6 +249,7 @@ function SectionNav({ section, onChange }: { section: PageSection; onChange: (s:
 
       <SectionNavButton label="Compatibility" active={section === 'compare'} onClick={() => onChange('compare')} />
       <SectionNavButton label="Human Design" active={section === 'humandesign'} onClick={() => onChange('humandesign')} />
+      <SectionNavButton label="Vibrational" active={section === 'vibrational'} onClick={() => onChange('vibrational')} />
     </nav>
   );
 }
@@ -737,6 +737,23 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               </>
             )}
 
+            {section === 'humandesign' && (
+              <>
+                <SectionHead title="Human Design" />
+                <section style={{ padding: '4px 2px 0' }}>
+                  <PinGate storageKey="natal:wip-unlocked" pin="8420" title="Human Design is under testing — enter code to continue">
+                    <FeatureCard
+                      title="Human Design"
+                      description="A synthesis of astrology, the I Ching, and the chakra system that maps your energy type, decision-making authority, and life purpose — calculated from your exact birth data."
+                      tags={['Energy Type', 'Inner Authority', 'Profile', 'Bodygraph', 'Gates']}
+                      ctaLabel="Open Chart →"
+                      onOpen={() => setHdDrawerOpen(true)}
+                    />
+                  </PinGate>
+                </section>
+              </>
+            )}
+
             {section === 'vibrational' && (
               <>
                 <SectionHead
@@ -753,23 +770,6 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                   This is not a replacement for your Western or Vedic chart — it&apos;s an additional, more specialized lens for going deeper into where your energy is genuinely concentrated, rather than a full personality or life-path reading on its own. Not every harmonic will show a strong hit in every chart, and that&apos;s expected: this method is built to surface real, concentrated energy where it exists, not to force a reading onto every frequency.
                 </p>
                 <VibrationalPanel chart={chart} mode={interpMode} onInterpret={setInterpSection} />
-              </>
-            )}
-
-            {section === 'humandesign' && (
-              <>
-                <SectionHead title="Human Design" />
-                <section style={{ padding: '4px 2px 0' }}>
-                  <PinGate storageKey="natal:wip-unlocked" pin="8420" title="Human Design is under testing — enter code to continue">
-                    <FeatureCard
-                      title="Human Design"
-                      description="A synthesis of astrology, the I Ching, and the chakra system that maps your energy type, decision-making authority, and life purpose — calculated from your exact birth data."
-                      tags={['Energy Type', 'Inner Authority', 'Profile', 'Bodygraph', 'Gates']}
-                      ctaLabel="Open Chart →"
-                      onOpen={() => setHdDrawerOpen(true)}
-                    />
-                  </PinGate>
-                </section>
               </>
             )}
 
