@@ -322,3 +322,37 @@ describe('computeIPSEStyleProfile — style distribution stays reasonably balanc
     }
   });
 });
+
+// ── Interpretation copy differentiation ───────────────────────────────────────
+// Regression guard for a real reported issue: strengths/growthEdges/
+// integratedExpression used to come from a purely domain-level table (4
+// entries total), so every person whose primary style fell under the same
+// domain saw byte-for-byte identical interpretation copy regardless of
+// which of the ~6 named styles was actually theirs. Copy is now keyed by
+// style id (23 entries); this asserts two people with different primary
+// styles in the same domain get genuinely different copy.
+
+describe('computeIPSEStyleProfile — interpretation copy is style-specific, not just domain-specific', () => {
+  it('two different primary styles in the same domain produce different strengths, growth edges, and integrated expression', () => {
+    const chartA = buildFakeChart({
+      asc: { longitude: 60 }, mc: { longitude: 330 },
+      mercury: { longitude: 68 }, uranus: { longitude: 70 }, sun: { longitude: 100 },
+    }, [conj('mercury', 'uranus', 1)]);
+
+    const chartB = buildFakeChart({
+      asc: { longitude: 335 }, mc: { longitude: 245 },
+      mercury: { longitude: 340 }, neptune: { longitude: 342 }, moon: { longitude: 100 },
+    }, [conj('mercury', 'neptune', 1)]);
+
+    const profileA = computeIPSEStyleProfile(chartA, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const profileB = computeIPSEStyleProfile(chartB, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+
+    const intellectualA = profileA.domainCards.find(c => c.domain === 'intellectual')!;
+    const intellectualB = profileB.domainCards.find(c => c.domain === 'intellectual')!;
+
+    expect(intellectualA.primaryStyle?.id).not.toBe(intellectualB.primaryStyle?.id);
+    expect(intellectualA.integratedExpression).not.toBe(intellectualB.integratedExpression);
+    expect(intellectualA.strengths).not.toEqual(intellectualB.strengths);
+    expect(intellectualA.growthEdges).not.toEqual(intellectualB.growthEdges);
+  });
+});

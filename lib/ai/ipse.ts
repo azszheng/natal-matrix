@@ -865,6 +865,137 @@ const IPSE_DOMAIN_COPY: Record<IPSEDomainId, { strengths: string[]; growthEdges:
   },
 };
 
+// Style-specific copy -- keyed by style id, not domain. Without this, every
+// person whose primary style falls under (say) "Spiritual / Meaning Style"
+// saw identical strengths/growth-edges/integrated-expression text regardless
+// of whether their actual style was a Mystic Receiver or an Occult
+// Investigator -- the two most differentiating fields in the whole card
+// were silently domain-level, not style-level. Falls back to
+// IPSE_DOMAIN_COPY only when no style clears the selection threshold.
+type StyleCopy = { strengths: string[]; growthEdges: string[]; integratedExpression: string };
+
+const IPSE_STYLE_COPY: Record<string, StyleCopy> = {
+  // Intellectual
+  researchInvestigator: {
+    strengths: ['Investigative persistence', 'Comfort with complexity and hidden layers', 'Ability to trace root causes others miss'],
+    growthEdges: ['Getting lost in research instead of concluding', 'Over-skepticism', 'Difficulty explaining findings simply'],
+    integratedExpression: 'A mind that can go deep without getting lost, surfacing hidden patterns and translating them into usable insight.',
+  },
+  systemsThinker: {
+    strengths: ['Seeing how parts connect into a whole', 'Innovative, non-linear problem-solving', 'Comfort with abstraction and future-oriented ideas'],
+    growthEdges: ['Impatience with slow or conventional process', 'Detaching from practical constraints', 'Restlessness once a system is understood'],
+    integratedExpression: 'A mind that can map complex systems and translate structural insight into workable innovation.',
+  },
+  technicalRigorousThinker: {
+    strengths: ['Precision and methodical follow-through', 'Comfort with detail and structure', 'Reliable, well-tested conclusions'],
+    growthEdges: ['Perfectionism or over-caution', 'Difficulty moving forward without full certainty', "Rigidity when a rule doesn't fit the situation"],
+    integratedExpression: 'A mind that builds understanding carefully, layer by layer, into something dependable.',
+  },
+  philosophicalSynthesizer: {
+    strengths: ['Big-picture synthesis across ideas', 'Generosity of interpretation', 'Ability to find meaning in complexity'],
+    growthEdges: ['Overgeneralizing from limited evidence', 'Avoiding necessary detail', 'Restlessness with narrow or repetitive tasks'],
+    integratedExpression: 'A mind that weaves broad understanding into a coherent, meaningful worldview.',
+  },
+  symbolicImaginalThinker: {
+    strengths: ['Metaphor and symbolic pattern recognition', 'Imaginative, associative thinking', 'Sensitivity to what is unspoken or implied'],
+    growthEdges: ['Difficulty with strict logic or literalism', 'Blurring fact and impression', 'Retreating into imagination instead of engaging directly'],
+    integratedExpression: 'A mind that translates the intangible into image and story, making the abstract felt and understandable.',
+  },
+  tacticalFastProcessor: {
+    strengths: ['Quick, decisive thinking under pressure', 'Sharp, efficient communication', 'Comfort improvising in real time'],
+    growthEdges: ['Impulsive conclusions', 'Impatience with deliberation or nuance', 'Combative communication under stress'],
+    integratedExpression: 'A mind that thinks on its feet, converting quick perception into fast, effective action.',
+  },
+  // Practical
+  strategicExecutor: {
+    strengths: ['Long-range planning', 'Disciplined follow-through', 'Reliability under responsibility'],
+    growthEdges: ['Over-control or rigidity', 'Difficulty delegating', 'Defining self-worth through achievement'],
+    integratedExpression: 'The capacity to hold a long-term structure and execute it with discipline over time.',
+  },
+  systemsImplementer: {
+    strengths: ['Turning plans into working processes', 'Attention to procedural detail', 'Consistency in routine execution'],
+    growthEdges: ['Over-reliance on process at the expense of flexibility', 'Frustration when systems are ignored', 'Difficulty improvising outside the plan'],
+    integratedExpression: 'The ability to translate an idea into a working, repeatable process.',
+  },
+  crisisManager: {
+    strengths: ['Composure under pressure', 'Willingness to confront hard problems directly', 'Resourcefulness in high-stakes moments'],
+    growthEdges: ['Difficulty relaxing outside of crisis', 'Attraction to intensity or conflict', 'Burnout from operating at constant alert'],
+    integratedExpression: 'The ability to meet real pressure directly and act effectively when it matters most.',
+  },
+  resourceManager: {
+    strengths: ['Careful stewardship of time, money, or materials', 'Patience for incremental, steady progress', 'Practical realism'],
+    growthEdges: ['Over-caution or resistance to risk', 'Difficulty parting with resources or control', 'Undervaluing intangible or long-shot opportunities'],
+    integratedExpression: 'The steady hand that builds security and stability through consistent, careful management.',
+  },
+  pressureDrivenBuilder: {
+    strengths: ['Endurance through difficulty', 'Willingness to carry real responsibility', 'Growth forged through consistent effort'],
+    growthEdges: ['Confusing pressure with capacity', 'Delaying rest until "earned"', 'Difficulty trusting ease when it appears'],
+    integratedExpression: 'The strength built through sustained effort -- most powerful once pressure and capacity are no longer confused.',
+  },
+  // Spiritual
+  mysticReceiver: {
+    strengths: ['Openness to intuitive, non-ordinary perception', 'Compassion and imaginative empathy', 'Comfort with mystery and the unknown'],
+    growthEdges: ['Difficulty distinguishing intuition from wishful thinking', 'Escapism or avoidance of ordinary demands', 'Diffuse boundaries between self and surroundings'],
+    integratedExpression: 'A receptive awareness that can hold mystery while staying grounded in daily life.',
+  },
+  occultInvestigator: {
+    strengths: ['Comfort exploring taboo, hidden, or intense subjects', 'Psychological depth and insight', 'Willingness to face what others avoid'],
+    growthEdges: ['Preoccupation with darkness or crisis', 'Difficulty trusting surface-level explanations', 'Intensity that can overwhelm lighter contexts'],
+    integratedExpression: 'The capacity to face hidden or difficult material and return with usable understanding.',
+  },
+  philosophicalSeeker: {
+    strengths: ['Genuine curiosity about meaning and belief', 'Optimism and expansiveness', 'Ability to find purpose across different contexts'],
+    growthEdges: ['Restlessness or dissatisfaction with the ordinary', 'Over-idealizing distant beliefs or places', 'Preaching rather than exploring'],
+    integratedExpression: 'A search for meaning that stays curious rather than dogmatic, and grounded rather than escapist.',
+  },
+  visionary: {
+    strengths: ['Original, future-oriented insight', 'Comfort breaking from convention', 'Ability to imagine what does not yet exist'],
+    growthEdges: ['Difficulty landing ideas in the present', 'Impatience with slower, incremental change', 'Isolation from those who do not share the vision'],
+    integratedExpression: 'The capacity to sense what is emerging and bring it into a form others can recognize.',
+  },
+  contemplativePractitioner: {
+    strengths: ['Discipline in reflective or spiritual practice', 'Patience with slow, internal development', 'Comfort with solitude'],
+    growthEdges: ['Withdrawal from ordinary responsibility', 'Rigid or joyless discipline', 'Delaying life while "still preparing"'],
+    integratedExpression: 'A grounded, disciplined practice that deepens meaning without requiring retreat from life.',
+  },
+  ancestralKarmicProcessor: {
+    strengths: ['Sensitivity to inherited or generational patterns', 'Capacity to process and metabolize old material', 'Loyalty to lineage or history'],
+    growthEdges: ['Carrying weight that was not consciously chosen', "Difficulty separating one's own path from inherited expectations", 'Repeating familiar patterns instead of examining them'],
+    integratedExpression: 'The capacity to consciously process inherited patterns rather than silently carry or repeat them.',
+  },
+  // Emotional
+  empathicAbsorber: {
+    strengths: ["Deep attunement to others' emotional states", 'Compassion and gentle presence', 'Sensitivity to unspoken atmosphere'],
+    growthEdges: ['Absorbing emotions that are not one\'s own', 'Difficulty maintaining clear boundaries', 'Emotional exhaustion in crowded or intense environments'],
+    integratedExpression: 'A permeable sensitivity that can stay compassionate without losing track of what belongs to whom.',
+  },
+  depthFeeler: {
+    strengths: ['Capacity for intense, transformative emotional bonds', 'Comfort with intensity others avoid', 'Perceptiveness about hidden emotional undercurrents'],
+    growthEdges: ['Confusing intensity with intimacy', 'Difficulty with lighter or more casual connection', 'Power struggles in close relationships'],
+    integratedExpression: 'Emotional depth that can transform a bond without needing to control it.',
+  },
+  emotionalTranslator: {
+    strengths: ['Ability to name and articulate feelings clearly', 'Bridging emotional and verbal understanding', 'Helping others make sense of what they feel'],
+    growthEdges: ['Intellectualizing feelings instead of experiencing them', 'Overexplaining in emotionally charged moments', 'Restlessness with unspoken or ambiguous feelings'],
+    integratedExpression: 'The capacity to put feeling into words without flattening what it actually feels like.',
+  },
+  relationalHarmonizer: {
+    strengths: ['Natural diplomacy and social ease', 'Genuine warmth in relationships', 'Skill at reading and easing tension'],
+    growthEdges: ['Avoiding necessary conflict', "Losing personal preference to keep the peace", "Over-adapting to others' expectations"],
+    integratedExpression: 'The ability to create real harmony without sacrificing honesty or self.',
+  },
+  loyalProtector: {
+    strengths: ['Steady, dependable emotional presence', 'Discretion and containment under pressure', 'Deep, enduring loyalty'],
+    growthEdges: ['Difficulty asking for support in return', 'Guardedness that limits vulnerability', "Carrying others' burdens silently"],
+    integratedExpression: 'A contained strength that protects others while still allowing itself to be known.',
+  },
+  boundaryLearner: {
+    strengths: ['Deep compassion and permeability', 'Willingness to stay open despite difficulty', 'Growth through direct relational experience'],
+    growthEdges: ['Blurred or inconsistent boundaries', 'Idealizing others before knowing them well', 'Difficulty distinguishing compassion from self-sacrifice'],
+    integratedExpression: "Compassion that stays open while learning, over time, where one's self ends and another's begins.",
+  },
+};
+
 function refineGrowthEdgesByEvidence(base: string[], hdLens: HumanDesignIPSELens): string[] {
   if (hdLens.available && hdLens.growthEdge) return [hdLens.growthEdge, ...base.slice(0, 2)];
   return base;
@@ -990,6 +1121,18 @@ export function computeIPSEStyleProfile(chart: NatalChart, options: IPSEOptions 
     const expressionTone = inferExpressionTone(combined.orientationScore, combined.fluencyScore, combined.frictionScore, humanDesignLens);
     const westernEvidence = westernStyles.flatMap(s => s.evidence.filter(e => e.system === 'western'));
 
+    // Style-specific copy when a primary style was identified; domain-level
+    // generic copy only for the no-clear-style fallback case. When a
+    // secondary style is also present, one of its strengths/growth-edges is
+    // folded in so two people sharing the same primary style but different
+    // secondary styles still read as distinguishable.
+    const primaryCopy = selected.primaryStyle ? IPSE_STYLE_COPY[selected.primaryStyle.id] : undefined;
+    const secondaryCopy = selected.secondaryStyles[0] ? IPSE_STYLE_COPY[selected.secondaryStyles[0].id] : undefined;
+    const baseStrengths = primaryCopy?.strengths ?? IPSE_DOMAIN_COPY[domain].strengths;
+    const baseGrowthEdges = primaryCopy?.growthEdges ?? IPSE_DOMAIN_COPY[domain].growthEdges;
+    const strengths = secondaryCopy ? [...baseStrengths, secondaryCopy.strengths[0]] : baseStrengths;
+    const growthEdges = secondaryCopy ? [...baseGrowthEdges, secondaryCopy.growthEdges[0]] : baseGrowthEdges;
+
     return {
       domain,
       title: IPSE_STYLE_DEFINITIONS[domain].title,
@@ -1003,9 +1146,9 @@ export function computeIPSEStyleProfile(chart: NatalChart, options: IPSEOptions 
       expressionTone,
       accessPattern: humanDesignLens.accessPattern,
       summary: generateDomainSummary(domain, selected, vedicLens, humanDesignLens, isMinor),
-      strengths: IPSE_DOMAIN_COPY[domain].strengths,
-      growthEdges: refineGrowthEdgesByEvidence(IPSE_DOMAIN_COPY[domain].growthEdges, humanDesignLens),
-      integratedExpression: IPSE_DOMAIN_COPY[domain].integratedExpression,
+      strengths,
+      growthEdges: refineGrowthEdgesByEvidence(growthEdges, humanDesignLens),
+      integratedExpression: primaryCopy?.integratedExpression ?? IPSE_DOMAIN_COPY[domain].integratedExpression,
       westernEvidence,
       vedicLens,
       vibrationalLens,
