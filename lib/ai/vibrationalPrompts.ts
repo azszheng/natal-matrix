@@ -133,7 +133,7 @@ ${METHOD_NOTE}
 
 CHART CONTEXT: ${chartSummary(chart)}
 
-HARMONIC ACTIVATION SUMMARY (six base harmonics: 5, 7, 8, 9, 11, 13):
+HARMONIC ACTIVATION SUMMARY (11 emphasized harmonics: 5, 7, 8, 9, 11, 13, 17, 19, 23, 29, 31):
 ${summaryLines}
 
 INSTRUCTIONS:

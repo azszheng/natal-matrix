@@ -127,7 +127,7 @@ export default function VibrationalPanel({ chart, mode, onInterpret }: Props) {
             Harmonic astrology was pioneered by John Addey and later developed into &ldquo;Vibrational Astrology&rdquo; by David Cochrane. The technique is simple to state and exact to compute: take every planet&apos;s ecliptic longitude, multiply it by a whole number N (the &ldquo;harmonic&rdquo;), and reduce the result modulo 360°. Any aspect of order N in your natal chart — a trine in the 3rd harmonic, a quintile in the 5th — collapses into an exact <strong>conjunction</strong> in that harmonic chart. A tight conjunction there means two planets share a genuine, precise Nth-harmonic relationship in your birth data.
           </p>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7 }}>
-            A tighter orb represents a stronger &ldquo;current.&rdquo; There&apos;s no single universally published orb standard for harmonic conjunctions — practitioners vary this by preference — so this reading uses a conservative, flat 3° orb across all six harmonics rather than presenting one convention as an absolute rule.
+            A tighter orb represents a stronger &ldquo;current.&rdquo; There&apos;s no single universally published orb standard for harmonic conjunctions — practitioners vary this by preference — so this reading uses a conservative, flat 3° orb across every harmonic below rather than presenting one convention as an absolute rule.
           </p>
         </Disclosure>
       </div>

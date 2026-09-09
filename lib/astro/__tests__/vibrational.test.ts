@@ -6,7 +6,7 @@ import {
   computeHarmonicConjunctions,
   computeVibrationalProfile,
   VIBRATIONAL_BODIES,
-  BASE_HARMONICS,
+  EMPHASIZED_HARMONICS,
 } from '../vibrational';
 
 const einstein: ResolvedBirth = {
@@ -73,8 +73,9 @@ describe('computeVibrationalProfile — real chart sanity', () => {
   const chart = computeNatalChart(einstein);
   const profile = computeVibrationalProfile(chart);
 
-  it('returns exactly the six documented base harmonics', () => {
-    expect(profile.map(h => h.number)).toEqual(BASE_HARMONICS.map(h => h.number));
+  it('returns exactly the eleven documented emphasized harmonics', () => {
+    expect(profile.map(h => h.number)).toEqual(EMPHASIZED_HARMONICS.map(h => h.number));
+    expect(profile.map(h => h.number)).toEqual([5, 7, 8, 9, 11, 13, 17, 19, 23, 29, 31]);
   });
 
   it('never surfaces trueNode against itself or a South Node tautology', () => {

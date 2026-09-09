@@ -9,20 +9,26 @@
  *
  * Any exact aspect of order H in the natal chart (e.g. a trine, which is
  * 1/3 of the circle) becomes an exact CONJUNCTION in the Hth harmonic
- * chart — that collapsing-to-conjunction is the entire mechanism. This
- * module computes the six "base harmonics" Cochrane's Vibrational
- * Astrology treats as primary (5, 7, 8, 9, 11, 13) and finds which body
- * pairs land in a tight harmonic conjunction for each one.
+ * chart — that collapsing-to-conjunction is the entire mechanism.
+ *
+ * EMPHASIZED_HARMONICS and their themes are taken directly from Cochrane's
+ * own presentation material ("Forecasting with Vibrational Astrology"),
+ * not a secondary summary: "Vibrational Astrology emphasizes the following
+ * harmonics [5, 7, 8, 9, 11, 13, 17, 19, 23, 29, 31, 32] but all before, in
+ * between, and after 32 are important." His slides give an explicit theme
+ * for every one of those except 32 (which is named as "well understood"
+ * but never given its own distinct quality in the source material) — 32
+ * is deliberately left out of this module rather than guessing a theme
+ * for it.
  *
  * Orb convention: this implementation uses a flat 3° orb for harmonic
- * conjunctions across all six base harmonics. There is no single
- * universally published orb table for harmonic charts — practitioners
- * (and harmonic software like Cochrane's own Sirius) vary this by
- * preference — so this is a documented, conservative choice, not a claim
- * of one canonical standard. "Strength" scales linearly from 0 at the
- * orb boundary to 100 at an exact (0°) conjunction, reflecting the
- * standard harmonic-astrology principle that a tighter orb means a
- * stronger "current."
+ * conjunctions across every harmonic. There is no single universally
+ * published orb table for harmonic charts — practitioners (and harmonic
+ * software like Cochrane's own Sirius) vary this by preference — so this
+ * is a documented, conservative choice, not a claim of one canonical
+ * standard. "Strength" scales linearly from 0 at the orb boundary to 100
+ * at an exact (0°) conjunction, reflecting Cochrane's own stated
+ * principle: "the tighter the orb, the stronger the current."
  */
 
 import type { NatalChart, BodyId } from './types';
@@ -55,36 +61,61 @@ export const VIBRATIONAL_BODIES: BodyId[] = [
 
 export const HARMONIC_CONJUNCTION_ORB = 3;
 
-export const BASE_HARMONICS: Array<{ number: number; label: string; theme: string }> = [
+export const EMPHASIZED_HARMONICS: Array<{ number: number; label: string; theme: string }> = [
   {
     number: 5,
     label: '5th Harmonic — Creativity & Play',
-    theme: 'Playfulness, creative self-expression, and spontaneous talent — the quintile current.',
+    theme: 'Creativity and play.',
   },
   {
     number: 7,
-    label: '7th Harmonic — Inspiration & Devotion',
-    theme: 'Quiet discipline, introspection, and single-minded devotion to a craft, belief, or practice.',
+    label: '7th Harmonic — Introversion & Skill',
+    theme: 'Introversion, focus, and skill.',
   },
   {
     number: 8,
-    label: '8th Harmonic — Drive & Intensity',
-    theme: 'The underlying driving force behind action — intensity, willpower, and what compels a person forward.',
+    label: '8th Harmonic — Self-Motivation',
+    theme: 'Self-motivation, challenges, and central life themes.',
   },
   {
     number: 9,
-    label: '9th Harmonic — Belonging & Integration',
-    theme: 'How a person places and integrates themselves within their community, and a sense of completion.',
+    label: '9th Harmonic — Community & Healing',
+    theme: 'Community, marriage, and healing.',
   },
   {
     number: 11,
-    label: '11th Harmonic — Innovation & Unrest',
-    theme: 'Restlessness, originality, and an appetite for the new — Uranian, inventive, and impatient with the status quo.',
+    label: '11th Harmonic — Instability & Change',
+    theme: 'Instability, yearning, constant change, and moving.',
   },
   {
     number: 13,
-    label: '13th Harmonic — Transformation & Mastery',
-    theme: 'Individual achievement and the drive toward mastery through sustained transformation.',
+    label: '13th Harmonic — Rising Above',
+    theme: 'The need to feel special or powerful; the drive to rise above.',
+  },
+  {
+    number: 17,
+    label: '17th Harmonic — Empathy',
+    theme: "Empathy and understanding of the stories of others.",
+  },
+  {
+    number: 19,
+    label: '19th Harmonic — Production & Creation',
+    theme: 'Production and creation — intellectual, cerebral.',
+  },
+  {
+    number: 23,
+    label: '23rd Harmonic — Non-Linearity',
+    theme: 'Non-linearity — living with an understanding of many perspectives at once.',
+  },
+  {
+    number: 29,
+    label: '29th Harmonic — Non-Linearity',
+    theme: 'Non-linearity — living with an understanding of many perspectives at once.',
+  },
+  {
+    number: 31,
+    label: '31st Harmonic — Personal Transformation',
+    theme: 'Capacity for, and involvement with, personal transformation.',
   },
 ];
 
@@ -127,7 +158,7 @@ export function computeHarmonicConjunctions(
 }
 
 export function computeVibrationalProfile(chart: NatalChart): VibrationalHarmonic[] {
-  return BASE_HARMONICS.map(({ number, label, theme }) => {
+  return EMPHASIZED_HARMONICS.map(({ number, label, theme }) => {
     const conjunctions = computeHarmonicConjunctions(chart, number);
     const strength = conjunctions.length > 0 ? conjunctions[0].strength : 0;
     return { number, label, theme, conjunctions, strength };
