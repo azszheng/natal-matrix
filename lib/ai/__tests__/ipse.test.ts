@@ -32,8 +32,11 @@ function buildFakeChart(placements: Partial<Record<BodyId, Placement>>, aspects:
   const bodies = {} as NatalChart['western']['bodies'];
 
   for (const id of ALL_BODIES) {
-    // Default: neutral cadent placement (house 12, no strong dignity), unless overridden.
-    const p = placements[id] ?? { longitude: 340 + ALL_BODIES.indexOf(id) * 0.1 };
+    // Default: spread roughly evenly around the zodiac (not clustered in any
+    // one sign) so an un-overridden body contributes chance-level scatter
+    // rather than accidentally concentrating in whichever sign this offset
+    // happens to land in.
+    const p = placements[id] ?? { longitude: (ALL_BODIES.indexOf(id) * (360 / ALL_BODIES.length)) + 7 };
     const sign = signOf(p.longitude);
     bodies[id] = {
       id, longitude: p.longitude, latitude: 0, distance: 1,
@@ -147,6 +150,34 @@ describe('computeIPSEProfile — domain dominance from real chart-factor pattern
     const spread = Math.max(...scores) - Math.min(...scores);
     // Weak, undifferentiated data should not produce a dramatic, confident spread.
     expect(spread).toBeLessThan(35);
+  });
+
+  it('elementModePattern only lights up for above-chance sign clustering, not chance-level scatter', () => {
+    // Regression test: this component previously reached its ceiling (40)
+    // whenever a domain had >=5 of ~13 tracked bodies in its supporting
+    // signs -- a threshold at or below pure chance, verified against five
+    // real, unrelated charts to saturate in 11 of 20 domain/person
+    // combinations regardless of any genuine signal.
+    const scattered = buildFakeChart({}); // default placements: no deliberate sign clustering
+    const scatteredProfile = computeIPSEProfile(scattered, { includeVedic: false, includeVibrational: false });
+    for (const d of scatteredProfile.rankedDomains) {
+      expect(d.westernComponents!.elementModePattern).toBeLessThan(40);
+    }
+
+    // Deliberately cluster ALL 13 tracked bodies into Intellectual's signs
+    // (gemini, virgo, aquarius, sagittarius, scorpio, capricorn) -- genuine,
+    // well-above-chance clustering (13 hits vs. an expected ~6.5) should
+    // score meaningfully higher than chance-level scatter.
+    const clustered = buildFakeChart({
+      sun: { longitude: 75 }, moon: { longitude: 165 }, mercury: { longitude: 315 },
+      venus: { longitude: 255 }, mars: { longitude: 225 }, jupiter: { longitude: 285 },
+      saturn: { longitude: 76 }, uranus: { longitude: 166 }, neptune: { longitude: 316 },
+      pluto: { longitude: 256 }, trueNode: { longitude: 226 }, southNode: { longitude: 286 },
+      chiron: { longitude: 77 },
+    });
+    const clusteredProfile = computeIPSEProfile(clustered, { includeVedic: false, includeVibrational: false });
+    const intellectual = clusteredProfile.rankedDomains.find(d => d.domain === 'intellectual')!;
+    expect(intellectual.westernComponents!.elementModePattern).toBeGreaterThan(20);
   });
 });
 

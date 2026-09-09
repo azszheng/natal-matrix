@@ -107,6 +107,12 @@ export type IPSEDomainResult = {
   westernScore: number | null;
   vedicScore: number | null;
   vibrationalScore: number | null;
+  // Per-variable breakdown (0-100 each) behind each system's aggregate score
+  // above -- surfaced so it's possible to see exactly which factor is
+  // driving (or failing to differentiate) a given domain's number, rather
+  // than only ever seeing the final blended score.
+  westernComponents: IPSEWesternComponents | null;
+  vedicComponents: IPSEVedicComponents | null;
   westernEvidence: IPSEEvidence[];
   vedicEvidence: IPSEEvidence[];
   vibrationalEvidence: IPSEEvidence[];
@@ -517,10 +523,22 @@ function computeRulerConditionComponent(chart: NatalChart, domainId: IPSEDomainI
 
 // ── Western: element / mode flavor (low weight) ───────────────────────────────
 
+// Scored as excess-over-chance, not a raw hit count: with ~13 tracked bodies
+// spread across 12 signs, a domain covering 4-6 "supporting" signs already
+// gets ~4.3-6.5 hits from pure chance alone, before any real clustering.
+// The previous formula (signHits * 0.08, capped at 0.4) reached its ceiling
+// at exactly 5 hits -- i.e. at or below chance level -- so it maxed out for
+// nearly every domain for nearly every chart regardless of any genuine
+// signal, and it also systematically favored domains with more target signs
+// (6 signs vs. 4 is a higher chance-level baseline, not more real emphasis).
+// Verified against 5 real, unrelated charts: this alone accounted for the
+// single most repeated flat value (40) across every domain and every person.
 function computeElementModeComponent(chart: NatalChart, domainId: IPSEDomainId, def: IPSEDomainDef): ComponentResult {
   const evidence: IPSEEvidence[] = [];
   const signHits = countPlanetsInSigns(chart, def.signs);
-  const weighted = Math.min(signHits * 0.08, 0.4);
+  const expectedHits = HOUSE_TRACKABLE_BODIES.length * (def.signs.length / 12);
+  const excess = signHits - expectedHits;
+  const weighted = clamp01(excess / 3) * 0.4; // 3 above-chance hits reaches the same 0.4 ceiling
 
   if (weighted >= 0.16) {
     evidence.push({
@@ -540,9 +558,13 @@ const WESTERN_COMPONENT_WEIGHTS = {
   planetProminence: 0.3, houseActivation: 0.2, aspectNetwork: 0.25, rulerCondition: 0.15, elementModePattern: 0.1,
 };
 
+export type IPSEWesternComponents = {
+  planetProminence: number; houseActivation: number; aspectNetwork: number; rulerCondition: number; elementModePattern: number;
+};
+
 function computeWesternScore(
   chart: NatalChart, analysis: ChartAnalysis, domainId: IPSEDomainId, def: IPSEDomainDef,
-): { score: number; evidence: IPSEEvidence[] } {
+): { score: number; evidence: IPSEEvidence[]; components: IPSEWesternComponents } {
   const planet = computePlanetProminenceComponent(chart, analysis, domainId, def);
   const house = computeHouseActivationComponent(chart, analysis, domainId, def);
   const aspect = computeAspectNetworkComponent(chart, domainId, def);
@@ -559,6 +581,13 @@ function computeWesternScore(
   return {
     score: Math.round(clamp01(score01) * 100),
     evidence: [...planet.evidence, ...house.evidence, ...aspect.evidence, ...ruler.evidence, ...element.evidence],
+    components: {
+      planetProminence: Math.round(planet.score * 100),
+      houseActivation: Math.round(house.score * 100),
+      aspectNetwork: Math.round(aspect.score * 100),
+      rulerCondition: Math.round(ruler.score * 100),
+      elementModePattern: Math.round(element.score * 100),
+    },
   };
 }
 
@@ -763,9 +792,13 @@ const VEDIC_COMPONENT_WEIGHTS = {
   karakaStrength: 0.3, bhavaActivation: 0.25, lordCondition: 0.2, dashaRelevance: 0.15, nakshatraYogaSupport: 0.1,
 };
 
+export type IPSEVedicComponents = {
+  karakaStrength: number; bhavaActivation: number; lordCondition: number; dashaRelevance: number; nakshatraYogaSupport: number;
+};
+
 function computeVedicScore(
   chart: NatalChart, analysis: VedicAnalysis, domainId: IPSEDomainId,
-): { score: number; evidence: IPSEEvidence[] } {
+): { score: number; evidence: IPSEEvidence[]; components: IPSEVedicComponents } {
   const def = VEDIC_IPSE[domainId];
 
   const karaka = computeVedicKarakaStrength(chart, analysis, domainId, def);
@@ -784,6 +817,13 @@ function computeVedicScore(
   return {
     score: Math.round(clamp01(score01) * 100),
     evidence: [...karaka.evidence, ...bhava.evidence, ...lord.evidence, ...dasha.evidence, ...yoga.evidence],
+    components: {
+      karakaStrength: Math.round(karaka.score * 100),
+      bhavaActivation: Math.round(bhava.score * 100),
+      lordCondition: Math.round(lord.score * 100),
+      dashaRelevance: Math.round(dasha.score * 100),
+      nakshatraYogaSupport: Math.round(yoga.score * 100),
+    },
   };
 }
 
@@ -1174,6 +1214,8 @@ export function computeIPSEProfile(chart: NatalChart, options: IPSEOptions = {})
       westernScore: western.score,
       vedicScore: vedic?.score ?? null,
       vibrationalScore: vibrational?.score ?? null,
+      westernComponents: western.components,
+      vedicComponents: vedic?.components ?? null,
       westernEvidence: western.evidence,
       vedicEvidence: vedic?.evidence ?? [],
       vibrationalEvidence: vibrational?.evidence ?? [],

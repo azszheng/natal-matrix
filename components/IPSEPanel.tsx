@@ -3,8 +3,21 @@
 import { useMemo } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
 import type { InterpretMode } from '@/lib/ai/prompts';
-import { computeIPSEProfile, type IPSEDomainResult, type IPSEEvidence, type IPSESystem } from '@/lib/ai/ipse';
+import { computeIPSEProfile, type IPSEDomainResult, type IPSEEvidence, type IPSESystem, type IPSEWesternComponents, type IPSEVedicComponents } from '@/lib/ai/ipse';
 import Disclosure from '@/components/ui/Disclosure';
+
+const COMPONENT_LABEL: Record<string, string> = {
+  planetProminence: 'Planet prominence',
+  houseActivation: 'House activation',
+  aspectNetwork: 'Aspect network',
+  rulerCondition: 'Ruler condition',
+  elementModePattern: 'Sign emphasis (flavor)',
+  karakaStrength: 'Karaka strength',
+  bhavaActivation: 'Bhava activation',
+  lordCondition: 'House lord condition',
+  dashaRelevance: 'Current dasha relevance',
+  nakshatraYogaSupport: 'Yoga support',
+};
 
 const TONE_LABEL: Record<string, string> = {
   supportive: 'Flows easily',
@@ -41,6 +54,28 @@ function EvidenceList({ title, evidence }: { title: string; evidence: IPSEEviden
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>
               {Math.round(e.weight * 100)}%
             </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ComponentBreakdown({ title, components }: { title: string; components: IPSEWesternComponents | IPSEVedicComponents }) {
+  const entries = Object.entries(components) as Array<[string, number]>;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <p style={{ margin: '0 0 6px', fontFamily: 'var(--font-mono)', fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-dim)' }}>
+        {title}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {entries.map(([key, value]) => (
+          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--fg-muted)' }}>
+            <span style={{ flex: '0 0 160px' }}>{COMPONENT_LABEL[key] ?? key}</span>
+            <div style={{ flex: 1, height: 4, background: 'var(--line)', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ width: `${value}%`, height: '100%', background: 'var(--accent)' }} />
+            </div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-dim)', width: 30, textAlign: 'right' }}>{value}</span>
           </div>
         ))}
       </div>
@@ -123,6 +158,14 @@ function DomainCard({ domain, mode, isMinor }: { domain: IPSEDomainResult; mode:
             <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>Vedic: {domain.vedicScore ?? '—'}</span>
             <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>Vibrational: {domain.vibrationalScore ?? '—'}</span>
           </div>
+          <Disclosure label="Variables behind this score">
+            {domain.westernComponents && (
+              <ComponentBreakdown title="Western variables" components={domain.westernComponents} />
+            )}
+            {domain.vedicComponents && (
+              <ComponentBreakdown title="Vedic variables" components={domain.vedicComponents} />
+            )}
+          </Disclosure>
           <Disclosure label="Evidence used for this domain">
             <EvidenceList title={SYSTEM_LABEL.western} evidence={domain.westernEvidence} />
             {domain.vedicEvidence.length > 0
