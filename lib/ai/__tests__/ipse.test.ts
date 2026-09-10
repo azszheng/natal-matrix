@@ -120,6 +120,17 @@ describe('computeIPSEStyleProfile — Western style detection', () => {
     expect(spiritual.primaryStyle?.id).toBe('mysticReceiver');
   });
 
+  it('detects Rational / humanist meaning-maker for a Jupiter-Saturn, Capricorn-Jupiter, 9th-house-Saturn chart', () => {
+    const chart = buildFakeChart({
+      saturn: { longitude: 250 }, // sagittarius, house 9
+      jupiter: { longitude: 280 }, // capricorn
+    }, [conj('jupiter', 'saturn', 1)]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const spiritual = profile.domainCards.find(c => c.domain === 'spiritual')!;
+    expect(spiritual.primaryStyle?.id).toBe('rationalMeaningMaker');
+  });
+
   it('detects Relational harmonizer for a Moon-Venus, 7th-house-heavy, Libra chart', () => {
     const chart = buildFakeChart({
       moon: { longitude: 195 }, // libra

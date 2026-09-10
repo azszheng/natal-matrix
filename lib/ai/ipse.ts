@@ -369,6 +369,7 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
       { id: 'visionary', label: 'Visionary', vibrationalPair: ['uranus', 'neptune'], westernIndicators: [A('uranus', 'neptune'), A('jupiter', 'neptune')] },
       { id: 'contemplativePractitioner', label: 'Contemplative practitioner', vibrationalPair: ['saturn', 'neptune'], westernIndicators: [A('saturn', 'neptune'), H('saturn', 12), HE(12)] },
       { id: 'ancestralKarmicProcessor', label: 'Ancestral / karmic processor', vibrationalPair: ['moon', 'pluto'], westernIndicators: [A('moon', 'pluto'), H('southNode', 4), H('southNode', 8), HE(4)] },
+      { id: 'rationalMeaningMaker', label: 'Rational / humanist meaning-maker', vibrationalPair: ['jupiter', 'saturn'], westernIndicators: [A('jupiter', 'saturn'), H('saturn', 9), S('jupiter', 'capricorn'), HE(9)] },
     ],
   },
   emotional: {
@@ -962,6 +963,11 @@ const IPSE_STYLE_COPY: Record<string, StyleCopy> = {
     strengths: ['Sensitivity to inherited or generational patterns', 'Capacity to process and metabolize old material', 'Loyalty to lineage or history'],
     growthEdges: ['Carrying weight that was not consciously chosen', "Difficulty separating one's own path from inherited expectations", 'Repeating familiar patterns instead of examining them'],
     integratedExpression: 'The capacity to consciously process inherited patterns rather than silently carry or repeat them.',
+  },
+  rationalMeaningMaker: {
+    strengths: ['Building a durable ethical or philosophical framework through direct experience', 'Comfort finding purpose in responsibility, craft, or care rather than doctrine', 'Skepticism that filters out untested belief'],
+    growthEdges: ['Dismissing intuition or the unexplained too quickly', 'Mistaking structure for the whole of meaning', 'Difficulty naming what feels sacred without proof'],
+    integratedExpression: 'A sense of purpose built through lived responsibility and tested principle, open enough to leave room for what cannot yet be explained.',
   },
   // Emotional
   empathicAbsorber: {
