@@ -72,6 +72,32 @@ function conj(a: BodyId, b: BodyId, orb = 1): Aspect {
   return { a, b, kind: 'conjunction', exactAngle: 0, actualAngle: 0, orb, applying: true };
 }
 
+const ASPECT_ANGLES: { angle: number; kind: Aspect['kind'] }[] = [
+  { angle: 0, kind: 'conjunction' }, { angle: 60, kind: 'sextile' }, { angle: 90, kind: 'square' },
+  { angle: 120, kind: 'trine' }, { angle: 180, kind: 'opposition' },
+];
+
+// Derives real aspects from a set of longitudes, the way an actual chart
+// would have them -- needed because a sample that only varies house/sign
+// placements (with an empty aspects array) never exercises any A(...)
+// indicator at all, silently leaving most styles' primary signal untested.
+function deriveAspects(placements: Record<string, number>): Aspect[] {
+  const ids = Object.keys(placements) as BodyId[];
+  const aspects: Aspect[] = [];
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      const a = ids[i], b = ids[j];
+      const diff = Math.abs(placements[a] - placements[b]) % 360;
+      const angle = diff > 180 ? 360 - diff : diff;
+      for (const { angle: target, kind } of ASPECT_ANGLES) {
+        const orb = Math.abs(angle - target);
+        if (orb <= 6) { aspects.push({ a, b, kind, exactAngle: target, actualAngle: angle, orb, applying: true }); break; }
+      }
+    }
+  }
+  return aspects;
+}
+
 function fakeHdChart(overrides: Partial<HdChart>): HdChart {
   return {
     input: {} as HdChart['input'], designUtc: '', personality: [], design: [],
@@ -356,21 +382,32 @@ describe('computeIPSEStyleProfile — safety language', () => {
 // property that made the difference: within each domain, no triggered
 // style should out-fire the least-triggered one by more than ~6x across a
 // reasonably large, varied sample.
+//
+// The sample must vary REAL, derived aspects, not just house/sign
+// placements with an empty aspects array -- an earlier version of this test
+// (and several ad-hoc diagnostics run during development) did exactly that
+// and silently never exercised any A(...) indicator, which is most styles'
+// primary signal. A second, subtler trap: deriving longitude as
+// `i*step1 + bodyIndex*step2` keeps the RELATIVE angle between any two
+// specific bodies constant across the whole sample (the i-term cancels out
+// in the difference), so aspects still wouldn't vary between iterations even
+// with a non-empty aspects array. The hash-based formula below varies pairwise
+// angles for real.
 
 describe('computeIPSEStyleProfile — style distribution stays reasonably balanced', () => {
   it('no single style dominates a domain across a large varied sample of synthetic charts', () => {
     const tally: Record<string, Record<string, number>> = { intellectual: {}, practical: {}, spiritual: {}, emotional: {} };
-    const N = 60;
+    const N = 150;
 
     for (let i = 0; i < N; i++) {
-      // Deterministic pseudo-scatter: each body lands at a different,
-      // non-repeating longitude derived from a simple multiplicative
-      // sequence, so the sample is varied without a real RNG dependency.
       const placements: Partial<Record<BodyId, Placement>> = {};
+      const raw: Record<string, number> = {};
       ALL_BODIES.forEach((id, bi) => {
-        placements[id] = { longitude: ((i * 47 + bi * 83) % 360) };
+        const lon = ((i + 1) * (bi + 1) * 2654435761) % 360;
+        placements[id] = { longitude: lon };
+        raw[id] = lon;
       });
-      const chart = buildFakeChart(placements);
+      const chart = buildFakeChart(placements, deriveAspects(raw));
       const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
       for (const card of profile.domainCards) {
         const key = card.primaryStyle?.id ?? '(fallback)';

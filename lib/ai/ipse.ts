@@ -431,12 +431,17 @@ function computeWesternStyles(chart: NatalChart, domain: IPSEDomainId): IPSEStyl
     const evidence: IPSEEvidence[] = [];
     let total = 0;
     let hits = 0;
+    // True once a hit names a specific planet, pair, or sign -- as opposed to
+    // a generic house-emphasis cluster, which doesn't care which bodies are
+    // involved and carries no domain-specific information on its own.
+    let hasSpecificHit = false;
 
     for (const ind of style.westernIndicators) {
       const result = evalWesternIndicator(chart, ind);
       if (!result.hit) continue;
       total += result.strength;
       hits += 1;
+      if (ind.k !== 'houseEmph') hasSpecificHit = true;
       evidence.push({
         id: `western-${domain}-${style.id}-${evidence.length}`,
         system: 'western', domain, styleId: style.id, component: ind.k === 'aspect' ? 'aspect' : ind.k === 'afflicted' ? 'aspect' : (ind.k === 'houseP' || ind.k === 'houseEmph') ? 'house' : 'planet',
@@ -470,8 +475,11 @@ function computeWesternStyles(chart: NatalChart, domain: IPSEDomainId): IPSEStyl
     }
 
     // Normalize: a style with 0 hits scores 0; each additional hit adds
-    // diminishing marginal value (bounded, not a runaway sum).
-    const score = hits === 0 ? 0 : clamp0100((total / (hits + 1)) * 130);
+    // diminishing marginal value (bounded, not a runaway sum). A lone
+    // house-emphasis hit, with no other corroborating indicator, also scores
+    // 0 -- two unrelated bodies coincidentally sharing a house should never
+    // be sufficient on its own to name someone's style.
+    const score = (hits === 0 || !hasSpecificHit) ? 0 : clamp0100((total / (hits + 1)) * 130);
 
     const supportive = evidence.filter(e => e.polarity === 'supportive').reduce((s, e) => s + e.weight, 0);
     const challenging = evidence.filter(e => e.polarity === 'challenging').reduce((s, e) => s + e.weight, 0);
