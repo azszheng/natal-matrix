@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
-import type { InterpretMode } from '@/lib/ai/prompts';
+import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
 import type { HdChart } from '@/lib/astro/humandesign-constants';
 import {
   computeIPSEStyleProfile,
@@ -10,7 +10,9 @@ import {
   type IPSEEvidence,
   type IPSEStyleResult,
 } from '@/lib/ai/ipse';
+import { buildIPSEDomainSection } from '@/lib/ai/ipsePrompts';
 import Disclosure from '@/components/ui/Disclosure';
+import InterpretButton from '@/components/interpret/InterpretButton';
 
 const TONE_LABEL: Record<string, string> = {
   supportive: 'Flows easily',
@@ -88,14 +90,23 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-function DomainCard({ card, mode, isMinor }: { card: IPSEDomainCard; mode: InterpretMode; isMinor: boolean }) {
+function DomainCard({ card, chart, mode, isMinor, onInterpret }: {
+  card: IPSEDomainCard;
+  chart: NatalChart;
+  mode: InterpretMode;
+  isMinor: boolean;
+  onInterpret?: (section: InterpretSection) => void;
+}) {
   const isEssence = mode === 'essence';
   const isAdvanced = mode === 'astrologer';
 
   return (
     <div style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', padding: '18px 20px', marginBottom: 12 }}>
-      <div style={{ marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
         <span style={{ fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 18, color: 'var(--fg)' }}>{card.title}</span>
+        {onInterpret && (
+          <InterpretButton section={buildIPSEDomainSection(card, chart, mode, isMinor)} onInterpret={onInterpret} />
+        )}
       </div>
       <p style={{ margin: '0 0 12px', fontSize: 11.5, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>{card.subtitle}</p>
 
@@ -188,9 +199,10 @@ type Props = {
   chart: NatalChart;
   mode: InterpretMode;
   hdChart?: HdChart | null;
+  onInterpret?: (section: InterpretSection) => void;
 };
 
-export default function IPSEPanel({ chart, mode, hdChart }: Props) {
+export default function IPSEPanel({ chart, mode, hdChart, onInterpret }: Props) {
   const profile = useMemo(
     () => computeIPSEStyleProfile(chart, { mode, humanDesign: hdChart ?? null }),
     [chart, mode, hdChart],
@@ -221,7 +233,7 @@ export default function IPSEPanel({ chart, mode, hdChart }: Props) {
 
       <div style={{ padding: '16px 20px' }}>
         {profile.domainCards.map(card => (
-          <DomainCard key={card.domain} card={card} mode={mode} isMinor={profile.isMinor} />
+          <DomainCard key={card.domain} card={card} chart={chart} mode={mode} isMinor={profile.isMinor} onInterpret={onInterpret} />
         ))}
       </div>
     </section>

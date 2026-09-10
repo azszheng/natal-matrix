@@ -800,7 +800,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
                       ? 'A chart is a symbolic map. A child is a living person. Always trust the child in front of you more than any interpretation.'
                       : 'IPSE reflects symbolic intelligence style and processing patterns, not measured ability, fixed potential, or personal worth.'}
                   </p>
-                  <IPSEPanel chart={chart} mode={interpMode} hdChart={hdChart} />
+                  <IPSEPanel chart={chart} mode={interpMode} hdChart={hdChart} onInterpret={setInterpSection} />
                 </>
               );
             })()}

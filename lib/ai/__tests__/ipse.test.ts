@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeIPSEStyleProfile, type IPSEStyleProfile } from '../ipse';
+import { buildIPSEDomainSection } from '../ipsePrompts';
 import { getDignityInfo } from '@/lib/astro/dignities';
 import { computeNatalChart } from '@/lib/astro/natal';
 import type { NatalChart, BodyId, SignId, ResolvedBirth, Aspect } from '@/lib/astro/types';
@@ -354,5 +355,44 @@ describe('computeIPSEStyleProfile — interpretation copy is style-specific, not
     expect(intellectualA.integratedExpression).not.toBe(intellectualB.integratedExpression);
     expect(intellectualA.strengths).not.toEqual(intellectualB.strengths);
     expect(intellectualA.growthEdges).not.toEqual(intellectualB.growthEdges);
+  });
+});
+
+// ── Expanded AI interpretation prompt ───────────────────────────────────────────
+
+describe('buildIPSEDomainSection', () => {
+  const einstein: ResolvedBirth = {
+    name: 'Einstein', date: '1879-03-14', time: '11:30',
+    city: 'Ulm', region: 'Baden-Württemberg', country: 'Germany',
+    lat: 48.3984, lng: 9.9916, timezone: 'LMT', utc: '1879-03-14T10:50:02Z', julianDayUT: 0,
+  };
+  const chart = computeNatalChart(einstein);
+  const profile = computeIPSEStyleProfile(chart);
+  const card = profile.domainCards[0];
+
+  it('carries the ipse section type and the domain evidence', () => {
+    const section = buildIPSEDomainSection(card, chart, 'deepdive', false);
+    expect(section.type).toBe('ipse');
+    expect(section.prompt).toContain(card.title.toUpperCase());
+    expect(section.prompt).toContain(String(card.orientationScore));
+  });
+
+  it('always instructs signal-strength framing instead of ability/giftedness language for strong evidence', () => {
+    const section = buildIPSEDomainSection(card, chart, 'deepdive', false);
+    expect(section.prompt).toContain('SIGNAL STRENGTH');
+    expect(section.prompt).toMatch(/never use/i);
+    expect(section.prompt.toLowerCase()).toContain('genius');
+    expect(section.prompt.toLowerCase()).toContain('gifted');
+    // These forbidden words appear only inside the negative instruction telling
+    // the model not to use them -- confirm that framing, not a green light.
+    expect(section.prompt).toContain('Do NOT translate a strong signal into a claim about giftedness');
+  });
+
+  it('adds the minor-chart safety block only when isMinor is true', () => {
+    const adultSection = buildIPSEDomainSection(card, chart, 'deepdive', false);
+    const minorSection = buildIPSEDomainSection(card, chart, 'deepdive', true);
+    expect(adultSection.prompt).not.toContain('MINOR CHART');
+    expect(minorSection.prompt).toContain('MINOR CHART');
+    expect(minorSection.prompt).toContain('Always trust the child in front of you more than any interpretation.');
   });
 });
