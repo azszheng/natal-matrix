@@ -202,6 +202,26 @@ describe('computeIPSEStyleProfile — evidence does not blindly cross-boost ever
     const emotional = profile.domainCards.find(c => c.domain === 'emotional')!;
     expect(emotional.orientationScore).toBeLessThan(40);
   });
+
+  it('does not pool evidence from candidate styles that never cleared the selection threshold (regression: inflated confidence badge and evidence leaking into the AI prompt for a style the person does not have)', () => {
+    const chart = buildFakeChart({
+      mercury: { longitude: 215 }, // scorpio, house 8
+    }, [
+      conj('mercury', 'pluto', 0.1),   // strong hit -> researchInvestigator, should be primary
+      conj('mercury', 'uranus', 0.1),  // strong hit -> systemsThinker, should qualify as secondary
+      conj('mercury', 'saturn', 5),    // weak hit -> technicalRigorousThinker, should stay unselected
+    ]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const intellectual = profile.domainCards.find(c => c.domain === 'intellectual')!;
+
+    expect(intellectual.primaryStyle?.id).toBe('researchInvestigator');
+    expect(intellectual.secondaryStyles.some(s => s.id === 'systemsThinker')).toBe(true);
+    expect(intellectual.secondaryStyles.some(s => s.id === 'technicalRigorousThinker')).toBe(false);
+
+    const evidenceStyleIds = new Set(intellectual.westernEvidence.map(e => e.styleId));
+    expect(evidenceStyleIds.has('technicalRigorousThinker')).toBe(false);
+  });
 });
 
 // ── Graceful degradation ───────────────────────────────────────────────────────

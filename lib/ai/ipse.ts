@@ -1094,7 +1094,7 @@ function generateOverallSummary(domainCards: IPSEDomainCard[], pattern: IPSEOver
 
 // ── Fallback (no usable Western data) ─────────────────────────────────────────
 
-function createFallbackProfile(isMinor: boolean, dataCoverage: IPSELayerAvailability): IPSEStyleProfile {
+function buildSectionHeader(isMinor: boolean): Pick<IPSEStyleProfile, 'sectionTitle' | 'sectionSubtitle' | 'disclaimer'> {
   return {
     sectionTitle: isMinor ? 'Learning & Growth Style' : 'IPSE Style Profile',
     sectionSubtitle: isMinor
@@ -1103,6 +1103,12 @@ function createFallbackProfile(isMinor: boolean, dataCoverage: IPSELayerAvailabi
     disclaimer: isMinor
       ? 'This profile is for supportive reflection only. It does not measure intelligence, ability, personality, or potential. Children should never be labeled, limited, compared, or judged based on a chart. A chart is a symbolic map. A child is a living person. Always trust the child in front of you more than any interpretation.'
       : 'IPSE reflects symbolic intelligence style and processing patterns, not measured ability, fixed potential, or personal worth.',
+  };
+}
+
+function createFallbackProfile(isMinor: boolean, dataCoverage: IPSELayerAvailability): IPSEStyleProfile {
+  return {
+    ...buildSectionHeader(isMinor),
     isMinor,
     dataCoverage,
     overallPattern: 'blended',
@@ -1143,7 +1149,16 @@ export function computeIPSEStyleProfile(chart: NatalChart, options: IPSEOptions 
 
     const combined = combineDomainSignals(westernStyles, vedicLens, vibrationalLens, humanDesignLens);
     const expressionTone = inferExpressionTone(combined.orientationScore, combined.fluencyScore, combined.frictionScore, humanDesignLens);
-    const westernEvidence = westernStyles.flatMap(s => s.evidence.filter(e => e.system === 'western'));
+    // Evidence for the *selected* style(s) only -- pooling every candidate
+    // style's evidence here would let unselected, losing styles inflate the
+    // confidence badge and leak irrelevant evidence into the UI and the AI
+    // interpretation prompt for a style the person doesn't actually have.
+    const selectedStyleIds = new Set(
+      [selected.primaryStyle?.id, ...selected.secondaryStyles.map(s => s.id)].filter((id): id is string => Boolean(id)),
+    );
+    const westernEvidence = westernStyles
+      .filter(s => selectedStyleIds.has(s.id))
+      .flatMap(s => s.evidence.filter(e => e.system === 'western'));
 
     // Style-specific copy when a primary style was identified; domain-level
     // generic copy only for the no-clear-style fallback case. When a
@@ -1154,8 +1169,8 @@ export function computeIPSEStyleProfile(chart: NatalChart, options: IPSEOptions 
     const secondaryCopy = selected.secondaryStyles[0] ? IPSE_STYLE_COPY[selected.secondaryStyles[0].id] : undefined;
     const baseStrengths = primaryCopy?.strengths ?? IPSE_DOMAIN_COPY[domain].strengths;
     const baseGrowthEdges = primaryCopy?.growthEdges ?? IPSE_DOMAIN_COPY[domain].growthEdges;
-    const strengths = secondaryCopy ? [...baseStrengths, secondaryCopy.strengths[0]] : baseStrengths;
-    const growthEdges = secondaryCopy ? [...baseGrowthEdges, secondaryCopy.growthEdges[0]] : baseGrowthEdges;
+    const strengths = secondaryCopy ? [...baseStrengths, secondaryCopy.strengths[0]] : [...baseStrengths];
+    const growthEdges = secondaryCopy ? [...baseGrowthEdges, secondaryCopy.growthEdges[0]] : [...baseGrowthEdges];
 
     return {
       domain,
@@ -1184,13 +1199,7 @@ export function computeIPSEStyleProfile(chart: NatalChart, options: IPSEOptions 
   const overallPattern = computeOverallPattern(domainCards);
 
   return {
-    sectionTitle: isMinor ? 'Learning & Growth Style' : 'IPSE Style Profile',
-    sectionSubtitle: isMinor
-      ? "Supportive insight into a child's natural learning, feeling, and growth patterns — not a measure of ability or potential."
-      : 'A symbolic map of how your intelligence expresses through thought, action, meaning, and emotion.',
-    disclaimer: isMinor
-      ? 'This profile is for supportive reflection only. It does not measure intelligence, ability, personality, or potential. Children should never be labeled, limited, compared, or judged based on a chart. A chart is a symbolic map. A child is a living person. Always trust the child in front of you more than any interpretation.'
-      : 'IPSE reflects symbolic intelligence style and processing patterns, not measured ability, fixed potential, or personal worth.',
+    ...buildSectionHeader(isMinor),
     isMinor,
     dataCoverage,
     overallPattern,
