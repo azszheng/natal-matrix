@@ -248,6 +248,24 @@ describe('computeIPSEStyleProfile — evidence does not blindly cross-boost ever
     const evidenceStyleIds = new Set(intellectual.westernEvidence.map(e => e.styleId));
     expect(evidenceStyleIds.has('technicalRigorousThinker')).toBe(false);
   });
+
+  it('a lone AFF() (afflicted-to-anything) hit does not, by itself, name Pressure-driven builder (regression, same class as the HE() fix)', () => {
+    const chart = buildFakeChart({
+      saturn: { longitude: 100 }, // house 4, not 6 -- H('saturn', 6) should not hit
+    }, [
+      // Saturn-Jupiter, not Saturn-Mars/Venus/Mercury/Sun -- deliberately
+      // avoids also satisfying any OTHER practical style's own aspect
+      // indicator (resourceManager's A(venus,saturn), strategicExecutor's
+      // A(mars/sun,saturn), systemsImplementer's A(mercury,saturn)), so a
+      // pass here can only mean the AFF() fix itself worked, not that some
+      // unrelated style coincidentally won instead.
+      { a: 'saturn', b: 'jupiter', kind: 'square', exactAngle: 90, actualAngle: 90, orb: 1, applying: true },
+    ]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const practical = profile.domainCards.find(c => c.domain === 'practical')!;
+    expect(practical.primaryStyle?.id).not.toBe('pressureDrivenBuilder');
+  });
 });
 
 // ── Graceful degradation ───────────────────────────────────────────────────────
