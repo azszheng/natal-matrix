@@ -202,7 +202,7 @@ export type IPSEOptions = {
 
 // ── Small local helpers (shared math/lookups) ─────────────────────────────────
 
-function clamp0100(n: number): number { return Math.max(0, Math.min(100, n)); }
+function clamp0100(n: number): number { return Math.round(Math.max(0, Math.min(100, n))); }
 function clamp01(n: number): number { return Math.max(0, Math.min(1, n)); }
 function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 function ordinal(n: number): string {
