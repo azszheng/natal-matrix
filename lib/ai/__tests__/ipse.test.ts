@@ -441,6 +441,42 @@ describe('computeIPSEStyleProfile — style distribution stays reasonably balanc
       expect(max / min).toBeLessThan(6);
     }
   });
+
+  it('a single supportive aspect, with no counterbalancing evidence, does not saturate fluency to 100 (regression: house/sign-placement evidence is always polarity "mixed" and never entered this ratio, so one lone trine used to be enough)', () => {
+    const chart = buildFakeChart({
+      moon: { longitude: 195 }, venus: { longitude: 315 },
+    }, [{ a: 'moon', b: 'venus', kind: 'trine', exactAngle: 120, actualAngle: 120, orb: 0.5, applying: true }]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const emotional = profile.domainCards.find(c => c.domain === 'emotional')!;
+    expect(emotional.primaryStyle?.id).toBe('relationalHarmonizer');
+    expect(emotional.fluencyScore).toBeLessThan(80);
+    expect(emotional.fluencyScore).toBeGreaterThan(50);
+  });
+
+  it('does not pool fluency/friction evidence from unselected candidate styles (regression: same pooling bug as the confidence badge, but for fluency/friction)', () => {
+    const chart = buildFakeChart({
+      mercury: { longitude: 215 }, // scorpio, house 8 -- entirely 'mixed'-polarity evidence for researchInvestigator (conjunction, house placement, sign placement are never supportive/challenging)
+    }, [
+      conj('mercury', 'pluto', 0.1),
+      // A weak (wide-orb), unrelated trine for philosophicalSynthesizer --
+      // scores far too low to be selected as primary or secondary, but its
+      // polarity is 'supportive'. Should never reach researchInvestigator's
+      // fluency calculation.
+      { a: 'mercury', b: 'jupiter', kind: 'trine', exactAngle: 120, actualAngle: 120, orb: 5, applying: true },
+    ]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const intellectual = profile.domainCards.find(c => c.domain === 'intellectual')!;
+    expect(intellectual.primaryStyle?.id).toBe('researchInvestigator');
+    expect(intellectual.secondaryStyles.some(s => s.id === 'philosophicalSynthesizer')).toBe(false);
+    // researchInvestigator's own evidence is entirely 'mixed' polarity -- with
+    // no supportive/challenging evidence of its own, fluency should sit at
+    // the neutral midpoint, not be pulled toward 100 by philosophicalSynthesizer
+    // (an unrelated, unselected style in the same domain)'s supportive trine.
+    expect(intellectual.fluencyScore).toBeGreaterThanOrEqual(45);
+    expect(intellectual.fluencyScore).toBeLessThanOrEqual(55);
+  });
 });
 
 // ── Interpretation copy differentiation ───────────────────────────────────────

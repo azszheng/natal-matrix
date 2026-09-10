@@ -808,17 +808,35 @@ const HD_FLUENCY_CAP = 12;
 const HD_FRICTION_CAP = 18;
 
 function combineDomainSignals(
-  westernStyles: IPSEStyleResult[], vedicLens: VedicIPSELens, vibrationalLens: VibrationalIPSELens, hdLens: HumanDesignIPSELens,
+  westernStyles: IPSEStyleResult[], selectedWesternStyles: IPSEStyleResult[], vedicLens: VedicIPSELens, vibrationalLens: VibrationalIPSELens, hdLens: HumanDesignIPSELens,
 ): { orientationScore: number; fluencyScore: number; frictionScore: number } {
+  // Orientation deliberately looks at all candidates (top3), not just the
+  // selected one(s) -- it measures how much overall emphasis this domain
+  // has in the chart, independent of which specific style ends up named.
   const top3 = [...westernStyles].sort((a, b) => b.score - a.score).slice(0, 3);
   let orientation = top3.length ? top3.reduce((s, x, i) => s + x.score * (i === 0 ? 0.6 : i === 1 ? 0.25 : 0.15), 0) : 0;
 
-  const allEvidence = westernStyles.flatMap(s => s.evidence.filter(e => e.system === 'western'));
+  // Fluency/friction describe how easily the *named* style expresses, so
+  // they must come from that style's own evidence only -- pooling every
+  // candidate here (including ones that never even qualified) let mostly-
+  // unrelated supportive evidence elsewhere in the domain drown out a
+  // genuinely mixed or challenging primary style, pushing fluency to a
+  // suspiciously frequent 100.
+  const allEvidence = selectedWesternStyles.flatMap(s => s.evidence.filter(e => e.system === 'western'));
   const supportive = allEvidence.filter(e => e.polarity === 'supportive').reduce((s, e) => s + e.weight, 0);
   const challenging = allEvidence.filter(e => e.polarity === 'challenging').reduce((s, e) => s + e.weight, 0);
-  const totalW = supportive + challenging || 1;
-  let fluency = clamp0100(50 + (supportive / totalW - 0.5) * 80);
-  let friction = clamp0100(50 + (challenging / totalW - 0.5) * 80);
+  // House/sign-emphasis and house-placement indicators are always polarity
+  // 'mixed' (see evalWesternIndicator), so they never enter this ratio --
+  // only aspects and dignity-based sign placements do. Without smoothing, a
+  // style with a single supportive aspect and zero challenging evidence (a
+  // common case; most of a style's other indicators are typically 'mixed')
+  // hits a 100%-supportive ratio immediately, regardless of how thin that
+  // evidence is. Laplace-style smoothing requires the evidence to actually
+  // accumulate before the ratio can swing to an extreme.
+  const SMOOTHING = 1;
+  const totalW = supportive + challenging + 2 * SMOOTHING;
+  let fluency = clamp0100(50 + ((supportive + SMOOTHING) / totalW - 0.5) * 80);
+  let friction = clamp0100(50 + ((challenging + SMOOTHING) / totalW - 0.5) * 80);
 
   if (vedicLens.available) {
     const vSupport = vedicLens.evidence.filter(e => e.polarity === 'supportive').reduce((s, e) => s + e.weight, 0);
@@ -1155,27 +1173,27 @@ export function computeIPSEStyleProfile(chart: NatalChart, options: IPSEOptions 
   const domainCards: IPSEDomainCard[] = DOMAIN_IDS.map(domain => {
     const westernStyles = computeWesternStyles(chart, domain);
     const selected = selectDomainStyles(westernStyles);
+    // The *selected* style(s) only -- pooling every candidate style's
+    // evidence here would let unselected, losing styles inflate the
+    // fluency/friction/confidence scores and leak irrelevant evidence into
+    // the UI and the AI interpretation prompt for a style the person doesn't
+    // actually have.
+    const selectedStyleIds = new Set(
+      [selected.primaryStyle?.id, ...selected.secondaryStyles.map(s => s.id)].filter((id): id is string => Boolean(id)),
+    );
+    const selectedWesternStyles = westernStyles.filter(s => selectedStyleIds.has(s.id));
 
     const vedicLens = dataCoverage.vedic ? computeVedicIPSELens(chart, domain) : { available: false, summary: '', evidence: [] };
     const vibrationalLens = dataCoverage.vibrational ? computeVibrationalIPSELens(chart, domain, westernStyles) : { available: false, summary: '', subtypes: [], evidence: [] };
-    const combined0 = combineDomainSignals(westernStyles, vedicLens, vibrationalLens, { available: false, accessPattern: 'unknown', summary: '', consistencyFactors: [], conditioningFactors: [], decisionSupport: '', growthEdge: '', evidence: [] });
+    const combined0 = combineDomainSignals(westernStyles, selectedWesternStyles, vedicLens, vibrationalLens, { available: false, accessPattern: 'unknown', summary: '', consistencyFactors: [], conditioningFactors: [], decisionSupport: '', growthEdge: '', evidence: [] });
     const humanDesignLens = dataCoverage.humanDesign
       ? computeHumanDesignIPSELens(options.humanDesign, domain, combined0.orientationScore)
       : { available: false, accessPattern: 'unknown' as IPSEAccessPattern, summary: '', consistencyFactors: [], conditioningFactors: [], decisionSupport: '', growthEdge: '', evidence: [] };
     const geneKeysLens = computeGeneKeysIPSELens();
 
-    const combined = combineDomainSignals(westernStyles, vedicLens, vibrationalLens, humanDesignLens);
+    const combined = combineDomainSignals(westernStyles, selectedWesternStyles, vedicLens, vibrationalLens, humanDesignLens);
     const expressionTone = inferExpressionTone(combined.orientationScore, combined.fluencyScore, combined.frictionScore, humanDesignLens);
-    // Evidence for the *selected* style(s) only -- pooling every candidate
-    // style's evidence here would let unselected, losing styles inflate the
-    // confidence badge and leak irrelevant evidence into the UI and the AI
-    // interpretation prompt for a style the person doesn't actually have.
-    const selectedStyleIds = new Set(
-      [selected.primaryStyle?.id, ...selected.secondaryStyles.map(s => s.id)].filter((id): id is string => Boolean(id)),
-    );
-    const westernEvidence = westernStyles
-      .filter(s => selectedStyleIds.has(s.id))
-      .flatMap(s => s.evidence.filter(e => e.system === 'western'));
+    const westernEvidence = selectedWesternStyles.flatMap(s => s.evidence.filter(e => e.system === 'western'));
 
     // Style-specific copy when a primary style was identified; domain-level
     // generic copy only for the no-clear-style fallback case. When a
