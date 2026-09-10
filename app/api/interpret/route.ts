@@ -60,7 +60,8 @@ async function streamClaude(
   send: (token: string) => void,
 ) {
   const isVedic      = section.system === 'vedic';
-  const systemPrompt = isVedic ? buildVedicSystemPrompt(mode) : buildSystemPrompt(mode, '');
+  const isIpse       = section.type === 'ipse';
+  const systemPrompt = isVedic ? buildVedicSystemPrompt(mode) : buildSystemPrompt(mode, '', { suppressAbilityFraming: isIpse });
   const chartContext = isVedic ? buildVedicChartContext(chart) : buildChartContext(chart);
   const maxTokens    = isVedic ? (VEDIC_MAX_TOKENS[mode] ?? 1200) : (MAX_TOKENS[mode] ?? 800);
 
@@ -92,7 +93,7 @@ async function streamOpenAI(
   mode: InterpretMode,
   send: (token: string) => void,
 ) {
-  const systemPrompt = buildSystemPrompt(mode, '');
+  const systemPrompt = buildSystemPrompt(mode, '', { suppressAbilityFraming: section.type === 'ipse' });
   const focusedCtx   = buildFocusedContext(chart, section);
 
   const stream = await openai.responses.create({

@@ -105,7 +105,8 @@ Write an expanded interpretation of this domain grounded in the specific evidenc
 5. A grounded growth edge specific to this evidence, not a generic one.
 
 Do not present this as fated, destined, or a fixed trait. Do not claim this measures real intelligence, ability, or worth in any of the four domains.
-Begin with a 3-5 word thematic title, then a blank line, then the interpretation. No headers within the body. No bullets.`;
+Begin with a 3-5 word thematic title, then a blank line, then the interpretation. No headers within the body. No bullets.
+Do not include any preamble, acknowledgment, or meta-commentary before the title -- no "Here is...", no "Now generating...", no restating these instructions. The very first characters of your response must be the title itself. This is a single domain within a larger four-domain profile, not the "full natal chart" or "full natal interpretation" -- never describe it that way.`;
 
   return {
     type: 'ipse',

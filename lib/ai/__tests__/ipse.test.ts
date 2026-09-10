@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { computeIPSEStyleProfile, type IPSEStyleProfile } from '../ipse';
 import { buildIPSEDomainSection } from '../ipsePrompts';
+import { buildSystemPrompt } from '../prompts';
 import { getDignityInfo } from '@/lib/astro/dignities';
 import { computeNatalChart } from '@/lib/astro/natal';
 import type { NatalChart, BodyId, SignId, ResolvedBirth, Aspect } from '@/lib/astro/types';
@@ -394,5 +395,18 @@ describe('buildIPSEDomainSection', () => {
     expect(adultSection.prompt).not.toContain('MINOR CHART');
     expect(minorSection.prompt).toContain('MINOR CHART');
     expect(minorSection.prompt).toContain('Always trust the child in front of you more than any interpretation.');
+  });
+});
+
+describe('buildSystemPrompt — suppressAbilityFraming (used for IPSE requests)', () => {
+  it('omits the "gifted" ability-framing paragraph when suppressed, so it cannot contradict the IPSE safety block', () => {
+    const suppressed = buildSystemPrompt('deepdive', '', { suppressAbilityFraming: true });
+    expect(suppressed.toLowerCase()).not.toContain('gifted');
+    expect(suppressed.toLowerCase()).not.toContain('the wound and the gift are the same tissue');
+  });
+
+  it('keeps that paragraph by default for non-IPSE sections', () => {
+    const normal = buildSystemPrompt('deepdive', '');
+    expect(normal.toLowerCase()).toContain('gifted');
   });
 });

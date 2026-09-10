@@ -44,7 +44,7 @@ function dashaLordToBodyId(lord: DashaLord): BodyId | null {
   return map[lord] ?? null;
 }
 
-export function buildSystemPrompt(mode: InterpretMode, lifeStageNote: string): string {
+export function buildSystemPrompt(mode: InterpretMode, lifeStageNote: string, opts?: { suppressAbilityFraming?: boolean }): string {
   const modeBlock = mode === 'essence'
     ? `WRITING MODE: ESSENCE — "Tell me what it means"
 
@@ -87,8 +87,8 @@ Never interpret in isolation. Sign tells you style; house tells you arena; aspec
 Focus on mechanisms, not labels. Don't say "you are intense." Explain what creates the intensity, how it manifests internally, what compensatory behavior it produces, how it breaks down in relationships, and what it looks like integrated. The mechanism is the insight.
 
 Find the core tension. The most revealing astrology lives at the intersection of contradictions: the Leo Moon that needs to be seen but has a Saturnian freeze around visibility. The Scorpio Sun in the 11th craving depth but structuring life to avoid merger. Name these paradoxes precisely. Desire vs fear. Visibility vs safety. Autonomy vs belonging. Intellect vs feeling. Control vs surrender.
-
-Do not pathologize gifted placements. Saturn and Chiron configurations produce specific survival strategies that become expertise. Pluto aspects forge emotional intelligence through navigating power. Show the mastery latent in what looks like damage. The wound and the gift are the same tissue.
+${opts?.suppressAbilityFraming ? '' : `
+Do not pathologize gifted placements. Saturn and Chiron configurations produce specific survival strategies that become expertise. Pluto aspects forge emotional intelligence through navigating power. Show the mastery latent in what looks like damage. The wound and the gift are the same tissue.`}
 
 Psychological precision, not spiritual reassurance. Name the specific mechanism, the early adaptive logic behind it, and the developmental arc. Be honest about what's hard without catastrophizing.
 
