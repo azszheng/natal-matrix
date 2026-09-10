@@ -150,6 +150,7 @@ export default function BirthForm({ onResolved }: Props) {
             placeholder="e.g. Amy Zheng"
             value={form.name ?? ''}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            autoComplete="off"
             className={inputClass}
             style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
           />
@@ -245,6 +246,7 @@ export default function BirthForm({ onResolved }: Props) {
             placeholder="e.g. California"
             value={form.region}
             onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+            autoComplete="off"
             className={inputClass}
             style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
           />
@@ -258,6 +260,7 @@ export default function BirthForm({ onResolved }: Props) {
             placeholder="e.g. United States"
             value={form.country}
             onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+            autoComplete="off"
             className={inputClass}
             style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
           />
