@@ -142,6 +142,38 @@ describe('computeIPSEStyleProfile — Western style detection', () => {
     expect(emotional.primaryStyle?.id).toBe('relationalHarmonizer');
   });
 
+  it('detects Entrepreneurial opportunist for a Mars-Jupiter, 11th-house-Jupiter, Sagittarius-Mars chart', () => {
+    const chart = buildFakeChart({
+      mars: { longitude: 250 }, // sagittarius
+      jupiter: { longitude: 310 }, // aquarius, house 11
+    }, [conj('mars', 'jupiter', 1)]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const practical = profile.domainCards.find(c => c.domain === 'practical')!;
+    expect(practical.primaryStyle?.id).toBe('entrepreneurialOpportunist');
+  });
+
+  it('detects Independent / nonconformist believer for a Sun-Uranus, 9th-house-Uranus, Aquarius-Sun chart', () => {
+    const chart = buildFakeChart({
+      uranus: { longitude: 250 }, // sagittarius, house 9
+      sun: { longitude: 310 }, // aquarius
+    }, [conj('sun', 'uranus', 1)]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const spiritual = profile.domainCards.find(c => c.domain === 'spiritual')!;
+    expect(spiritual.primaryStyle?.id).toBe('independentBeliever');
+  });
+
+  it('detects Emotional self-regulator for a Sun-Moon, Mars-Moon, Capricorn-Moon chart', () => {
+    const chart = buildFakeChart({
+      moon: { longitude: 280 }, // capricorn
+    }, [conj('sun', 'moon', 1), conj('mars', 'moon', 1)]);
+
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    const emotional = profile.domainCards.find(c => c.domain === 'emotional')!;
+    expect(emotional.primaryStyle?.id).toBe('emotionalSelfRegulator');
+  });
+
   it('falls back to a gentle default label when no style clears the threshold', () => {
     const chart = buildFakeChart({}); // scattered, no deliberate aspects
     const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });

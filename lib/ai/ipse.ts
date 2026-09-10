@@ -357,6 +357,7 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
       { id: 'crisisManager', label: 'Crisis manager', vibrationalPair: ['mars', 'pluto'], westernIndicators: [A('mars', 'pluto'), H('mars', 8), S('mars', 'scorpio'), HE(8)] },
       { id: 'resourceManager', label: 'Resource manager', vibrationalPair: ['venus', 'saturn'], westernIndicators: [HE(2), A('venus', 'saturn'), SE('taurus')] },
       { id: 'pressureDrivenBuilder', label: 'Pressure-driven builder', vibrationalPair: ['mars', 'saturn'], westernIndicators: [AFF('saturn'), A('mars', 'saturn', true), H('saturn', 6)] },
+      { id: 'entrepreneurialOpportunist', label: 'Entrepreneurial opportunist', vibrationalPair: ['mars', 'jupiter'], westernIndicators: [A('mars', 'jupiter'), H('jupiter', 11), S('mars', 'sagittarius'), HE(11)] },
     ],
   },
   spiritual: {
@@ -370,6 +371,7 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
       { id: 'contemplativePractitioner', label: 'Contemplative practitioner', vibrationalPair: ['saturn', 'neptune'], westernIndicators: [A('saturn', 'neptune'), H('saturn', 12), HE(12)] },
       { id: 'ancestralKarmicProcessor', label: 'Ancestral / karmic processor', vibrationalPair: ['moon', 'pluto'], westernIndicators: [A('moon', 'pluto'), H('southNode', 4), H('southNode', 8), HE(4)] },
       { id: 'rationalMeaningMaker', label: 'Rational / humanist meaning-maker', vibrationalPair: ['jupiter', 'saturn'], westernIndicators: [A('jupiter', 'saturn'), H('saturn', 9), S('jupiter', 'capricorn'), HE(9)] },
+      { id: 'independentBeliever', label: 'Independent / nonconformist believer', vibrationalPair: ['sun', 'uranus'], westernIndicators: [A('sun', 'uranus'), H('uranus', 9), S('sun', 'aquarius')] },
     ],
   },
   emotional: {
@@ -382,6 +384,7 @@ const IPSE_STYLE_DEFINITIONS: Record<IPSEDomainId, DomainDef> = {
       { id: 'relationalHarmonizer', label: 'Relational harmonizer', vibrationalPair: ['moon', 'venus'], westernIndicators: [A('moon', 'venus'), H('venus', 7), SE('libra')] },
       { id: 'loyalProtector', label: 'Loyal protector', vibrationalPair: ['moon', 'saturn'], westernIndicators: [A('moon', 'saturn'), A('venus', 'saturn'), H('saturn', 4)] },
       { id: 'boundaryLearner', label: 'Boundary learner', vibrationalPair: ['venus', 'neptune'], westernIndicators: [A('moon', 'neptune', true), A('venus', 'neptune', true), H('neptune', 7), HE(7)] },
+      { id: 'emotionalSelfRegulator', label: 'Emotional self-regulator', vibrationalPair: ['mars', 'moon'], westernIndicators: [A('sun', 'moon'), A('mars', 'moon'), S('moon', 'capricorn')] },
     ],
   },
 };
@@ -933,6 +936,11 @@ const IPSE_STYLE_COPY: Record<string, StyleCopy> = {
     growthEdges: ['Confusing pressure with capacity', 'Delaying rest until "earned"', 'Difficulty trusting ease when it appears'],
     integratedExpression: 'The strength built through sustained effort -- most powerful once pressure and capacity are no longer confused.',
   },
+  entrepreneurialOpportunist: {
+    strengths: ['Spotting and acting on opportunity before it is obvious to others', 'Comfort with calculated risk', 'Building momentum through bold, confident action'],
+    growthEdges: ['Overcommitting before the groundwork is ready', 'Underestimating the follow-through a venture needs after the initial leap', 'Restlessness once something becomes routine'],
+    integratedExpression: 'The ability to seize real opportunity and pair it with enough follow-through that momentum becomes something lasting.',
+  },
   // Spiritual
   mysticReceiver: {
     strengths: ['Openness to intuitive, non-ordinary perception', 'Compassion and imaginative empathy', 'Comfort with mystery and the unknown'],
@@ -969,6 +977,11 @@ const IPSE_STYLE_COPY: Record<string, StyleCopy> = {
     growthEdges: ['Dismissing intuition or the unexplained too quickly', 'Mistaking structure for the whole of meaning', 'Difficulty naming what feels sacred without proof'],
     integratedExpression: 'A sense of purpose built through lived responsibility and tested principle, open enough to leave room for what cannot yet be explained.',
   },
+  independentBeliever: {
+    strengths: ['Trusting personal conviction over consensus or inherited authority', 'Willingness to hold an unpopular position when it is genuinely earned', 'Belief built from direct experience rather than adopted wholesale'],
+    growthEdges: ['Contrarianism for its own sake', 'Isolation from shared meaning or community', "Difficulty compromising even when the goal would be served by it"],
+    integratedExpression: 'A belief system built from direct conviction rather than consensus, held firmly enough to act on but open enough to keep revising.',
+  },
   // Emotional
   empathicAbsorber: {
     strengths: ["Deep attunement to others' emotional states", 'Compassion and gentle presence', 'Sensitivity to unspoken atmosphere'],
@@ -999,6 +1012,11 @@ const IPSE_STYLE_COPY: Record<string, StyleCopy> = {
     strengths: ['Deep compassion and permeability', 'Willingness to stay open despite difficulty', 'Growth through direct relational experience'],
     growthEdges: ['Blurred or inconsistent boundaries', 'Idealizing others before knowing them well', 'Difficulty distinguishing compassion from self-sacrifice'],
     integratedExpression: "Compassion that stays open while learning, over time, where one's self ends and another's begins.",
+  },
+  emotionalSelfRegulator: {
+    strengths: ['Channeling emotional intensity into disciplined follow-through', 'Self-motivation that does not depend on external validation', 'Composure under emotional pressure'],
+    growthEdges: ['Suppressing feeling instead of processing it', 'Mistaking control for resolution', 'Difficulty asking for support when self-regulation itself becomes exhausting'],
+    integratedExpression: 'The capacity to feel fully while still acting with discipline, rather than needing to choose between the two.',
   },
 };
 
