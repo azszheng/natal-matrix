@@ -610,6 +610,8 @@ Write for someone who may be new to astrology. Plain language. If you use an ast
 FORMAT:
 A thematic title on its own line — 3 to 6 words, no punctuation, no planet or sign names in the title. Then a blank line. Then a single paragraph of 220–300 words.
 
+TITLE DIVERSITY: Do not default to the same title word for a given element or modality every time. Water does not have to produce a title built around "Depth" — it could just as validly center on discretion, undertow, threshold, intuition, quiet, or current, depending on what the rest of the chart actually supports. The same applies to every element and modality: earth need not mean "grounded," fire need not mean "spark" or "flame," air need not mean "clarity," cardinal need not mean "initiate," mutable need not mean "shift." Draw the title from the SPECIFIC convergence of themes in this chart (the top convergent theme, the Sun-Moon relationship, the chart shape, Saturn or Chiron's role) rather than reaching for the first word associated with the dominant element.
+
 ELEMENTAL AND MODAL LENS — THIS IS THE PARAGRAPH'S BACKBONE:
 Before writing a single sentence, absorb the dominant element and modality from the data. These are not facts to mention once and move on — they are the atmosphere, texture, and behavioral style through which every other observation is expressed. A water-fixed chart does not merely "have" those qualities; every sentence should feel like it was written from inside that psyche. Name the element and modality explicitly early in the paragraph, translate each in plain language (water = depth, emotional intelligence, the need to understand underneath; fixed = commitment, intensity, the tendency to go all the way in), and then sustain that register throughout.
 
