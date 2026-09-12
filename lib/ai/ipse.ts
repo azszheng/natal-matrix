@@ -1108,23 +1108,38 @@ function computeOverallPattern(domainCards: IPSEDomainCard[]): IPSEOverallPatter
   return 'blended';
 }
 
-const PATTERN_LABEL: Record<IPSEOverallPattern, string> = {
-  'intellect-led': 'Intellect-led, with the next-strongest style offering support.',
-  'practicality-led': 'Practicality-led, with the next-strongest style offering support.',
-  'spirit-led': 'Spirit-led, with the next-strongest style offering support.',
-  'emotion-led': 'Emotion-led, with the next-strongest style offering support.',
-  'dual-led': 'Dual-led -- two styles work closely together rather than one leading alone.',
-  blended: 'Blended rather than dominated by one mode -- all four styles have meaningful presence.',
-  polarized: 'Polarized -- two styles are much more emphasized than the other two.',
-  subtle: 'Subtle overall -- no single style strongly dominates; these capacities may develop through lived experience more than one obvious chart signature.',
+const DOMAIN_SHORT_LABEL: Record<IPSEDomainId, string> = {
+  intellectual: 'Intellectual', practical: 'Practical', spiritual: 'Spiritual', emotional: 'Emotional',
 };
+
+function describeOverallPattern(domainCards: IPSEDomainCard[], pattern: IPSEOverallPattern): string {
+  const sorted = [...domainCards].sort((a, b) => b.orientationScore - a.orientationScore);
+  const [top, second, third, fourth] = sorted;
+  const name = (c: IPSEDomainCard) => DOMAIN_SHORT_LABEL[c.domain];
+
+  switch (pattern) {
+    case 'intellect-led':
+    case 'practicality-led':
+    case 'spirit-led':
+    case 'emotion-led':
+      return `${name(top)}-led, with ${name(second)} offering support.`;
+    case 'dual-led':
+      return `Dual-led -- ${name(top)} and ${name(second)} work closely together rather than one leading alone.`;
+    case 'blended':
+      return 'Blended rather than dominated by one mode -- all four styles have meaningful presence.';
+    case 'polarized':
+      return `Polarized -- ${name(top)} and ${name(second)} are much more emphasized than ${name(third)} and ${name(fourth)}.`;
+    case 'subtle':
+      return 'Subtle overall -- no single style strongly dominates; these capacities may develop through lived experience more than one obvious chart signature.';
+  }
+}
 
 function generateOverallSummary(domainCards: IPSEDomainCard[], pattern: IPSEOverallPattern, isMinor: boolean): string {
   if (isMinor) {
     const top = [...domainCards].sort((a, b) => b.orientationScore - a.orientationScore)[0];
     return `This child's profile currently appears most expressive through ${top.title.toLowerCase()} patterns. This should be used as a gentle support map, not a fixed description of who they are or what they can become.`;
   }
-  return `Overall pattern: ${PATTERN_LABEL[pattern]}`;
+  return `Overall pattern: ${describeOverallPattern(domainCards, pattern)}`;
 }
 
 // ── Fallback (no usable Western data) ─────────────────────────────────────────

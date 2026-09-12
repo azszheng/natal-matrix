@@ -323,6 +323,29 @@ describe('computeIPSEStyleProfile — real chart end-to-end', () => {
   });
 });
 
+// ── Overall pattern naming ───────────────────────────────────────────────────────
+// Regression guard for a real user complaint: the "Polarized" (and dual-led /
+// X-led) pattern summaries used to say things like "two styles are much more
+// emphasized than the other two" without ever naming which two -- unclear to
+// a reader with no way to cross-reference the score bars themselves.
+
+describe('computeIPSEStyleProfile — overall pattern summary names the actual domains', () => {
+  it('names both the emphasized and de-emphasized domain pairs in a polarized profile', () => {
+    const chart = buildFakeChart({
+      mercury: { longitude: 305 }, uranus: { longitude: 308 }, // aquarius
+      mars: { longitude: 220 }, pluto: { longitude: 50 }, // mars: scorpio, house 8 -- pluto kept elsewhere so it doesn't also feed occultInvestigator's SE(scorpio)/HE(8)
+    }, [
+      conj('mercury', 'uranus', 0.1),
+      conj('mars', 'pluto', 0.1),
+    ]);
+    const profile = computeIPSEStyleProfile(chart, { includeVedic: false, includeVibrational: false, includeHumanDesign: false });
+    expect(profile.overallPattern).toBe('polarized');
+    expect(profile.profileSummary).toBe(
+      'Overall pattern: Polarized -- Practical and Intellectual are much more emphasized than Spiritual and Emotional.',
+    );
+  });
+});
+
 // ── Minor-chart safety ─────────────────────────────────────────────────────────
 
 describe('computeIPSEStyleProfile — minor chart', () => {
