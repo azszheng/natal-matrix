@@ -787,20 +787,12 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
               return (
                 <>
                   <SectionHead
-                    title={isMinor ? 'Learning & Growth Style' : 'IPSE Style Profile'}
-                    note="Intellectual · Practical · Spiritual · Emotional"
+                    title={isMinor ? 'Learning & Growth Style' : 'IPSE Profile'}
+                    note="How you think, execute, find meaning, and process emotion"
                   />
-                  <p style={{ margin: '4px 2px 6px', fontSize: 15, color: 'var(--fg-muted)', fontFamily: 'var(--font-sans)', lineHeight: 1.65, maxWidth: 640 }}>
-                    {isMinor
-                      ? "Supportive insight into a child's natural learning, feeling, and growth patterns — not a measure of ability or potential."
-                      : 'A symbolic map of how your intelligence expresses through thought, action, meaning, and emotion.'}
-                  </p>
-                  <p style={{ margin: '0 2px 14px', fontSize: 13, color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', lineHeight: 1.65, maxWidth: 640 }}>
-                    {isMinor
-                      ? 'A chart is a symbolic map. A child is a living person. Always trust the child in front of you more than any interpretation.'
-                      : 'IPSE reflects symbolic intelligence style and processing patterns, not measured ability, fixed potential, or personal worth.'}
-                  </p>
-                  <IPSEPanel chart={chart} mode={interpMode} hdChart={hdChart} onInterpret={setInterpSection} />
+                  <div style={{ marginTop: 10 }}>
+                    <IPSEPanel chart={chart} mode={interpMode} hdChart={hdChart} onInterpret={setInterpSection} />
+                  </div>
                 </>
               );
             })()}
