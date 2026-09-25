@@ -43,6 +43,27 @@ describe('categorizeWeather — trace-precipitation false positives', () => {
   it('prioritizes snow over rain when both are measurable', () => {
     expect(categorizeWeather(1, 1, 100)).toBe('snow');
   });
+
+  it('does not report rain when precipitation is measurable but cloud cover is too low to be real local rain (user-reported case)', () => {
+    // Real reproduction case: Wichita, KS, 1975-10-24 03:00Z (10pm local
+    // Oct 23, CDT) -- ERA5 grid-cell average showed 0.3mm precip with only
+    // 17% cloud cover that hour. The actual station METAR at that exact
+    // hour read "KICT 240300Z 01008KT 20SM CLR ... RMK OCNL DSNT LTG IN CB
+    // E" -- clear sky, 20 miles visibility, with a thunderstorm cell only
+    // visible at a distance to the east. Real rain essentially always
+    // co-occurs with substantial cloud cover in the same grid average (a
+    // genuine heavy-rain event, Hurricane Harvey's Houston landfall, shows
+    // 100% cloud cover at every hour); a real, non-trace precip figure
+    // alongside low cloud cover is the signature of a nearby-but-not-
+    // overhead cell smeared into the ~28km grid box, not local rain.
+    expect(categorizeWeather(0.3, 0, 17)).toBe('clear');
+  });
+
+  it('still reports rain when both precipitation and cloud cover corroborate each other', () => {
+    // Hurricane Harvey, Houston landfall, 2017-08-26 -- ERA5 shows
+    // 0.8-5.4mm/hr precip alongside 100% cloud cover at every hour.
+    expect(categorizeWeather(3.6, 0, 100)).toBe('rain');
+  });
 });
 
 describe('computeAtmosphere — queries the UTC calendar date, not the local one', () => {

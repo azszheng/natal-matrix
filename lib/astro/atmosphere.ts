@@ -45,10 +45,27 @@ type WeatherCat = BirthAtmosphere['weatherCategory'];
 // moment that was, in reality, dry — verified against a real
 // trace-precipitation false positive (Phoenix, AZ, monsoon-onset day,
 // 0.1mm/hr grid average, no actual rain at that specific point).
+//
+// Precipitation also needs CLOUD-COVER corroboration before it's trusted:
+// ERA5's ~28km grid cell can average in a storm cell that passed nearby but
+// not overhead, producing a real (non-trace) precip figure at a point that
+// was actually clear. Verified against a real case: Wichita, KS, 1975-10-24
+// 03:00Z showed 0.3mm precip with only 17% cloud cover in the same hour --
+// the actual station METAR at that hour read CLR (clear, 20SM visibility),
+// with the remark "OCNL DSNT LTG IN CB E" (occasional distant lightning in
+// a cumulonimbus cell to the east) confirming the storm was nearby, not
+// local. Genuine rain essentially always co-occurs with substantial cloud
+// cover in the same grid average -- confirmed against Hurricane Harvey's
+// Houston landfall (2017-08-26), which shows 100% cloud cover at every hour
+// alongside 0.8-5.4mm/hr precip. Requiring cloud cover above a real
+// "mostly cloudy" bar before trusting precip/snow filters out the
+// smeared-nearby-cell case while still catching genuine rain and snow.
+const RAIN_CLOUD_COVER_MIN = 40;
+
 export function categorizeWeather(precip: number, snow: number, cloud: number): WeatherCat {
   if (precip < 0 && snow < 0 && cloud < 0) return 'unknown';
-  if (snow   >= 0.1)  return 'snow';
-  if (precip >= 0.2)  return 'rain';
+  if (snow   >= 0.1 && cloud >= RAIN_CLOUD_COVER_MIN)  return 'snow';
+  if (precip >= 0.2 && cloud >= RAIN_CLOUD_COVER_MIN)  return 'rain';
   if (cloud  > 60)    return 'cloudy';
   return 'clear';
 }
@@ -80,7 +97,13 @@ async function fetchFromERA5(lat: number, lon: number, dateISO: string, utcHour:
   }
 }
 
-// Station-based fallback via WMO weather codes.
+// NOT independent station observations, despite the name -- omitting
+// `models=` from this endpoint returns Open-Meteo's default "best match"
+// blend (ERA5-Land mixed with ERA5), still model/reanalysis data, just a
+// different blend at finer land resolution than the explicit era5_seamless
+// request above. Kept as a fallback because it's a genuinely different
+// blend that can succeed where the primary request returns nothing, not
+// because it's ground truth.
 async function fetchFromStations(lat: number, lon: number, dateISO: string, utcHour: number): Promise<WeatherCat> {
   try {
     const url =
