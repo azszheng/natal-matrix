@@ -11,6 +11,7 @@ import {
   type SynastryTheme,
 } from './synastry';
 import { getSalienceLevel } from './synastryScoring';
+import { BODY_LABEL, ordinal } from './synastryLabels';
 
 // ── Planet overlay weights ────────────────────────────────────────────────────
 
@@ -116,19 +117,6 @@ function overlayThemes(planet: BodyId, house: number): SynastryTheme[] {
 }
 
 // ── Label builder ─────────────────────────────────────────────────────────────
-
-const BODY_LABEL: Partial<Record<BodyId, string>> = {
-  sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars',
-  jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune',
-  pluto: 'Pluto', trueNode: 'North Node', chiron: 'Chiron', asc: 'ASC', mc: 'MC',
-};
-
-function ordinal(n: number): string {
-  if (n === 1) return '1st';
-  if (n === 2) return '2nd';
-  if (n === 3) return '3rd';
-  return `${n}th`;
-}
 
 function buildLabel(planetOwner: 'A' | 'B', planet: BodyId, house: number): string {
   const who = planetOwner === 'A' ? 'Person A' : 'Person B';

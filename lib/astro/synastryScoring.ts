@@ -262,13 +262,16 @@ export function computeSynastry(
 ): SynastryResult {
   const rawAspects = computeSynastryRaw(chartA, chartB);
 
-  const aspects: SynastryAspect[] = rawAspects.map(raw => ({
-    ...raw,
-    salienceScore: scoreSynastryAspect(raw, raw.maxOrb),
-    salienceLevel: getSalienceLevel(scoreSynastryAspect(raw, raw.maxOrb)),
-    themes:        classifyAspectThemes(raw),
-    isGenerational: isGenerationalPair(raw.bodyA, raw.bodyB),
-  })).sort((a, b) => b.salienceScore - a.salienceScore);
+  const aspects: SynastryAspect[] = rawAspects.map(raw => {
+    const salienceScore = scoreSynastryAspect(raw, raw.maxOrb);
+    return {
+      ...raw,
+      salienceScore,
+      salienceLevel: getSalienceLevel(salienceScore),
+      themes:        classifyAspectThemes(raw),
+      isGenerational: isGenerationalPair(raw.bodyA, raw.bodyB),
+    };
+  }).sort((a, b) => b.salienceScore - a.salienceScore);
 
   const hasHouseData = !!(
     chartA.western.houses?.cusps?.length &&

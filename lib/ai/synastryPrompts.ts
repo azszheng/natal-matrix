@@ -305,7 +305,7 @@ export function buildSynastryRelationshipSummarySection(
   const topAspects = aspects
     .filter(a => !a.isGenerational)
     .slice(0, 12)
-    .map(a => `  ${nameA}'s ${bodyLabel(a.bodyA)} ${a.kind} ${nameB}'s ${bodyLabel(a.bodyB)} (${a.orb.toFixed(1)}°) — ${cap(a.salienceLevel.replace('_',''))} — ${a.themes.map(t => THEME_LABEL[t]).join(', ')}`)
+    .map(a => `  ${nameA}'s ${bodyLabel(a.bodyA)} ${a.kind} ${nameB}'s ${bodyLabel(a.bodyB)} (${a.orb.toFixed(1)}°) — ${cap(a.salienceLevel.replace('_', ' '))} — ${a.themes.map(t => THEME_LABEL[t]).join(', ')}`)
     .join('\n');
 
   const topOverlays = overlays

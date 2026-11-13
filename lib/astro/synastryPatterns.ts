@@ -11,23 +11,13 @@ import {
   type SalienceLevel,
 } from './synastry';
 import { getSalienceLevel, isPersonalPlanet, isNode, isOuterPlanet } from './synastryScoring';
+import { BODY_LABEL, ordinal } from './synastryLabels';
 
 // ── Display helpers ───────────────────────────────────────────────────────────
-
-const BODY_LABEL: Partial<Record<BodyId, string>> = {
-  sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus', mars: 'Mars',
-  jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus', neptune: 'Neptune',
-  pluto: 'Pluto', trueNode: 'N.Node', chiron: 'Chiron', asc: 'ASC', mc: 'MC',
-};
 
 function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 function signLabel(s: SignId): string { return cap(s); }
-
-function ordinal(n: number): string {
-  if (n === 1) return '1st'; if (n === 2) return '2nd'; if (n === 3) return '3rd';
-  return `${n}th`;
-}
 
 // ── Element & modality helpers ────────────────────────────────────────────────
 
@@ -293,9 +283,13 @@ export function detectSharedPatterns(
     }
 
     // 6. Shared Saturn-family-root signature
+    // Houses 4/8/12 are the classical "root/depth/hidden" houses this
+    // pattern's family/emotional-containment framing actually describes.
+    // The 10th house is career and public standing, not family -- it does
+    // not belong here even though it's also a Saturn-associated house.
     const satA = chartA.western.bodies.saturn;
     const satB = chartB.western.bodies.saturn;
-    if (satA && satB && satA.house === satB.house && [4, 8, 12, 10].includes(satA.house)) {
+    if (satA && satB && satA.house === satB.house && [4, 8, 12].includes(satA.house)) {
       const score = 75;
       patterns.push({
         type: 'shared_family_signature',

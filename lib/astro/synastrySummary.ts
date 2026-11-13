@@ -63,30 +63,32 @@ export function buildThemeSummaries(
       continue;
     }
 
+    // House overlays and shared patterns are broader, less specific signals
+    // than a direct interplanetary aspect (overlays are always computed for
+    // all 28 body/owner combinations, so they corroborate far more easily);
+    // discount them relative to aspects so a theme with only a house overlay
+    // and no qualifying aspect doesn't score as high as one with a genuinely
+    // tight aspect.
     const aspectScore  = decaySum(themeAspects.map(a => a.salienceScore));
-    const overlayScore = decaySum(themeOverlays.map(o => o.salienceScore));
-    const patternScore = decaySum(themePatterns.map(p => p.salienceScore));
+    const overlayScore = decaySum(themeOverlays.map(o => o.salienceScore)) * 0.5;
+    const patternScore = decaySum(themePatterns.map(p => p.salienceScore)) * 0.4;
 
-    // Blend evidence types as a weighted average (weights redistributed over
-    // whichever categories actually have evidence), not a sum — aspects,
-    // house overlays, and shared patterns each independently touch most
-    // themes for almost any two real charts (14x14 body pairs, generous
-    // orbs, 28 house overlays always computed), so adding three
-    // independently near-ceiling numbers pushed nearly every pairing's
-    // every theme to "very high," regardless of actual relative strength.
-    // A single category with strong evidence still reads as strong; it's
-    // only stacking *multiple* strong categories that used to auto-max.
-    const cats = [aspectScore, overlayScore, patternScore]
-      .filter(s => s > 0)
-      .sort((a, b) => b - a);
-    const BLEND_WEIGHTS: Record<number, number[]> = {
-      1: [1],
-      2: [0.7, 0.3],
-      3: [0.55, 0.3, 0.15],
-    };
-    const weights  = BLEND_WEIGHTS[cats.length] ?? [];
-    const rawScore = cats.reduce((sum, s, i) => sum + s * (weights[i] ?? 0), 0);
-    const score    = Math.min(Math.round(rawScore), 100);
+    // Blend evidence types with the same diminishing-returns logic already
+    // used to combine scores *within* a category (decaySum, above) — the
+    // top category counts in full, and every additional category only adds
+    // a fast-decaying, capped bonus. Aspects, house overlays, and shared
+    // patterns each independently touch most themes for almost any two real
+    // charts (14x14 body pairs, generous orbs, 28 house overlays always
+    // computed), so a discrete weighted-average (previously: the top
+    // category's effective weight dropped from 1.0 to 0.7 the instant a
+    // second category had ANY evidence, even negligible) caused a strong
+    // single-category signal to lose ~30% of its score just because a weak,
+    // barely-qualifying second category also happened to exist — the exact
+    // "one dominant signal still reads as strong" case this was meant to
+    // preserve. decaySum already solves this correctly: a lone strong score
+    // passes through unchanged, and multiple strong scores are curbed
+    // without a cliff at the boundary between "1 category" and "2 categories."
+    const score = Math.round(decaySum([aspectScore, overlayScore, patternScore].filter(s => s > 0)));
 
     summaries.push({
       theme,
