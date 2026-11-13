@@ -109,8 +109,8 @@ export const EMPHASIZED_HARMONICS: Array<{ number: number; label: string; theme:
   },
   {
     number: 29,
-    label: '29th Harmonic — Non-Linearity',
-    theme: 'Non-linearity — living with an understanding of many perspectives at once.',
+    label: '29th Harmonic — Alternative Paradigms',
+    theme: 'Openness to alternative paradigms — an optimistic, evolving view of the universe and the belief that a situation can still improve.',
   },
   {
     number: 31,

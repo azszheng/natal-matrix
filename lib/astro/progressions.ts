@@ -82,7 +82,9 @@ export function computeSecondaryProgressions(natal: NatalChart, whenUTC: string)
     if (!progBody) continue;
 
     for (const natalId of NATAL_TARGETS) {
-      if (progId === natalId) continue;
+      // Do NOT skip progId === natalId: a progressed body conjunct its own
+      // natal position is a real, significant event (e.g. the progressed
+      // Lunar return around age 27), not a degenerate self-aspect.
       const natalBody = natal.western.bodies[natalId];
       if (!natalBody) continue;
 

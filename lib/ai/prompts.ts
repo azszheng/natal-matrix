@@ -13,13 +13,14 @@ export {
 } from './synastryPrompts';
 import { analyzeChart, formatChartAnalysis, bodyContext, houseContext, aspectContext } from './chartAnalysis';
 import { analyzeVedicChart, formatVedicAnalysis, vedicBodyContext, vedicHouseContext, vedicDashaContext } from './vedicAnalysis';
+import type { VedicAnalysis } from './vedicAnalysis';
 import { HOUSE_FRONT_TITLES, HOUSE_MEANINGS, scoreHouseActivation } from './houseThemes';
 
 export type InterpretSection = {
-  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot' | 'topic' | 'vibrational' | 'ipse';
+  type: 'body' | 'house' | 'aspect' | 'transit' | 'progression' | 'dasha' | 'synastry' | 'snapshot' | 'topic' | 'vibrational' | 'ipse' | 'humandesign';
   label: string;
   prompt: string;
-  system?: 'western' | 'vedic';
+  system?: 'western' | 'vedic' | 'humandesign';
   // Front-facing UX layer — displayed in the panel header
   frontTitle?: string;   // e.g. "Where You Come Alive"
   anchor?: string;       // e.g. "5th House — creativity, romance, play, self-expression"
@@ -326,16 +327,21 @@ Identify the developmental arc: what becomes available when this tension is held
   };
 }
 
-export function buildVedicBodySection(bodyId: BodyId, chart: NatalChart): InterpretSection {
+export function buildVedicBodySection(bodyId: BodyId, chart: NatalChart, precomputedAnalysis?: VedicAnalysis): InterpretSection {
   const body     = chart.vedic.bodies[bodyId];
   if (!body) return { type: 'body', label: `Vedic ${bodyId}`, prompt: `Interpret ${bodyId} in this Vedic chart.`, system: 'vedic' };
 
   const retro    = body.isRetrograde ? ' retrograde' : '';
   const nakName  = body.nakshatra.charAt(0).toUpperCase() + body.nakshatra.slice(1).replace(/([A-Z])/g, ' $1').trim();
-  const lordName = BODY_LABEL[body.nakshatraLord as BodyId] ?? body.nakshatraLord;
+  const lordName = body.nakshatraLord === 'trueNode' ? 'Rahu'
+    : body.nakshatraLord === 'southNode' ? 'Ketu'
+    : BODY_LABEL[body.nakshatraLord as BodyId] ?? body.nakshatraLord;
   const bodyName = bodyId === 'trueNode' ? 'Rahu' : bodyId === 'southNode' ? 'Ketu' : cap(bodyId);
 
-  const analysis = analyzeVedicChart(chart);
+  // Recomputing the full Vedic analysis (house lords, yogas, dignities) is
+  // expensive; callers rendering many rows against the same chart (e.g. one
+  // per planet in a table) should compute it once and pass it in.
+  const analysis = precomputedAnalysis ?? analyzeVedicChart(chart);
   const synthCtx = vedicBodyContext(bodyId, chart, analysis);
 
   return {
@@ -613,7 +619,7 @@ A thematic title on its own line — 3 to 6 words, no punctuation, no planet or 
 TITLE DIVERSITY: Do not default to the same title word for a given element or modality every time. Water does not have to produce a title built around "Depth" — it could just as validly center on discretion, undertow, threshold, intuition, quiet, or current, depending on what the rest of the chart actually supports. The same applies to every element and modality: earth need not mean "grounded," fire need not mean "spark" or "flame," air need not mean "clarity," cardinal need not mean "initiate," mutable need not mean "shift." Draw the title from the SPECIFIC convergence of themes in this chart (the top convergent theme, the Sun-Moon relationship, the chart shape, Saturn or Chiron's role) rather than reaching for the first word associated with the dominant element.
 
 ELEMENTAL AND MODAL LENS — THIS IS THE PARAGRAPH'S BACKBONE:
-Before writing a single sentence, absorb the dominant element and modality from the data. These are not facts to mention once and move on — they are the atmosphere, texture, and behavioral style through which every other observation is expressed. A water-fixed chart does not merely "have" those qualities; every sentence should feel like it was written from inside that psyche. Name the element and modality explicitly early in the paragraph, translate each in plain language (water = depth, emotional intelligence, the need to understand underneath; fixed = commitment, intensity, the tendency to go all the way in), and then sustain that register throughout.
+Before writing a single sentence, absorb the dominant element and modality from the data. These are not facts to mention once and move on — they are the atmosphere, texture, and behavioral style through which every other observation is expressed. A water-fixed chart does not merely "have" those qualities; every sentence should feel like it was written from inside that psyche. Name the element and modality explicitly early in the paragraph and translate each into plain language — but do not default to the same stock translation every time. Each element and modality covers a real range of expression, and the rest of the chart data (Sun/Moon/Rising, aspects, house placements, themes) should decide which shade fits this specific person. For example, water can read as depth, but just as validly as guardedness, discretion, quiet perceptiveness, emotional undertow, or intuitive attunement; fixed can read as "going all the way in," but just as validly as endurance, resistance to being rushed, deliberate follow-through, or steadiness under pressure. Choose the shade the data actually supports, not the first cliché that comes to mind, and then sustain that specific register throughout.
 
 CONTENT REQUIREMENTS (incorporate naturally — do not list, do not enumerate):
 1. Open by naming the dominant element and modality — translate each into how it actually feels to live in that combination, in behavioral and relational terms, not astrological labels
@@ -836,7 +842,8 @@ export function buildVedicChartContext(chart: NatalChart): string {
     const name   = id === 'trueNode' ? 'Rahu' : id === 'southNode' ? 'Ketu' : cap(id);
     const retro  = b.isRetrograde ? '℞' : '';
     const nak    = b.nakshatra ? ` · ${cap(b.nakshatra)} pada ${b.nakshatraPada}` : '';
-    const lord   = b.nakshatraLord ? ` (lord: ${cap(b.nakshatraLord)})` : '';
+    const lordName = b.nakshatraLord === 'trueNode' ? 'Rahu' : b.nakshatraLord === 'southNode' ? 'Ketu' : cap(b.nakshatraLord);
+    const lord   = b.nakshatraLord ? ` (lord: ${lordName})` : '';
     lines.push(`  ${name}: ${cap(b.sign)} H${b.house}${retro}${nak}${lord}`);
   }
   lines.push('');

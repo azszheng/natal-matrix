@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import type { NatalChart, BodyId } from '@/lib/astro/types';
 import { PLANET_GLYPH } from '@/components/charts/glyphs';
 import { toDMS, signLabel } from './tableUtils';
 import InterpretButton from '@/components/interpret/InterpretButton';
 import { buildVedicBodySection, type InterpretSection } from '@/lib/ai/prompts';
+import { analyzeVedicChart } from '@/lib/ai/vedicAnalysis';
 import Tooltip from '@/components/ui/Tooltip';
 
 const VEDIC_ROWS: BodyId[] = [
@@ -22,6 +24,11 @@ const LORD_GLYPH: Record<string, string> = {
 
 export default function VedicRashiTable({ chart, onInterpret }: { chart: NatalChart; onInterpret?: (s: InterpretSection) => void }) {
   const { bodies } = chart.vedic;
+  // Computed once per chart instead of once per row -- analyzeVedicChart
+  // reruns house-lord loops, planet-strength scoring, and yoga detection.
+  // Only needed when interpret buttons are actually rendered (PrintReport
+  // renders this table without onInterpret and never needs it at all).
+  const analysis = useMemo(() => (onInterpret ? analyzeVedicChart(chart) : undefined), [chart, onInterpret]);
 
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -71,7 +78,7 @@ export default function VedicRashiTable({ chart, onInterpret }: { chart: NatalCh
                 </td>
                 {onInterpret && (
                   <td style={{ ...td, textAlign: 'center' }}>
-                    <InterpretButton section={buildVedicBodySection(id, chart)} onInterpret={onInterpret} />
+                    <InterpretButton section={buildVedicBodySection(id, chart, analysis)} onInterpret={onInterpret} />
                   </td>
                 )}
               </tr>

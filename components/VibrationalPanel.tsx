@@ -15,6 +15,17 @@ const BODY_NAME: Partial<Record<BodyId, string>> = {
   pluto: 'Pluto', trueNode: 'N.Node', chiron: 'Chiron', asc: 'ASC', mc: 'MC',
 };
 
+function ordinal(n: number): string {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1:  return `${n}st`;
+    case 2:  return `${n}nd`;
+    case 3:  return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
+
 function strengthColor(strength: number): string {
   if (strength >= 80) return '#a83232';
   if (strength >= 55) return '#c46f38';
@@ -66,7 +77,8 @@ function HarmonicCard({
 
       {hasHits ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {harmonic.conjunctions.slice(0, 6).map((c, i) => (
+          {/* Keep in sync with the top-5 cap the AI prompt uses (lib/ai/vibrationalPrompts.ts) so the interpretation never omits something shown here. */}
+          {harmonic.conjunctions.slice(0, 5).map((c, i) => (
             <div key={i} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
               padding: '5px 8px', fontSize: 12, fontFamily: 'var(--font-mono)',
@@ -116,7 +128,7 @@ export default function VibrationalPanel({ chart, mode, onInterpret }: Props) {
         </p>
         {dominant && dominant.strength > 0 && (
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', color: 'var(--fg-dim)', whiteSpace: 'nowrap' }}>
-            Dominant: {dominant.number}th harmonic
+            Dominant: {ordinal(dominant.number)} harmonic
           </span>
         )}
       </div>
@@ -127,7 +139,7 @@ export default function VibrationalPanel({ chart, mode, onInterpret }: Props) {
             Harmonic astrology was pioneered by John Addey and later developed into &ldquo;Vibrational Astrology&rdquo; by David Cochrane. The technique is simple to state and exact to compute: take every planet&apos;s ecliptic longitude, multiply it by a whole number N (the &ldquo;harmonic&rdquo;), and reduce the result modulo 360°. Any aspect of order N in your natal chart — a trine in the 3rd harmonic, a quintile in the 5th — collapses into an exact <strong>conjunction</strong> in that harmonic chart. A tight conjunction there means two planets share a genuine, precise Nth-harmonic relationship in your birth data.
           </p>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.7 }}>
-            A tighter orb represents a stronger &ldquo;current.&rdquo; There&apos;s no single universally published orb standard for harmonic conjunctions — practitioners vary this by preference — so this reading uses a conservative, flat 3° orb across every harmonic below rather than presenting one convention as an absolute rule.
+            A tighter orb represents a stronger &ldquo;current.&rdquo; There&apos;s no single universally published orb standard for harmonic conjunctions — practitioners vary this by preference — so this reading uses a conservative, flat {HARMONIC_CONJUNCTION_ORB}° orb across every harmonic below rather than presenting one convention as an absolute rule.
           </p>
         </Disclosure>
       </div>

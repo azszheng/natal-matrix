@@ -2,9 +2,13 @@ import type { SignId, BodyId } from '@/lib/astro/types';
 import { SIGN_GLYPH, PLANET_GLYPH } from '@/components/charts/glyphs';
 
 export function toDMS(deg: number): string {
-  const d = Math.floor(deg);
-  const m = Math.floor((deg - d) * 60);
-  const s = Math.round(((deg - d) * 60 - m) * 60);
+  // Round the total seconds once, up front, so a seconds value that rounds
+  // to 60 carries into minutes (and a minutes value of 60 into degrees)
+  // instead of printing e.g. 15°59'60" for 15.999997°.
+  const totalSeconds = Math.round(deg * 3600);
+  const d = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
   return `${d}°${String(m).padStart(2, '0')}'${String(s).padStart(2, '0')}"`;
 }
 

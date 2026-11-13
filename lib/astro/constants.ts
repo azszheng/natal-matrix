@@ -63,7 +63,7 @@ export function getOrb(kind: AspectKind, a: BodyId, b: BodyId): number {
 // ── Nakshatra lords (Vimshottari) ────────────────────────────────────────────
 
 export const NAKSHATRA_LORD: Record<NakshatraId, BodyId> = {
-  ashwini:           'trueNode',   // Ketu
+  ashwini:           'southNode',  // Ketu
   bharani:           'venus',
   krittika:          'sun',
   rohini:            'moon',
@@ -72,7 +72,7 @@ export const NAKSHATRA_LORD: Record<NakshatraId, BodyId> = {
   punarvasu:         'jupiter',
   pushya:            'saturn',
   ashlesha:          'mercury',
-  magha:             'trueNode',   // Ketu
+  magha:             'southNode',  // Ketu
   purvaPhalguni:     'venus',
   uttaraPhalguni:    'sun',
   hasta:             'moon',
@@ -81,7 +81,7 @@ export const NAKSHATRA_LORD: Record<NakshatraId, BodyId> = {
   vishakha:          'jupiter',
   anuradha:          'saturn',
   jyeshtha:          'mercury',
-  mula:              'trueNode',   // Ketu
+  mula:              'southNode',  // Ketu
   purvaAshadha:      'venus',
   uttaraAshadha:     'sun',
   shravana:          'moon',

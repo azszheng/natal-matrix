@@ -5,6 +5,7 @@
 
 import type { NatalChart, BodyId, SignId } from '@/lib/astro/types';
 import type { VibrationalHarmonic, VibrationalConjunction } from '@/lib/astro/vibrational';
+import { HARMONIC_CONJUNCTION_ORB } from '@/lib/astro/vibrational';
 import type { InterpretSection, InterpretMode } from './prompts';
 
 const BODY_LABEL: Partial<Record<BodyId, string>> = {
@@ -15,6 +16,19 @@ const BODY_LABEL: Partial<Record<BodyId, string>> = {
 
 function bodyLabel(b: BodyId): string { return BODY_LABEL[b] ?? b; }
 function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// 5th, 21st, 23rd, ... — the 11/12/13 exception applies for every multiple
+// of 100 (11th-13th, 111th-113th, ...), not just the base case.
+function ordinal(n: number): string {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1:  return `${n}st`;
+    case 2:  return `${n}nd`;
+    case 3:  return `${n}rd`;
+    default: return `${n}th`;
+  }
+}
 
 function signOfLongitude(lon: number): SignId {
   const SIGNS: SignId[] = [
@@ -56,32 +70,33 @@ export function buildVibrationalHarmonicSection(
 ): InterpretSection {
   const hasHits = harmonic.conjunctions.length > 0;
   const top = harmonic.conjunctions.slice(0, 5);
+  const nth = ordinal(harmonic.number);
 
   const conjunctionBlock = hasHits
     ? topConjunctionDetail(top, harmonic.number)
-    : `  (No conjunction within a ${3}° orb was found for this harmonic in this chart — this harmonic is not strongly activated.)`;
+    : `  (No conjunction within a ${HARMONIC_CONJUNCTION_ORB}° orb was found for this harmonic in this chart — this harmonic is not strongly activated.)`;
 
-  const prompt = `VIBRATIONAL ASTROLOGY — ${harmonic.number}TH HARMONIC INTERPRETATION
+  const prompt = `VIBRATIONAL ASTROLOGY — ${nth.toUpperCase()} HARMONIC INTERPRETATION
 ${METHOD_NOTE}
 
 HARMONIC THEME: ${harmonic.theme}
 
 CHART CONTEXT: ${chartSummary(chart)}
 
-${harmonic.number}TH HARMONIC CONJUNCTIONS FOUND (strongest first):
+${nth.toUpperCase()} HARMONIC CONJUNCTIONS FOUND (strongest first):
 ${conjunctionBlock}
 
 INSTRUCTIONS:
 ${modeInstruction(mode)}
 
 ${hasHits
-    ? `Interpret what it means that these specific bodies form a tight ${harmonic.number}th-harmonic conjunction in this chart. Address:
+    ? `Interpret what it means that these specific bodies form a tight ${nth}-harmonic conjunction in this chart. Address:
 1. What each involved body represents on its own, briefly.
 2. What gets fused or amplified when they meet at this specific harmonic frequency.
-3. How the ${harmonic.number}th harmonic's theme (${harmonic.theme}) shows up because of this specific combination — not generically.
+3. How the ${nth} harmonic's theme (${harmonic.theme}) shows up because of this specific combination — not generically.
 4. How this shows up in daily life, work, or self-expression.
 5. How to work with it consciously.`
-    : `No strong ${harmonic.number}th-harmonic conjunction was found in this chart. Write briefly and honestly about that: explain in 2-4 sentences what the ${harmonic.number}th harmonic represents in general (${harmonic.theme}), and note that its absence as a tight activation doesn't mean the theme is missing from the person's life — only that it isn't singled out as an exceptionally concentrated current by this specific technique. Do not invent a conjunction that isn't there.`}
+    : `No strong ${nth}-harmonic conjunction was found in this chart. Write briefly and honestly about that: explain in 2-4 sentences what the ${nth} harmonic represents in general (${harmonic.theme}), and note that its absence as a tight activation doesn't mean the theme is missing from the person's life — only that it isn't singled out as an exceptionally concentrated current by this specific technique. Do not invent a conjunction that isn't there.`}
 
 Do not present this as fated or deterministic. Ground every claim in the specific bodies and orb listed — do not write generically about "harmonics" without reference to this chart's actual data.
 Begin with a 3–5 word thematic title, then a blank line, then the interpretation. No headers within the body. No bullets.`;

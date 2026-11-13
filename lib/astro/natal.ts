@@ -151,7 +151,11 @@ export function computeNatalChart(input: ResolvedBirth): NatalChart {
   ) as NatalChart['vedic']['bodies'];
 
   // Step 7 — Aspects
-  const aspects = computeAspects(allWesternBodies);
+  // South Node is synthesized as True Node + 180°, so the two are always in an
+  // exact opposition — a tautology, not a chart signature. Drop that pair.
+  const aspects = computeAspects(allWesternBodies).filter(a =>
+    !((a.a === 'trueNode' && a.b === 'southNode') || (a.a === 'southNode' && a.b === 'trueNode'))
+  );
 
   // Step 8 — Dignities (traditional 7 planets + nodes)
   const dignities = Object.fromEntries(

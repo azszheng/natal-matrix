@@ -37,8 +37,9 @@ export function computeTransits(natal: NatalChart, whenUTC: string): TransitAspe
     }
 
     for (const natalId of NATAL_TARGETS) {
-      if (transitId === natalId) continue;
-
+      // Do NOT skip transitId === natalId: a transiting body conjunct its own
+      // natal position is a "return" (Saturn return, Jupiter return, etc.) —
+      // one of the most significant transit events, not a degenerate case.
       const natalBody = natal.western.bodies[natalId];
       if (!natalBody) continue;
 

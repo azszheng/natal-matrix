@@ -88,17 +88,36 @@ export function computeVimshottariDasha(natal: NatalChart, whenUTC: string): Das
   const maha = timeline.find(p => new Date(p.startISO) <= targetDate && targetDate < new Date(p.endISO))
     ?? timeline[timeline.length - 1];
 
-  // Build antardasha sequence within the current mahadasha
-  const mahaStartDate  = new Date(maha.startISO);
-  const mahaLordIdx    = DASHA_CYCLE.indexOf(maha.lord);
+  // Build antardasha sequence within the current mahadasha.
+  //
+  // Classical Vimshottari proportions are always taken against the
+  // mahadasha lord's FULL nominal years -- never the (possibly partial)
+  // balance actually tracked in `maha.durationYears`. The birth mahadasha in
+  // particular is a partial *remainder* of a longer natural period that
+  // began before birth; its antardasha sequence still starts at the
+  // mahadasha lord itself and runs through the full cycle, but the portion
+  // that elapsed before birth must be skipped so the visible antardashas
+  // line up with the actual (partial) mahadasha window.
+  const mahaLordIdx         = DASHA_CYCLE.indexOf(maha.lord);
+  const mahaFullYears       = DASHA_YEARS[maha.lord];
+  const elapsedBeforeWindow = mahaFullYears - maha.durationYears; // 0 for every full (non-birth) mahadasha
+
   const antardashas: DashaPeriod[] = [];
-  let antarCursor = new Date(mahaStartDate);
+  let antarCursor = new Date(maha.startISO);
+  let cumulative  = 0; // years elapsed in the natural, full-length antardasha sequence
 
   for (let i = 0; i < 9; i++) {
-    const subLord  = DASHA_CYCLE[(mahaLordIdx + i) % 9];
-    const subYears = (DASHA_YEARS[subLord] * maha.durationYears) / 120;
-    const subEnd   = addYears(antarCursor, subYears);
-    antardashas.push({ lord: subLord, startISO: toISO(antarCursor), endISO: toISO(subEnd), durationYears: subYears });
+    const subLord      = DASHA_CYCLE[(mahaLordIdx + i) % 9];
+    const fullSubYears = (DASHA_YEARS[subLord] * mahaFullYears) / 120;
+    const segStart     = cumulative;
+    const segEnd       = cumulative + fullSubYears;
+    cumulative = segEnd;
+
+    if (segEnd <= elapsedBeforeWindow + 1e-9) continue; // fully elapsed before this mahadasha's tracked window began
+
+    const visibleYears = segEnd - Math.max(segStart, elapsedBeforeWindow);
+    const subEnd        = addYears(antarCursor, visibleYears);
+    antardashas.push({ lord: subLord, startISO: toISO(antarCursor), endISO: toISO(subEnd), durationYears: visibleYears });
     antarCursor = subEnd;
   }
 

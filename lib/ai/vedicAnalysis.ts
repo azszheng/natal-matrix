@@ -289,7 +289,10 @@ function computeScore(bodyId: BodyId, chart: NatalChart, lagnaSign: SignId): num
   if (hg === 'kendra' || hg === 'trikona' || hg === 'both') s += 2;
   else if (hg === 'upachaya') s += 1;
   else if (hg === 'dusthana') s -= 2;
-  if (b.isRetrograde) s += 1;
+  // The "retrograde strengthens" rule applies to true grahas, not the lunar
+  // nodes -- Rahu/Ketu are retrograde essentially all the time by nature, so
+  // applying this bonus to them would be an unconditional, meaningless boost.
+  if (b.isRetrograde && bodyId !== 'trueNode' && bodyId !== 'southNode') s += 1;
   if (checkCombust(bodyId, chart)) s -= 2;
   const fr = getFunctionalRole(bodyId, lagnaSign);
   if (fr === 'yogakaraka') s += 2;
@@ -377,6 +380,26 @@ function buildLagnaAnalysis(chart: NatalChart): LagnaAnalysis {
   };
 }
 
+// ── Kemadruma Yoga (shared) ──────────────────────────────────────────────────
+//
+// Classical grahas only (Rahu/Ketu are shadow points, not counted as
+// flanking/conjunct planets for Kemadruma purposes). A single shared
+// implementation used by both buildMoonAnalysis (the Moon section's
+// "⚠ Kemadruma condition" note) and detectYogas (the Yogas list) so the two
+// can never contradict each other.
+const KEMADRUMA_PLANETS: BodyId[] = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+
+function computeHasKemadruma(bodies: NatalChart['vedic']['bodies'], moonHouse: number): boolean {
+  const h2  = ((moonHouse - 1 + 1)  % 12) + 1;
+  const h12 = ((moonHouse - 1 + 11) % 12) + 1;
+  const hasFlankingOrConjunct = KEMADRUMA_PLANETS.some(id => {
+    if (id === 'moon') return false;
+    const h = bodies[id]?.house;
+    return h === h2 || h === h12 || h === moonHouse;
+  });
+  return !hasFlankingOrConjunct;
+}
+
 // ── Moon analysis ──────────────────────────────────────────────────────────────
 
 function buildMoonAnalysis(chart: NatalChart): MoonAnalysis {
@@ -393,14 +416,7 @@ function buildMoonAnalysis(chart: NatalChart): MoonAnalysis {
     return b && vedicAspects(b.house, id).has(m.house);
   });
 
-  // Kemadruma: no planet in 2nd or 12th house from Moon
-  const moonH = m.house;
-  const h2 = ((moonH - 1 + 1) % 12) + 1;
-  const h12 = ((moonH - 1 + 11) % 12) + 1;
-  const hasKemadruma = !MAIN.some(id => {
-    const h = chart.vedic.bodies[id]?.house;
-    return h === h2 || h === h12;
-  });
+  const hasKemadruma = computeHasKemadruma(chart.vedic.bodies, m.house);
 
   return {
     sign:            m.sign,
@@ -687,13 +703,7 @@ function detectYogas(chart: NatalChart): VedicYoga[] {
 
   // ── Kemadruma (challenging — Moon isolated) ────────────────────────────────
   if (moon) {
-    const h2 = ((moon.house - 1 + 1) % 12) + 1;
-    const h12 = ((moon.house - 1 + 11) % 12) + 1;
-    const noNeighbours = !MAIN.some(id => {
-      const h = b[id]?.house;
-      return h === h2 || h === h12;
-    });
-    if (noNeighbours && !MAIN.some(id => id !== 'moon' && b[id]?.house === moon.house)) {
+    if (computeHasKemadruma(b, moon.house)) {
       yogas.push({
         name: 'Kemadruma Yoga',
         category: 'challenging',
@@ -706,11 +716,34 @@ function detectYogas(chart: NatalChart): VedicYoga[] {
     }
   }
 
-  // Deduplicate by name+planet combo, keep max 10
+  // Deduplicate by name+planet combo, then rank by classical significance
+  // (not insertion order) before capping at 10 -- otherwise the up-to-5
+  // Pancha Mahapurusha entries plus the up-to-12 generic kendra x trikona
+  // Raja Yoga cross-product (both pushed early) can crowd out rarer,
+  // equally-or-more significant yogas like Viparita/Neecha Bhanga Raja Yoga
+  // or Dhana Yoga just because they're computed later in the function.
   const unique = yogas.filter((y, i, arr) =>
     arr.findIndex(z => z.name === y.name && z.planets.join() === y.planets.join()) === i
   );
-  return unique.slice(0, 10);
+  const CATEGORY_PRIORITY: Record<string, number> = {
+    'pancha-mahapurusha': 0,
+    'dharma':             1,
+    'dhana':              1,
+    'viparita':           1,
+    'chandra':            2,
+    'sun':                2,
+    'parivartana':        2,
+    'raja':               3,
+    'challenging':        4,
+  };
+  const STRENGTH_RANK: Record<string, number> = { strong: 0, moderate: 1, weak: 2 };
+  const ranked = [...unique].sort((a, z) => {
+    const pa = CATEGORY_PRIORITY[a.category] ?? 5;
+    const pz = CATEGORY_PRIORITY[z.category] ?? 5;
+    if (pa !== pz) return pa - pz;
+    return (STRENGTH_RANK[a.strength] ?? 3) - (STRENGTH_RANK[z.strength] ?? 3);
+  });
+  return ranked.slice(0, 10);
 }
 
 // ── Vedic theme scoring ────────────────────────────────────────────────────────
