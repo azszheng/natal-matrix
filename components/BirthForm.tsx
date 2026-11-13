@@ -193,82 +193,90 @@ export default function BirthForm({ onResolved }: Props) {
           />
         </div>
 
-        {/* City autocomplete */}
-        <div className="relative">
-          <label className={labelClass}>Birth City <span className="text-[var(--aspect-dynamic)]">*</span></label>
-          <input
-            type="text"
-            placeholder="e.g. Santa Monica"
-            value={cityQuery}
-            onChange={(e) => {
-              setCityQuery(e.target.value);
-              setSelectedGeo(null);
-            }}
-            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-            autoComplete="off"
-            className={inputClass}
-            style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
-          />
-          {loadingSuggestions && (
-            <div className="absolute right-3 top-8 text-[var(--fg-dim)] text-xs">…</div>
-          )}
-          {showSuggestions && suggestions.length > 0 && (
-            <ul
-              ref={suggestionsRef}
-              className="absolute z-50 w-full mt-1 border overflow-hidden"
-              style={{
-                backgroundColor: 'var(--bg-raised)',
-                borderColor: 'var(--line)',
-                borderRadius: 'var(--radius)',
-              }}
-            >
-              {suggestions.map((geo, i) => (
-                <li key={i}>
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--line)] transition-colors"
-                    style={{ color: 'var(--fg)' }}
-                    onClick={() => selectGeo(geo)}
-                  >
-                    <span>{geo.city || geo.displayName.split(',')[0]}</span>
-                    {(geo.region || geo.country) && (
-                      <span className="ml-2 text-xs" style={{ color: 'var(--fg-muted)' }}>
-                        {[geo.region, geo.country].filter(Boolean).join(', ')}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        {/* Birth Location — city, state/region, country grouped under one label */}
+        <div className="sm:col-span-2 lg:col-span-3">
+          <label className={labelClass}>Birth Location <span className="text-[var(--aspect-dynamic)]">*</span></label>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
-        {/* Region */}
-        <div>
-          <label className={labelClass}>State / Region <span className="text-[var(--aspect-dynamic)]">*</span></label>
-          <input
-            type="text"
-            placeholder="e.g. California"
-            value={form.region}
-            onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
-            autoComplete="off"
-            className={inputClass}
-            style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
-          />
-        </div>
+            {/* City autocomplete */}
+            <div className="relative">
+              <label className="block text-[10px] normal-case text-[var(--fg-dim)] mb-1">City</label>
+              <input
+                type="text"
+                placeholder="e.g. Santa Monica"
+                value={cityQuery}
+                onChange={(e) => {
+                  setCityQuery(e.target.value);
+                  setSelectedGeo(null);
+                }}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                autoComplete="off"
+                className={inputClass}
+                style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
+              />
+              {loadingSuggestions && (
+                <div className="absolute right-3 top-8 text-[var(--fg-dim)] text-xs">…</div>
+              )}
+              {showSuggestions && suggestions.length > 0 && (
+                <ul
+                  ref={suggestionsRef}
+                  className="absolute z-50 w-full mt-1 border overflow-hidden"
+                  style={{
+                    backgroundColor: 'var(--bg-raised)',
+                    borderColor: 'var(--line)',
+                    borderRadius: 'var(--radius)',
+                  }}
+                >
+                  {suggestions.map((geo, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--line)] transition-colors"
+                        style={{ color: 'var(--fg)' }}
+                        onClick={() => selectGeo(geo)}
+                      >
+                        <span>{geo.city || geo.displayName.split(',')[0]}</span>
+                        {(geo.region || geo.country) && (
+                          <span className="ml-2 text-xs" style={{ color: 'var(--fg-muted)' }}>
+                            {[geo.region, geo.country].filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-        {/* Country */}
-        <div>
-          <label className={labelClass}>Country <span className="text-[var(--aspect-dynamic)]">*</span></label>
-          <input
-            type="text"
-            placeholder="e.g. United States"
-            value={form.country}
-            onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
-            autoComplete="off"
-            className={inputClass}
-            style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
-          />
+            {/* Region */}
+            <div>
+              <label className="block text-[10px] normal-case text-[var(--fg-dim)] mb-1">State / Region</label>
+              <input
+                type="text"
+                placeholder="e.g. California"
+                value={form.region}
+                onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+                autoComplete="off"
+                className={inputClass}
+                style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
+              />
+            </div>
+
+            {/* Country */}
+            <div>
+              <label className="block text-[10px] normal-case text-[var(--fg-dim)] mb-1">Country</label>
+              <input
+                type="text"
+                placeholder="e.g. United States"
+                value={form.country}
+                onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+                autoComplete="off"
+                className={inputClass}
+                style={{ borderColor: 'var(--line)', borderRadius: 'var(--radius)', color: 'var(--fg)' }}
+              />
+            </div>
+
+          </div>
         </div>
       </div>
 
