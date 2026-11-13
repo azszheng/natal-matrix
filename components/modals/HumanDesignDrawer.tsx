@@ -1,15 +1,21 @@
 'use client';
 
 import type { HdChart } from '@/lib/astro/humandesign-constants';
+import type { NatalChart } from '@/lib/astro/types';
+import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
 import HumanDesignPanel from '@/components/HumanDesignPanel';
 
 type Props = {
   hdChart: HdChart | null;
+  natalChart: NatalChart | null;
   loading: boolean;
   onClose: () => void;
+  onInterpret: (section: InterpretSection) => void;
+  mode: InterpretMode;
+  isMinor: boolean;
 };
 
-export default function HumanDesignDrawer({ hdChart, loading, onClose }: Props) {
+export default function HumanDesignDrawer({ hdChart, natalChart, loading, onClose, onInterpret, mode, isMinor }: Props) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 40 }} />
@@ -58,7 +64,9 @@ export default function HumanDesignDrawer({ hdChart, loading, onClose }: Props) 
               Calculating Human Design chart…
             </div>
           )}
-          {!loading && hdChart && <HumanDesignPanel chart={hdChart} />}
+          {!loading && hdChart && (
+            <HumanDesignPanel chart={hdChart} natalChart={natalChart} onInterpret={onInterpret} mode={mode} isMinor={isMinor} />
+          )}
           {!loading && !hdChart && (
             <div style={{ padding: '32px 24px', color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
               Human Design chart unavailable.

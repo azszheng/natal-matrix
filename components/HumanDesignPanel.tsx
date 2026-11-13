@@ -1,9 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import type { HdChart, HdPlanetId } from '@/lib/astro/humandesign-constants';
+import type { HdChart, HdPlanetId, CenterId } from '@/lib/astro/humandesign-constants';
 import { HD_PLANET_GLYPH, HD_PLANET_ORDER, CENTER_LABEL } from '@/lib/astro/humandesign-constants';
+import { enrichAllActivations, PLANET_TIERS } from '@/lib/astro/humandesign-derive';
+import type { EnrichedActivation } from '@/lib/astro/humandesign-derive';
 import HumanDesignBodygraph from '@/components/charts/HumanDesignBodygraph';
+import type { NatalChart } from '@/lib/astro/types';
+import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
+import {
+  buildHumanDesignTypeSection,
+  buildHumanDesignAuthoritySection,
+  buildHumanDesignProfileSection,
+  buildHumanDesignDefinitionSection,
+  buildHumanDesignCenterSection,
+  buildHumanDesignChannelSection,
+  buildHumanDesignGateActivationSection,
+  buildHumanDesignAstrologyBridgeSection,
+  buildHumanDesignPracticesSection,
+  planetLabel,
+} from '@/lib/ai/humanDesignPrompts';
+import InterpretButton from '@/components/interpret/InterpretButton';
 
 // ── Derived helpers ──────────────────────────────────────────────────────────
 
@@ -241,7 +258,14 @@ const expandBtn: React.CSSProperties = {
 
 // ── Overview tab ──────────────────────────────────────────────────────────────
 
-function OverviewTab({ chart }: { chart: HdChart }) {
+type InterpretProps = {
+  natalChart?: NatalChart | null;
+  mode?: InterpretMode;
+  onInterpret?: (section: InterpretSection) => void;
+  isMinor?: boolean;
+};
+
+function OverviewTab({ chart, natalChart, mode = 'deepdive', onInterpret, isMinor = false }: { chart: HdChart } & InterpretProps) {
   const [pLine, dLine] = chart.profile.split('/').map(Number);
   const tc = TYPE_CONTENT[chart.type];
   const ac = AUTHORITY_CONTENT[chart.authority];
@@ -251,7 +275,6 @@ function OverviewTab({ chart }: { chart: HdChart }) {
   const [showProf, setShowProf] = useState(false);
   const [showDef,  setShowDef]  = useState(false);
 
-  const definedLabels   = chart.definedCenters.map(c => CENTER_LABEL[c]);
   const undefinedLabels = (Object.keys(CENTER_LABEL) as (keyof typeof CENTER_LABEL)[])
     .filter(c => !chart.definedCenters.includes(c))
     .map(c => CENTER_LABEL[c]);
@@ -274,6 +297,12 @@ function OverviewTab({ chart }: { chart: HdChart }) {
           <p style={{ margin: '0 0 14px', fontSize: 13, fontFamily: 'var(--font-display)', color: 'var(--fg-muted)', fontStyle: 'italic' }}>
             {tc.tagline}
           </p>
+        )}
+
+        {onInterpret && (
+          <div style={{ marginBottom: 14 }}>
+            <InterpretButton section={buildHumanDesignTypeSection(chart, mode, isMinor)} onInterpret={onInterpret} />
+          </div>
         )}
 
         {showType && tc && (
@@ -375,6 +404,11 @@ function OverviewTab({ chart }: { chart: HdChart }) {
             <InfoBox label="The Practice">
               <p style={{ ...monoSm, fontSize: 12 }}>{ac.practice}</p>
             </InfoBox>
+            {onInterpret && (
+              <div style={{ marginTop: 12 }}>
+                <InterpretButton section={buildHumanDesignAuthoritySection(chart, mode, isMinor)} onInterpret={onInterpret} />
+              </div>
+            )}
           </div>
         )}
 
@@ -431,6 +465,11 @@ function OverviewTab({ chart }: { chart: HdChart }) {
                 </div>
               </div>
             )}
+            {onInterpret && (
+              <div style={{ marginTop: 14 }}>
+                <InterpretButton section={buildHumanDesignProfileSection(chart, mode, isMinor)} onInterpret={onInterpret} />
+              </div>
+            )}
           </div>
         )}
 
@@ -438,23 +477,44 @@ function OverviewTab({ chart }: { chart: HdChart }) {
           <div style={{ padding: '16px 20px 20px', borderTop: '1px solid var(--line)', background: 'rgba(255,255,255,0.015)' }}>
             <Lbl>Definition — {chart.definition}</Lbl>
             <p style={{ ...monoSm, marginTop: 6 }}>{DEFINITION_DESC[chart.definition] ?? ''}</p>
+            {onInterpret && (
+              <div style={{ marginTop: 12 }}>
+                <InterpretButton section={buildHumanDesignDefinitionSection(chart, mode, isMinor)} onInterpret={onInterpret} />
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Centers */}
-      <div style={{ padding: pad, borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: pad, borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <Lbl>Defined Centers ({chart.definedCenters.length}/9)</Lbl>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-            {definedLabels.map(l => <Chip key={l} label={l} />)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+            {chart.definedCenters.map(c => (
+              <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <Chip label={CENTER_LABEL[c]} />
+                {onInterpret && (
+                  <InterpretButton section={buildHumanDesignCenterSection(c, chart, mode, isMinor)} onInterpret={onInterpret} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
         {undefinedLabels.length > 0 && (
           <div>
             <Lbl>Open / Undefined</Lbl>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-              {undefinedLabels.map(l => <Chip key={l} label={l} dim />)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+              {(Object.keys(CENTER_LABEL) as CenterId[])
+                .filter(c => !chart.definedCenters.includes(c))
+                .map(c => (
+                  <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <Chip label={CENTER_LABEL[c]} dim />
+                    {onInterpret && (
+                      <InterpretButton section={buildHumanDesignCenterSection(c, chart, mode, isMinor)} onInterpret={onInterpret} />
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
         )}
@@ -467,13 +527,16 @@ function OverviewTab({ chart }: { chart: HdChart }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
             {chart.definedChannels.map(ch => (
               <div key={`${ch.a}-${ch.b}`}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 3 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 3, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--fg-glyph)', fontWeight: 600, minWidth: 44 }}>
                     {ch.a}–{ch.b}
                   </span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg)', fontWeight: 500 }}>
                     {ch.name}
                   </span>
+                  {onInterpret && (
+                    <InterpretButton section={buildHumanDesignChannelSection(ch, chart, mode, isMinor)} onInterpret={onInterpret} />
+                  )}
                 </div>
                 {ch.description && (
                   <p style={{ margin: '0 0 0 56px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-dim)', lineHeight: 1.6 }}>
@@ -485,6 +548,27 @@ function OverviewTab({ chart }: { chart: HdChart }) {
           </div>
         </div>
       )}
+
+      {/* AI-generated insights */}
+      <div style={{ padding: pad, borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <Lbl>Go Deeper</Lbl>
+        {onInterpret && natalChart && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-muted)' }}>
+              How this connects to your natal chart
+            </span>
+            <InterpretButton section={buildHumanDesignAstrologyBridgeSection(chart, natalChart, mode, isMinor)} onInterpret={onInterpret} />
+          </div>
+        )}
+        {onInterpret && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-muted)' }}>
+              Practical experiments to try
+            </span>
+            <InterpretButton section={buildHumanDesignPracticesSection(chart, mode, isMinor)} onInterpret={onInterpret} />
+          </div>
+        )}
+      </div>
 
       {/* Incarnation Cross */}
       <div style={{ padding: pad }}>
@@ -544,7 +628,7 @@ function ChartTab({ chart }: { chart: HdChart }) {
             </svg>
             <div>
               <p style={{ margin: '0 0 1px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg)', fontWeight: 600 }}>Undefined Center</p>
-              <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-dim)', lineHeight: 1.4 }}>Open — absorbs others' energy</p>
+              <p style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-dim)', lineHeight: 1.4 }}>Open — absorbs others&apos; energy</p>
             </div>
           </div>
 
@@ -651,8 +735,9 @@ function ChartTab({ chart }: { chart: HdChart }) {
 
 // ── Gates tab ─────────────────────────────────────────────────────────────────
 
-function GatesTab({ chart }: { chart: HdChart }) {
+function GatesTab({ chart, mode = 'deepdive', onInterpret, isMinor = false }: { chart: HdChart } & InterpretProps) {
   const [side, setSide] = useState<'both' | 'personality' | 'design'>('both');
+  const enriched = enrichAllActivations(chart);
   const activations = side === 'personality' ? chart.personality : side === 'design' ? chart.design : null;
   const designDate = new Date(chart.designUtc).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
@@ -731,6 +816,39 @@ function GatesTab({ chart }: { chart: HdChart }) {
         </table>
       </div>
 
+      {/* Interpret gate activations, grouped by planet tier */}
+      {onInterpret && (
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)' }}>
+          <Lbl>Interpret a Gate Activation</Lbl>
+          <p style={{ ...monoSm, marginTop: 6, marginBottom: 14 }}>
+            Every gate reads differently depending on its planet, line, and whether it completes a channel. Pick one to interpret.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {PLANET_TIERS.map(tier => {
+              const rows = enriched.filter(a => tier.planets.includes(a.planet));
+              if (rows.length === 0) return null;
+              return (
+                <div key={tier.label}>
+                  <p style={{ margin: '0 0 6px', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: 'var(--fg-dim)' }}>
+                    {tier.label}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {rows.map((a: EnrichedActivation) => (
+                      <div key={`${a.planet}-${a.side}`} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg)', minWidth: 150 }}>
+                          Gate {a.gate}.{a.line} · {planetLabel(a.planet)} · {a.side}
+                        </span>
+                        <InterpretButton section={buildHumanDesignGateActivationSection(a, chart, mode, isMinor)} onInterpret={onInterpret} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Cross + design date */}
       <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
@@ -755,7 +873,7 @@ function GatesTab({ chart }: { chart: HdChart }) {
 
 // ── Root component ────────────────────────────────────────────────────────────
 
-export default function HumanDesignPanel({ chart }: { chart: HdChart }) {
+export default function HumanDesignPanel({ chart, natalChart, mode, onInterpret, isMinor }: { chart: HdChart } & InterpretProps) {
   const [tab, setTab] = useState<TabId>('overview');
 
   return (
@@ -793,9 +911,9 @@ export default function HumanDesignPanel({ chart }: { chart: HdChart }) {
       </div>
 
       {/* Tab content */}
-      {tab === 'overview' && <OverviewTab chart={chart} />}
+      {tab === 'overview' && <OverviewTab chart={chart} natalChart={natalChart} mode={mode} onInterpret={onInterpret} isMinor={isMinor} />}
       {tab === 'chart'    && <ChartTab    chart={chart} />}
-      {tab === 'gates'    && <GatesTab    chart={chart} />}
+      {tab === 'gates'    && <GatesTab    chart={chart} mode={mode} onInterpret={onInterpret} isMinor={isMinor} />}
 
     </div>
   );

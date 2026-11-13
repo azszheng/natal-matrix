@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import type { NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
 import { buildSystemPrompt, buildChartContext, buildVedicSystemPrompt, buildVedicChartContext } from '@/lib/ai/prompts';
+import { buildHumanDesignSystemPrompt } from '@/lib/ai/humanDesignPrompts';
 import type { InterpretationProvider } from '@/lib/ai/interpretationInput';
 import { buildFocusedContext } from '@/lib/ai/interpretationInput';
 
@@ -15,13 +16,13 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY ?? 'placeholder' 
 const OPENAI_MODEL = process.env.OPENAI_ASTROLOGY_MODEL ?? 'gpt-4o-mini';
 
 const MAX_TOKENS: Record<InterpretMode, number> = {
-  essence:    600,
+  essence:    900,
   deepdive:   1400,
   astrologer: 2000,
 };
 
 const VEDIC_MAX_TOKENS: Record<InterpretMode, number> = {
-  essence:    500,
+  essence:    800,
   deepdive:   1600,
   astrologer: 1800,
 };
@@ -59,9 +60,12 @@ async function streamClaude(
   mode: InterpretMode,
   send: (token: string) => void,
 ) {
-  const isVedic      = section.system === 'vedic';
-  const isIpse       = section.type === 'ipse';
-  const systemPrompt = isVedic ? buildVedicSystemPrompt(mode) : buildSystemPrompt(mode, '', { suppressAbilityFraming: isIpse });
+  const isVedic       = section.system === 'vedic';
+  const isHumanDesign = section.system === 'humandesign';
+  const isIpse        = section.type === 'ipse';
+  const systemPrompt = isVedic ? buildVedicSystemPrompt(mode)
+    : isHumanDesign ? buildHumanDesignSystemPrompt(mode)
+    : buildSystemPrompt(mode, '', { suppressAbilityFraming: isIpse });
   const chartContext = isVedic ? buildVedicChartContext(chart) : buildChartContext(chart);
   const maxTokens    = isVedic ? (VEDIC_MAX_TOKENS[mode] ?? 1200) : (MAX_TOKENS[mode] ?? 800);
 
@@ -93,7 +97,9 @@ async function streamOpenAI(
   mode: InterpretMode,
   send: (token: string) => void,
 ) {
-  const systemPrompt = buildSystemPrompt(mode, '', { suppressAbilityFraming: section.type === 'ipse' });
+  const systemPrompt = section.system === 'humandesign'
+    ? buildHumanDesignSystemPrompt(mode)
+    : buildSystemPrompt(mode, '', { suppressAbilityFraming: section.type === 'ipse' });
   const focusedCtx   = buildFocusedContext(chart, section);
 
   const stream = await openai.responses.create({
