@@ -12,14 +12,14 @@ const MODES: {
 }[] = [
   {
     id: 'essence',
-    name: 'Tell me what it means',
+    name: 'Essence',
     subtitle: 'Clear, warm, no jargon',
     description: 'Plain language focused on how this shows up in real life.',
     tooltip: 'Simple and emotionally grounded — explains what the placement feels like to live, what it makes easy, what it makes hard. 150–300 words.',
   },
   {
     id: 'deepdive',
-    name: 'Show me the psychology',
+    name: 'Depth',
     subtitle: 'Psychological depth, fully personal',
     description: 'Traces the mechanism, the shadow, the integrated expression, and a reflection question.',
     tooltip: 'The full psychological portrait — how the placement shapes inner life, relationships, and behavior, with protective and integrated expressions. 500–900 words.',

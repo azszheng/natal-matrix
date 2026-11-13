@@ -840,8 +840,12 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
         {hdDrawerOpen && (
           <HumanDesignDrawer
             hdChart={hdChart}
+            natalChart={chart}
             loading={hdLoading}
             onClose={() => setHdDrawerOpen(false)}
+            onInterpret={setInterpSection}
+            mode={interpMode}
+            isMinor={chart ? isMinorChart(chart.input.date) : false}
           />
         )}
 

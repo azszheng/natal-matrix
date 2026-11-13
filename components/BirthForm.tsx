@@ -27,8 +27,9 @@ export default function BirthForm({ onResolved }: Props) {
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestionsRef = useRef<HTMLUListElement>(null);
+  const requestSeqRef = useRef(0);
 
-  const canCast = form.date && form.time && selectedGeo;
+  const canCast = form.date && form.time && selectedGeo && form.region.trim() && form.country.trim();
 
   // Debounced geocode lookup
   const fetchSuggestions = useCallback((q: string) => {
@@ -38,16 +39,22 @@ export default function BirthForm({ onResolved }: Props) {
       return;
     }
     debounceRef.current = setTimeout(async () => {
+      const seq = ++requestSeqRef.current;
       setLoadingSuggestions(true);
       try {
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
         const data: GeoResult[] = await res.json();
+        // Ignore this response if a newer query has been fired since --
+        // otherwise a slower response for an earlier keystroke can arrive
+        // after and overwrite the results of a more recent, faster one.
+        if (seq !== requestSeqRef.current) return;
         setSuggestions(data);
         setShowSuggestions(true);
       } catch {
+        if (seq !== requestSeqRef.current) return;
         setSuggestions([]);
       } finally {
-        setLoadingSuggestions(false);
+        if (seq === requestSeqRef.current) setLoadingSuggestions(false);
       }
     }, 400);
   }, []);
@@ -121,8 +128,6 @@ export default function BirthForm({ onResolved }: Props) {
       }
 
       const chart: NatalChart = await chartRes.json();
-      console.log('[Natal Matrix] ResolvedBirth:', resolved);
-      console.log('[Natal Matrix] NatalChart:', chart);
       onResolved(resolved, chart);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -147,7 +152,7 @@ export default function BirthForm({ onResolved }: Props) {
           <label className={labelClass}>Name <span className="normal-case text-[var(--fg-dim)]">(optional)</span></label>
           <input
             type="text"
-            placeholder="e.g. Amy Zheng"
+            placeholder="Full name"
             value={form.name ?? ''}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             autoComplete="off"

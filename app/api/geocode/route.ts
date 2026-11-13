@@ -4,9 +4,28 @@ import type { GeoResult } from '@/lib/astro/types';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const UA = process.env.NOMINATIM_USER_AGENT ?? 'NatalMatrix/1.0 (azszheng@gmail.com)';
 
-// In-memory rate limit: Nominatim requires max 1 req/sec
+// In-memory rate limit: Nominatim requires max 1 req/sec.
+// Requests are serialized through a promise chain rather than a bare
+// read-then-write of `lastRequestAt` -- two concurrent requests reading the
+// same stale timestamp before either updates it would otherwise compute
+// similar wait times and fire at nearly the same moment. This only
+// serializes requests handled by the same running instance; it cannot
+// enforce the limit across multiple serverless instances without an
+// external shared store (e.g. Redis), which is out of scope here.
 let lastRequestAt = 0;
 const MIN_INTERVAL_MS = 1100;
+let requestQueue: Promise<void> = Promise.resolve();
+
+function throttle(): Promise<void> {
+  const turn = requestQueue.then(async () => {
+    const wait = MIN_INTERVAL_MS - (Date.now() - lastRequestAt);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    lastRequestAt = Date.now();
+  });
+  // Keep the chain alive even if this turn's caller later throws.
+  requestQueue = turn.catch(() => {});
+  return turn;
+}
 
 type NominatimResult = {
   display_name: string;
@@ -32,12 +51,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json([], { status: 200 });
   }
 
-  const now = Date.now();
-  const wait = MIN_INTERVAL_MS - (now - lastRequestAt);
-  if (wait > 0) {
-    await new Promise((r) => setTimeout(r, wait));
-  }
-  lastRequestAt = Date.now();
+  await throttle();
 
   const url = new URL(NOMINATIM_URL);
   url.searchParams.set('format', 'json');

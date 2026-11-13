@@ -46,7 +46,17 @@ export async function DELETE(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
-  const { id }: { id: number } = await req.json();
+  let body: { id?: number };
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 });
+  }
+  const id = typeof body.id === 'number' ? body.id : parseInt(String(body.id), 10);
+  if (!Number.isFinite(id)) {
+    return new Response(JSON.stringify({ error: 'Invalid id' }), { status: 400 });
+  }
+
   const { error } = await supabase
     .from('birth_charts')
     .delete()

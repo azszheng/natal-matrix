@@ -118,6 +118,8 @@ export default function ComparisonPanel({ chart, section, onClose, mode = 'deepd
     userRelatability: null, emotionalResonance: null, clarity: null,
     overallPreference: null,
   });
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const claudeAbort = useRef<AbortController | null>(null);
   const openaiAbort = useRef<AbortController | null>(null);
@@ -194,6 +196,37 @@ export default function ComparisonPanel({ chart, section, onClose, mode = 'deepd
 
   function setRating(key: keyof Omit<ComparisonRatings, 'overallPreference'>, val: number) {
     setRatings(r => ({ ...r, [key]: val }));
+    setSaveState('idle');
+  }
+
+  async function submitRatings() {
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      const { date, time, lat, lng } = chart.input;
+      const cacheKey = `nc_cmp::${date}|${time}|${lat.toFixed(3)}|${lng.toFixed(3)}::${mode}::${section.type}|${section.label}`;
+      const res = await fetch('/api/interpretation-ratings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cacheKey,
+          sectionType: section.type,
+          sectionLabel: section.label,
+          mode,
+          ...ratings,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        setSaveState('error');
+        setSaveError(err.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setSaveState('saved');
+    } catch (err) {
+      setSaveState('error');
+      setSaveError((err as Error).message);
+    }
   }
 
   return (
@@ -270,7 +303,7 @@ export default function ComparisonPanel({ chart, section, onClose, mode = 'deepd
             {(['claude', 'openai'] as const).map(p => (
               <button
                 key={p}
-                onClick={() => setRatings(r => ({ ...r, overallPreference: p }))}
+                onClick={() => { setRatings(r => ({ ...r, overallPreference: p })); setSaveState('idle'); }}
                 style={{
                   fontFamily: 'var(--font-mono)', fontSize: 10,
                   textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -286,11 +319,37 @@ export default function ComparisonPanel({ chart, section, onClose, mode = 'deepd
             ))}
             {ratings.overallPreference && (
               <button
-                onClick={() => setRatings(r => ({ ...r, overallPreference: null }))}
+                onClick={() => { setRatings(r => ({ ...r, overallPreference: null })); setSaveState('idle'); }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-dim)', fontSize: 11, fontFamily: 'var(--font-mono)' }}
               >
                 clear
               </button>
+            )}
+          </div>
+
+          {/* Save */}
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={submitRatings}
+              disabled={saveState === 'saving'}
+              style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10.5,
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+                padding: '6px 18px', cursor: saveState === 'saving' ? 'default' : 'pointer',
+                border: '1px solid var(--fg-glyph)',
+                background: 'var(--fg-glyph)', color: 'var(--bg)',
+                opacity: saveState === 'saving' ? 0.6 : 1,
+              }}
+            >
+              {saveState === 'saving' ? 'Saving…' : 'Save Ratings'}
+            </button>
+            {saveState === 'saved' && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--fg-muted)' }}>Saved.</span>
+            )}
+            {saveState === 'error' && (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--aspect-dynamic)' }}>
+                Failed to save{saveError ? `: ${saveError}` : ''}
+              </span>
             )}
           </div>
 

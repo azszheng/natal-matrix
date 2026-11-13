@@ -39,6 +39,15 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
+  const { data: chartRow, error: chartError } = await supabase
+    .from('birth_charts')
+    .select('id')
+    .eq('id', chartId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (chartError) return new Response(JSON.stringify({ error: chartError.message }), { status: 500 });
+  if (!chartRow) return new Response(JSON.stringify({ error: 'Chart not found' }), { status: 404 });
+
   const body: Entry | Entry[] = await req.json();
   const entries = Array.isArray(body) ? body : [body];
 

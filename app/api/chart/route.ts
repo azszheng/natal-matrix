@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  if (!body.utc || !body.lat || !body.lng) {
+  if (!body.utc || typeof body.lat !== 'number' || typeof body.lng !== 'number') {
     return NextResponse.json(
       { error: 'Missing required fields: utc, lat, lng' },
       { status: 400 },
