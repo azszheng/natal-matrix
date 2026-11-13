@@ -207,9 +207,6 @@ const PLANET_W: Partial<Record<BodyId, number>> = {
   trueNode: 1, southNode: 1, chiron: 1, juno: 0.5,
 };
 
-// Bodies for which we do NOT score "in-house" (angles are always in their house)
-const SKIP_HOUSE_SCORE = new Set<BodyId>(['asc', 'mc', 'partOfFortune', 'vertex']);
-
 const SCORE_BODIES: BodyId[] = [
   'sun','moon','mercury','venus','mars','jupiter','saturn',
   'uranus','neptune','pluto','trueNode','chiron',
@@ -286,9 +283,9 @@ function computeScore(
   }
 
   // 1. Planets in primary houses
-  for (const [idStr, body] of Object.entries(bodies) as [BodyId, typeof bodies[BodyId]][]) {
-    const id = idStr as BodyId;
-    if (!body || SKIP_HOUSE_SCORE.has(id)) continue;
+  for (const id of SCORE_BODIES) {
+    const body = bodies[id];
+    if (!body) continue;
     if (!def.houses.includes(body.house)) continue;
     const w = (PLANET_W[id] ?? 0.3) + (ANGULAR.has(body.house) ? 0.5 : 0);
     score += w;
@@ -328,6 +325,11 @@ function computeScore(
   // 5. Tight aspects involving key planets
   for (const asp of aspects) {
     if (asp.orb > 6) continue;
+    // Both sides must be in the documented factor set -- otherwise a key
+    // planet's aspect to a minor asteroid (Ceres, Vesta, Pallas, Lilith)
+    // would surface as a "chart indicator" even though scoring elsewhere
+    // in this file deliberately excludes those bodies.
+    if (!SCORE_BODIES.includes(asp.a as BodyId) || !SCORE_BODIES.includes(asp.b as BodyId)) continue;
     const aIsKey = def.keyPlanets.includes(asp.a as BodyId);
     const bIsKey = def.keyPlanets.includes(asp.b as BodyId);
     if (!aIsKey && !bIsKey) continue;
@@ -365,8 +367,9 @@ function computeScore(
   }
 
   // 8. Sign emphasis (each planet in a supporting sign adds a small flat weight)
-  for (const [idStr, body] of Object.entries(bodies) as [BodyId, typeof bodies[BodyId]][]) {
-    if (!body || SKIP_HOUSE_SCORE.has(idStr as BodyId)) continue;
+  for (const id of SCORE_BODIES) {
+    const body = bodies[id];
+    if (!body) continue;
     if (def.supportingSigns.includes(body.sign)) score += 0.4;
   }
 
@@ -482,12 +485,13 @@ export function computeTopics(chart: NatalChart): ScoredTopic[] {
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
 }
 
-export function topicToSection(topic: ScoredTopic, chart: NatalChart): InterpretSection {
+export function topicToSection(topic: ScoredTopic): InterpretSection {
   const def = TOPICS.find(d => d.id === topic.id)!;
-  const stelliums = detectStelliums(chart);
-  const vedic = analyzeVedicChart(chart);
-  const { anchors, vedicAnchors } = computeScore(chart, def, stelliums, vedic);
-  const prompt = buildTopicPrompt(def, anchors, vedicAnchors, topic.relevanceLabel);
+  // Reuse the anchors already computed once by computeTopics() instead of
+  // re-running stellium detection, the full Vedic analysis (house lords,
+  // yogas, dignities), and the entire scoring pass a second time just to
+  // rebuild data the caller already has.
+  const prompt = buildTopicPrompt(def, topic.chartAnchors, topic.vedicAnchors, topic.relevanceLabel);
 
   return {
     type: 'topic',

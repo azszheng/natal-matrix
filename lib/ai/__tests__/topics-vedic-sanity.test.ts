@@ -39,9 +39,22 @@ describe('topics.ts Vedic enrichment (sanity check, not a permanent assertion su
     expect(withVedic.length).toBeGreaterThan(0);
     expect(withoutVedic.length).toBeGreaterThan(0);
 
+    // Scoring is documented to cover only SCORE_BODIES (the 12 major bodies)
+    // -- minor asteroids and Lilith should never appear as chart anchors or
+    // silently inflate a topic's relevance.
+    const asteroidNames = ['ceres', 'vesta', 'pallas', 'juno', 'blackmoonlilith'];
+    for (const t of topics) {
+      for (const anchor of t.chartAnchors) {
+        const lower = anchor.toLowerCase();
+        for (const name of asteroidNames) {
+          expect(lower).not.toContain(name);
+        }
+      }
+    }
+
     // Prompt for the top topic should mention Vedic only if it has anchors.
     const top = topics[0];
-    const section = topicToSection(top, chart);
+    const section = topicToSection(top);
     console.log(`\n=== Prompt for top topic: ${top.title} ===\n`);
     console.log(section.prompt);
 

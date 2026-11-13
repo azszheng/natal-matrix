@@ -72,7 +72,7 @@ function TopicCard({
       </span>
 
       <button
-        onClick={() => onInterpret(topicToSection(topic, chart))}
+        onClick={() => onInterpret(topicToSection(topic))}
         style={{
           flexShrink: 0,
           fontFamily: 'var(--font-mono)', fontSize: 10,
