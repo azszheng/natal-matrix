@@ -457,7 +457,7 @@ function scoreParentification(chart: NatalChart): EvidenceHit[] {
   if (satMC) hits.push({ text: `Saturn–MC ${satMC.kind}`, system: 'tropical', weight: 2 });
 
   const sunSat = findAsp(aspects, 'sun', 'saturn');
-  if (sunSat && hasDutyElement) hits.push({ text: aspLabel(sunSat), system: 'tropical', weight: 1 });
+  if (sunSat) hits.push({ text: aspLabel(sunSat), system: 'tropical', weight: 1 });
 
   if (bodies.moon?.sign === 'capricorn') hits.push({ text: 'Moon in Capricorn', system: 'tropical', weight: 1 });
 
@@ -636,6 +636,21 @@ function tierThemes(raws: RawResult[]): Array<{ raw: RawResult; tier: 'primary' 
   const sorted = [...raws].filter(r => r.score > 0).sort((a, b) => b.score - a.score);
   if (sorted.length === 0) return [];
 
+  // Each theme's written summary makes specific tropical (Western) placement
+  // claims (e.g. "Neptune's presence in your 4th house..."). A theme with
+  // zero tropical hits should not become primary just because a single weak
+  // Vedic-only signal happened to outscore everything else -- that produces
+  // a confident-sounding summary describing a placement that isn't actually
+  // in the chart. Promote the highest-scoring theme that has at least one
+  // tropical hit to the front instead; fall back to the highest score
+  // overall only if no theme has tropical corroboration at all.
+  const hasTropical = (r: RawResult) => r.hits.some(h => h.system === 'tropical');
+  const primaryIdx = sorted.findIndex(hasTropical);
+  if (primaryIdx > 0) {
+    const [corroborated] = sorted.splice(primaryIdx, 1);
+    sorted.unshift(corroborated);
+  }
+
   const claimed = new Set<string>(); // tropical evidence claimed by primary/secondary
   const tiered: Array<{ raw: RawResult; tier: 'primary' | 'secondary' | 'background' }> = [];
   let primaryCount = 0;
@@ -772,11 +787,17 @@ function buildVedicNote(hasVedicEvidence: boolean): string {
 // ── Age utilities ─────────────────────────────────────────────────────────────
 
 export function getAgeFromBirthDate(birthDate: string): number {
-  const birth = new Date(birthDate);
+  // Parse the "YYYY-MM-DD" components directly instead of going through
+  // `new Date(birthDate)` -- a date-only string is parsed as UTC midnight,
+  // but getFullYear/getMonth/getDate read it back in local time, so in any
+  // timezone west of UTC the birth date reads one calendar day earlier than
+  // intended. That shifted the minor/adult boundary by a day right around
+  // the person's actual birthday.
+  const [by, bm, bd] = birthDate.split('-').map(Number);
   const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  let age = today.getFullYear() - by;
+  const m = (today.getMonth() + 1) - bm;
+  if (m < 0 || (m === 0 && today.getDate() < bd)) age--;
   return age;
 }
 

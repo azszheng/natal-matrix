@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
 import { buildChildhoodSection } from '@/lib/ai/prompts';
@@ -24,7 +24,13 @@ function lsSet(key: string) {
 }
 
 function chartAckKey(chart: NatalChart): string {
-  return `nc_ack_minor_v2_${chart.input.date}_${chart.input.time}`;
+  // Include location (and name, when given) so two children who happen to
+  // share a birth date/time -- twins, or charts entered with an unknown/
+  // default time -- don't collide on the same acknowledgment key and
+  // silently skip the required gate for the second chart.
+  const { date, time, lat, lng, name } = chart.input;
+  const namePart = name ? `_${name.trim().toLowerCase().replace(/\s+/g, '-')}` : '';
+  return `nc_ack_minor_v2_${date}_${time}_${lat.toFixed(4)}_${lng.toFixed(4)}${namePart}`;
 }
 
 // ── Strength badge ────────────────────────────────────────────────────────────
@@ -201,7 +207,10 @@ function ThemeCard({
 }) {
   const title = isMinor ? theme.minorTitle : theme.adultTitle;
   const summary = isMinor ? theme.minorSummary : theme.adultSummary;
-  const section = useCallback(
+  // useMemo caches the computed InterpretSection value itself; a useCallback
+  // here would only have memoized the function reference, while the call
+  // site still invoked it (and therefore recomputed it) on every render.
+  const section = useMemo(
     () => buildChildhoodSection(theme, chart, isMinor, mode),
     [theme, chart, isMinor, mode],
   );
@@ -241,7 +250,7 @@ function ThemeCard({
           </p>
         </div>
         <div style={{ flexShrink: 0, paddingTop: 2 }}>
-          <InterpretButton section={section()} onInterpret={onInterpret} />
+          <InterpretButton section={section} onInterpret={onInterpret} />
         </div>
       </div>
 
@@ -397,22 +406,30 @@ type Props = {
 export default function ChildhoodImprintsSection({ chart, mode, onInterpret }: Props) {
   const isMinor = isMinorChart(chart.input.date);
 
-  const [ack1, setAck1] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return lsGet('nc_ack_childhood_v1');
-  });
+  // Both flags default to false on the server and on first client render
+  // (matching SSR markup exactly) and are only set from localStorage inside
+  // an effect after mount -- reading localStorage synchronously in a
+  // useState initializer (guarded only by a `typeof window` check) still
+  // produces different server vs. first-client-render output whenever the
+  // value is already acknowledged, causing a hydration mismatch. `checked`
+  // gates rendering until that effect has run, avoiding a flash of the gate.
+  const [ack1, setAck1] = useState(false);
+  const [ack2, setAck2] = useState(false);
+  const [checked, setChecked] = useState(false);
 
-  const [ack2, setAck2] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    if (!isMinor) return true;
-    return lsGet(chartAckKey(chart));
-  });
+  const ackKey = chartAckKey(chart);
+  useEffect(() => {
+    setAck1(lsGet('nc_ack_childhood_v1'));
+    setAck2(isMinor ? lsGet(ackKey) : true);
+    setChecked(true);
+  }, [ackKey, isMinor]);
 
   const result = useMemo(() => scoreChildhoodImprints(chart), [chart]);
 
   function confirmAck1() { lsSet('nc_ack_childhood_v1'); setAck1(true); }
-  function confirmAck2() { lsSet(chartAckKey(chart)); setAck2(true); }
+  function confirmAck2() { lsSet(ackKey); setAck2(true); }
 
+  if (!checked) return null;
   if (!result.primary) return null;
 
   return (
