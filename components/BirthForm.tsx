@@ -158,7 +158,7 @@ export default function BirthForm({ onResolved }: Props) {
 
         {/* Date */}
         <div>
-          <label className={labelClass}>Date <span className="text-[var(--aspect-dynamic)]">*</span></label>
+          <label className={labelClass}>Birth Date <span className="text-[var(--aspect-dynamic)]">*</span></label>
           <input
             type="date"
             required
@@ -172,7 +172,7 @@ export default function BirthForm({ onResolved }: Props) {
         {/* Time */}
         <div>
           <label className={labelClass}>
-            Time <span className="text-[var(--aspect-dynamic)]">*</span>
+            Birth Time <span className="text-[var(--aspect-dynamic)]">*</span>
             <span
               className="ml-2 normal-case text-[var(--fg-dim)] cursor-help"
               title="Required — even a 10-minute difference can change the Ascendant by 2.5°. If you don't know your time, you cannot get an accurate chart."
@@ -190,7 +190,7 @@ export default function BirthForm({ onResolved }: Props) {
 
         {/* City autocomplete */}
         <div className="relative">
-          <label className={labelClass}>City <span className="text-[var(--aspect-dynamic)]">*</span></label>
+          <label className={labelClass}>Birth City <span className="text-[var(--aspect-dynamic)]">*</span></label>
           <input
             type="text"
             placeholder="e.g. Santa Monica"

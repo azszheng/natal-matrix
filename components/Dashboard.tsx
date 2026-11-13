@@ -569,7 +569,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
           </section>
         ) : (
           <section style={{ border: '1px solid var(--line)', background: 'var(--bg-raised)', padding: '20px 24px', marginTop: chart ? 0 : 0 }}>
-            <p style={{ margin: '0 0 16px', fontSize: 10, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-muted)' }}>Birth Data</p>
+            <p style={{ margin: '0 0 18px', fontSize: 20, fontFamily: 'var(--font-display)', fontWeight: 600, letterSpacing: '0.01em', color: 'var(--fg)' }}>Birth Data</p>
             <BirthForm onResolved={handleResolved} />
           </section>
         )}
