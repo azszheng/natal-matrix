@@ -412,14 +412,31 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
   }, [isLoggedIn]);
 
   useEffect(() => {
-    function onLoadChart(e: Event) {
+    async function onLoadChart(e: Event) {
       const c = (e as CustomEvent<SavedChart>).detail;
-      setChart(c.chart_data);
       setBirth(c.chart_data.input);
       setSavedChartId(c.id);
       setSaveStatus('saved');
       setFormOpen(false);
       setSavedSnapshot(null);
+
+      // Recompute rather than trust the stored chart_data blob as-is: a
+      // chart saved before a schema change (e.g. the sect feature added
+      // western.sect/planetSect) won't have the newer fields, and
+      // downstream UI/prompt code assumes every chart has them. Recomputing
+      // from the stored birth input keeps a saved profile current with
+      // whatever the chart shape is today instead of crashing on load.
+      try {
+        const res = await fetch('/api/chart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(c.chart_data.input),
+        });
+        setChart(res.ok ? await res.json() : c.chart_data);
+      } catch {
+        setChart(c.chart_data); // offline/network failure — stale data beats none
+      }
+
       fetchHdChart(c.chart_data.input);
       loadChartInterpretations(c.id);
     }

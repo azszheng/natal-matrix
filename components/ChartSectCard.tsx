@@ -34,6 +34,10 @@ function TeamRow({ label, team, active }: { label: string; team: BodyId[]; activ
 
 export default function ChartSectCard({ chart }: { chart: NatalChart }) {
   const sect = chart.western.sect;
+  // Defensive: a chart loaded from stale cached/stored data (saved before
+  // this field existed, surfaced only if a fresh recompute on load fails)
+  // won't have this. Skip the card rather than crash the page.
+  if (!sect) return null;
   const isDay = sect.chartSect === 'day';
 
   const explainerSentence = isDay
