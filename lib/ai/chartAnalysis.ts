@@ -13,6 +13,51 @@
 
 import type { NatalChart, BodyId, SignId } from '@/lib/astro/types';
 
+// ── Mutual reception (lightweight) ───────────────────────────────────────────
+// A in B's sign, B in A's sign (by domicile rulership) — a functional
+// exchange of resources, not simple weakness. Used to color sect synthesis
+// below; not exposed as its own section elsewhere yet.
+function mutualReceptionPartner(bodyId: BodyId, chart: NatalChart): BodyId | null {
+  const dig = chart.western.dignities[bodyId];
+  if (!dig || dig.label === 'domicile') return null;
+  const dispositorId = dig.traditionalRuler;
+  if (dispositorId === bodyId) return null;
+  const dispositorDig = chart.western.dignities[dispositorId];
+  return dispositorDig?.traditionalRuler === bodyId ? dispositorId : null;
+}
+
+// ── Sect synthesis lines (shared by bodyContext and aspectContext) ──────────
+// Dignity answers CAPACITY — what resources/function the planet has. Sect
+// answers ACCESSIBILITY — how naturally that capacity is regulated and
+// expressed in THIS chart's day/night condition. These are two separate
+// axes; never collapse them into one strength score, and never call an
+// in-sect placement automatically good or a contrary-sect placement
+// automatically bad (benefics stay benefic contrary to sect; malefics are
+// not simply "weaker" in sect — they are more manageable).
+function sectContextLines(bodyId: BodyId, chart: NatalChart): string[] {
+  const sectCond = chart.western.planetSect[bodyId];
+  if (!sectCond || sectCond.status === 'not-applicable') return [];
+
+  const name = lbl(bodyId);
+  const sect = chart.western.sect;
+  const dig  = chart.western.dignities[bodyId]?.label;
+  const statusLabel =
+    sectCond.status === 'in-sect'       ? 'in sect'
+    : sectCond.status === 'contrary-sect' ? 'contrary to sect'
+    : "ambiguous (Mercury sits too close to the Sun to read oriental/occidental confidently — do not force a confident sect claim)";
+
+  const lines = [
+    `SECT (accessibility/regulation, NOT capacity) for ${name}: ${statusLabel} in this ${sect.chartSect} chart — role: ${sectCond.role.replace(/-/g, ' ')}. Essential dignity${dig ? ` (${dig})` : ''} already told you ${name}'s capacity; keep that separate from this. Interpretive register available here: ${sectCond.interpretationTags.join(', ') || 'none'}.`,
+  ];
+
+  const mrPartner = mutualReceptionPartner(bodyId, chart);
+  if (mrPartner) {
+    lines.push(`Mutual reception: ${name} is disposed by ${lbl(mrPartner)}, which is in turn disposed by ${name} — a functional exchange of resources between the two, not simple weakness. Let sect further color this exchange rather than overriding it.`);
+  }
+
+  return lines;
+}
+
 // ── Sign metadata ─────────────────────────────────────────────────────────────
 
 export type ElementId  = 'fire' | 'earth' | 'air' | 'water';
@@ -672,6 +717,15 @@ export function formatChartAnalysis(chart: NatalChart, analysis: ChartAnalysis):
     line();
   }
 
+  const sect = chart.western.sect;
+  line(`CHART SECT: ${cap(sect.chartSect)} (Sun altitude ${sect.sunAltitudeDeg.toFixed(1)}° — ${sect.sunAltitudeDeg >= 0 ? 'above' : 'below'} horizon)`);
+  line(`  Sect luminary: ${lbl(sect.sectLuminary)} · Benefic of sect: ${lbl(sect.beneficOfSect)} · Malefic of sect: ${lbl(sect.maleficOfSect)}`);
+  line(`  Contrary luminary: ${lbl(sect.contraryLuminary)} · Benefic contrary sect: ${lbl(sect.beneficContrarySect)} · Malefic contrary sect: ${lbl(sect.maleficContrarySect)}`);
+  if (sect.mercurySect !== 'ambiguous') line(`  Mercury: ${sect.mercuryOrientation} (${sect.mercurySect}) — ${sect.mercurySect === (sect.chartSect === 'day' ? 'diurnal' : 'nocturnal') ? 'sect-compatible' : 'contrary to this chart\'s sect'}`);
+  else line(`  Mercury: too close to the Sun for a confident oriental/occidental reading — treat its sect as ambiguous, do not force a claim`);
+  line('  Sect is a modifier of accessibility/regulation, never a +/- score — keep it separate from essential dignity (capacity) everywhere below.');
+  line();
+
   const sm = analysis.sunMoonRelationship;
   line(`SUN-MOON: ${Math.round(sm.angle)}° apart${sm.aspect ? ' · ' + sm.aspect + ' in orb' : ' · no major aspect in orb'}`);
   line(`  ${sm.phaseDescription}`);
@@ -782,6 +836,8 @@ export function bodyContext(bodyId: BodyId, chart: NatalChart, analysis: ChartAn
   if (cd) L.push(`Critical degree: ${name} at ${cd.type === 'anaretic' ? '29°' : '0°'} ${cap(cd.sign)} — ${cd.type === 'anaretic' ? 'urgent completion pressure' : 'raw archetypal expression'}.`);
   if (body?.isRetrograde) L.push(`Retrograde: energy is internalized and revisional — develops inward before outward expression.`);
 
+  L.push(...sectContextLines(bodyId, chart));
+
   return L.join('\n');
 }
 
@@ -813,6 +869,10 @@ export function aspectContext(bodyA: BodyId, bodyB: BodyId, chart: NatalChart, a
     const r = analysis.chartRuler;
     L.push(`Chart ruler: ${r.label} in ${cap(r.sign)} H${r.house} (${r.accidentalStrength})`);
   }
+
+  L.push(...sectContextLines(bodyA, chart));
+  L.push(...sectContextLines(bodyB, chart));
+
   return L.join('\n');
 }
 

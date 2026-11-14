@@ -9,6 +9,7 @@ import {
 import { computeAspects } from './aspects';
 import { toVedicBody, getAscendantRashi, tropicalToSidereal } from './vedic';
 import { getDignityInfo } from './dignities';
+import { calculateChartSect, getPlanetSectCondition } from './sect';
 
 function signFromLon(lon: number) {
   const normalized = ((lon % 360) + 360) % 360;
@@ -165,6 +166,14 @@ export function computeNatalChart(input: ResolvedBirth): NatalChart {
     ]),
   ) as NatalChart['western']['dignities'];
 
+  // Step 9 — Sect (Western-only; see sect.ts). Calculated once here, early
+  // in the pipeline, so every downstream consumer (chart analysis, AI
+  // prompts, UI) reads the same precomputed result instead of recomputing it.
+  const sect = calculateChartSect(allWesternBodies.sun, allWesternBodies.mercury, jdUT, input.lat, input.lng);
+  const planetSect = Object.fromEntries(
+    Object.keys(allWesternBodies).map(id => [id, getPlanetSectCondition(id as BodyId, sect)]),
+  ) as NatalChart['western']['planetSect'];
+
   return {
     input: { ...input, julianDayUT: jdUT },
     western: {
@@ -172,6 +181,8 @@ export function computeNatalChart(input: ResolvedBirth): NatalChart {
       houses,
       aspects,
       dignities,
+      sect,
+      planetSect,
     },
     vedic: {
       ayanamsa,

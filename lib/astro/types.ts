@@ -141,6 +141,58 @@ export type DignityInfo = {
   modernRuler?: BodyId;
 };
 
+// ── Sect (day/night chart) ───────────────────────────────────────────────────
+//
+// Traditional Western/Hellenistic sect. Western-only — do not import or
+// apply this to Vedic interpretation. Vedic temporal strength (Kāla Bala,
+// part of Ṣaḍbala) is a distinct, not-yet-implemented system; never
+// silently translate one into the other.
+
+export type ChartSect = 'day' | 'night';
+
+export type SectStatus =
+  | 'in-sect'       // planet's team matches the chart's sect
+  | 'contrary-sect' // planet's team opposes the chart's sect
+  | 'conditional'   // Mercury only — depends on oriental/occidental status
+  | 'not-applicable'; // outer planets, angles, nodes, asteroids, Lilith
+
+export type SectRole =
+  | 'sect-luminary' | 'contrary-luminary'
+  | 'benefic-of-sect' | 'benefic-contrary-sect'
+  | 'malefic-of-sect' | 'malefic-contrary-sect'
+  | 'mercury-diurnal' | 'mercury-nocturnal' | 'mercury-ambiguous'
+  | 'outer-planet' | 'other';
+
+export type SectInfo = {
+  chartSect: ChartSect;
+
+  sectLuminary: BodyId;      // 'sun' (day) or 'moon' (night)
+  contraryLuminary: BodyId;
+
+  beneficOfSect: BodyId;        // 'jupiter' (day) or 'venus' (night)
+  beneficContrarySect: BodyId;
+
+  maleficOfSect: BodyId;        // 'saturn' (day) or 'mars' (night)
+  maleficContrarySect: BodyId;
+
+  // Mercury is conditional: its own diurnal/nocturnal tendency (from
+  // whether it rises before the Sun as a morning star, "oriental", or sets
+  // after it as an evening star, "occidental") is compared against the
+  // chart's sect. 'ambiguous' when Mercury sits too close to the Sun for
+  // the orientation itself to be meaningfully determined.
+  mercuryOrientation: 'oriental' | 'occidental' | 'ambiguous';
+  mercurySect: 'diurnal' | 'nocturnal' | 'ambiguous';
+
+  sunAltitudeDeg: number; // true (unrefracted) altitude at birth; sign determines day/night
+};
+
+export type PlanetSectCondition = {
+  planet: BodyId;
+  status: SectStatus;
+  role: SectRole;
+  interpretationTags: string[];
+};
+
 // ── Full Chart ───────────────────────────────────────────────────────────────
 
 export type NatalChart = {
@@ -150,6 +202,8 @@ export type NatalChart = {
     houses: HouseCusps;
     aspects: Aspect[];
     dignities: Record<BodyId, DignityInfo>;
+    sect: SectInfo;
+    planetSect: Partial<Record<BodyId, PlanetSectCondition>>;
   };
   vedic: {
     ayanamsa: number;

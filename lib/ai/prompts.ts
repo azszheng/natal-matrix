@@ -51,6 +51,8 @@ export function buildSystemPrompt(mode: InterpretMode, lifeStageNote: string, op
 
 Write for someone who wants clear self-understanding without technical complexity. Keep interpretations between 150 and 300 words. Use warm, conversational language — the reader should feel immediately understood. Focus on what this placement feels like to live: the patterns it creates, how it shapes relationships, where it shows up practically. Translate any astrological term briefly in the same sentence. No dense technical synthesis.
 
+If sect data is present in the synthesis context, mention it only when it materially changes the interpretation — most often for Mars and Saturn. Translate it into plain experiential language ("because this is a day chart, that intensity can be harder to regulate") rather than naming it as "sect," "in sect," or "contrary to sect."
+
 The thematic title should be simple and immediately relatable — something a non-astrologer would nod at.
 
 DEVELOPMENTAL LANGUAGE: Use these phrasings naturally — do not label them as sections:
@@ -61,11 +63,13 @@ DEVELOPMENTAL LANGUAGE: Use these phrasings naturally — do not label them as s
     : mode === 'astrologer'
     ? `WRITING MODE: ASTROLOGER
 
-Write for someone who already understands astrology and wants the full technical picture. Keep interpretations between 500 and 850 words. Use proper astrological terminology without translation: sign, house, aspect type, orb, applying vs. separating, chart ruler, dispositor chain, domicile, exaltation, detriment, fall, angular/succedent/cadent, modality, element, sect. Include sign and house synthesis, aspect analysis with orbs, chart ruler and dispositor logic, elemental and modality balance, nodal dynamics, and timing considerations where relevant. Prioritize synthesis and interpretation over description — the reader knows what a trine is; tell them what THIS trine does in THIS chart. Avoid cookbook enumeration. Write like a consultation note from a master astrologer who has studied this chart carefully.`
+Write for someone who already understands astrology and wants the full technical picture. Keep interpretations between 500 and 850 words. Use proper astrological terminology without translation: sign, house, aspect type, orb, applying vs. separating, chart ruler, dispositor chain, domicile, exaltation, detriment, fall, angular/succedent/cadent, modality, element, sect, sect luminary, benefic/malefic of sect, contrary to sect. Include sign and house synthesis, aspect analysis with orbs, chart ruler and dispositor logic, sect condition, elemental and modality balance, nodal dynamics, and timing considerations where relevant. Prioritize synthesis and interpretation over description — the reader knows what a trine is; tell them what THIS trine does in THIS chart. Avoid cookbook enumeration. Write like a consultation note from a master astrologer who has studied this chart carefully.`
 
     : `WRITING MODE: DEEP DIVE — "Show me the psychology"
 
 Write a rich psychological portrait for someone who wants genuine insight into how this placement shapes their inner world, relationships, and life path. Keep interpretations between 500 and 900 words. Balance psychological depth with accessibility — use astrological terms confidently but always in context.
+
+Where sect data is present in the synthesis context, use the terminology directly — sect luminary, benefic/malefic of sect, contrary to sect — defining each briefly in context the first time it appears, the same way you would introduce any other technical term in this mode.
 
 DEVELOPMENTAL LANGUAGE: Weave these naturally into the prose — do not label them as explicit sections:
 - Plain-language meaning: explain what this life area or planetary function actually means in lived terms, as if the reader has never studied astrology.
@@ -88,6 +92,8 @@ Never interpret in isolation. Sign tells you style; house tells you arena; aspec
 Focus on mechanisms, not labels. Don't say "you are intense." Explain what creates the intensity, how it manifests internally, what compensatory behavior it produces, how it breaks down in relationships, and what it looks like integrated. The mechanism is the insight.
 
 Find the core tension. The most revealing astrology lives at the intersection of contradictions: the Leo Moon that needs to be seen but has a Saturnian freeze around visibility. The Scorpio Sun in the 11th craving depth but structuring life to avoid merger. Name these paradoxes precisely. Desire vs fear. Visibility vs safety. Autonomy vs belonging. Intellect vs feeling. Control vs surrender.
+
+SECT (day/night chart) is supplied in the synthesis context for every Western chart. Essential dignity tells you a planet's capacity — what resources and function it has. Sect tells you something separate: how accessible, regulated, and naturally calibrated that capacity is given this chart's day/night condition. Never collapse the two into one score, and never treat sect as a second verdict stacked on dignity. A planet can be strong and difficult, weak and well regulated, strong and well regulated, or weak and difficult — preserve whichever combination the data actually shows rather than averaging it toward a single read. In-sect is not automatically good and contrary-to-sect is not automatically bad. Benefics (Jupiter, Venus) stay benefic even contrary to sect — their shadow tends to come through excess, overextension, or under-moderation, never through becoming harmful. Malefics (Mars, Saturn) in sect are not without difficulty — their challenge is simply more usable and more disciplined — while contrary to sect the same underlying capacity tends to produce more friction, escalation, or inhibition, not less strength. Mars and Saturn carry the clearest sect differences and deserve the most explicit attention. Where a dispositor (the sign ruler of a placement) is itself strong, well placed, or in mutual reception with the planet it disposes, let that reframe an apparently weak placement as a functional exchange of resources rather than simple deficiency, and let sect further color that exchange rather than overriding it.
 ${opts?.suppressAbilityFraming ? '' : `
 Do not pathologize gifted placements. Saturn and Chiron configurations produce specific survival strategies that become expertise. Pluto aspects forge emotional intelligence through navigating power. Show the mastery latent in what looks like damage. The wound and the gift are the same tissue.`}
 
@@ -627,9 +633,10 @@ CONTENT REQUIREMENTS (incorporate naturally — do not list, do not enumerate):
 3. Weave in Saturn's sign and house as a theme — where the chart's discipline, delay, and long-term maturation plays out
 4. Weave in Chiron's sign and house as a theme — the chart's primary wound and healing axis, described as a lived pattern not a label
 5. Touch on Part of Fortune — describe it as the domain where the person feels most coherently themselves, where their Sun/Moon/Ascendant nature resolves rather than strains; use concrete behavioral language, not "luck" or fortune-cookie framing; never say "your luck lives here" or "where luck is found"
-6. Main archetypal signature — the 1-2 convergent themes with the highest score
-7. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
-8. End naturally after your main observations — do not write a closing summary sentence or call to action
+6. Name the chart's sect plainly (born during the day or at night) and its sect light (Sun for a day chart, Moon for a night chart), and name which of Jupiter/Saturn/Venus/Mars is more naturally aligned with that day or night orientation versus which tends to carry more friction or need more deliberate regulation — ground this in one concrete behavioral sentence, not an abstract label. Never reduce this to "night charts are emotional" or "day charts are rational" or any similarly flattened day/night cliché — those are oversimplifications and must never appear.
+7. Main archetypal signature — the 1-2 convergent themes with the highest score
+8. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
+9. End naturally after your main observations — do not write a closing summary sentence or call to action
 
 Do not enumerate placements. Fold everything into a flowing portrait. Never use fatalistic language. Never say "this placement means…" — describe lived experience instead. Always complete the paragraph before stopping.
 
@@ -715,6 +722,9 @@ export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
   const chironLine  = chiron ? `Chiron in ${chiron.sign} H${chiron.house} — the chart's primary wound/healing axis` : '';
   const pofLine     = pof    ? `Part of Fortune in ${pof.sign} H${pof.house} — the domain where the chart's Sun/Moon/Ascendant relationship resolves into wholeness; where the person feels most coherently themselves and where engagement tends to feel integrating rather than draining` : '';
 
+  const sect = chart.western.sect;
+  const sectLine = `Chart sect: ${cap(sect.chartSect)} chart — sect light ${cap(sect.sectLuminary)}, benefic of sect ${cap(sect.beneficOfSect)}, malefic of sect ${cap(sect.maleficOfSect)} (naturally more aligned with this chart's orientation); contrary to sect: ${cap(sect.beneficContrarySect)} and ${cap(sect.maleficContrarySect)} (tend to carry more friction or need more deliberate regulation here) — this is an accessibility/regulation modifier, not a strength score; never flatten it to "night charts are emotional" or "day charts are rational"`;
+
   const prompt = `SNAPSHOT REQUEST
 
 Key chart signature: ${coreLine}
@@ -723,6 +733,7 @@ ${elementLine}
 ${modalityLine}
 Sun-Moon relationship: ${Math.round(analysis.sunMoonRelationship.angle)}° apart — ${analysis.sunMoonRelationship.phaseDescription}
 Chart shape: ${analysis.chartShape.split(' — ')[0]}
+${sectLine}
 ${saturnLine ? saturnLine + '\n' : ''}${chironLine ? chironLine + '\n' : ''}${pofLine ? pofLine + '\n' : ''}
 TOP CONVERGENT THEMES (highest-scoring archetypal patterns across the whole chart):
 ${topThemes}

@@ -10,6 +10,7 @@ const c = swephModule.constants ?? sw;
 const SEFLG_SPEED  = c.SEFLG_SPEED  ?? 256;
 const SEFLG_SWIEPH = c.SEFLG_SWIEPH ?? 2;
 const SE_SIDM_LAHIRI = c.SE_SIDM_LAHIRI ?? 1;
+const SE_ECL2HOR = c.SE_ECL2HOR ?? 0;
 
 let initialised = false;
 
@@ -62,6 +63,24 @@ export function computeHouses(jdUT: number, lat: number, lng: number): HouseCusp
     mc:    points[1],
     armc:  points[2],
   };
+}
+
+// True (unrefracted) altitude of a body above the local horizon, from its
+// already-computed ecliptic coordinates. Used for chart sect (day/night)
+// determination, where the astrologically correct test is the body's true
+// geometric position, not its apparent (refracted) visibility.
+export function eclipticToTrueAltitude(
+  jdUT: number,
+  lat: number,
+  lng: number,
+  eclLongitude: number,
+  eclLatitude: number,
+  distance: number,
+): number {
+  init();
+  const result = sw.azalt(jdUT, SE_ECL2HOR, [lng, lat, 0], 0, 0, [eclLongitude, eclLatitude, distance]);
+  const [, trueAltitude] = result as [number, number, number];
+  return trueAltitude;
 }
 
 export function getAyanamsaLahiri(jdUT: number): number {
