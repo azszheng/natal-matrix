@@ -11,9 +11,19 @@ export default async function Home() {
       <header style={{ borderBottom: '1px solid var(--line)' }}>
         <div className="am-masthead" style={{ maxWidth: 1040, margin: '0 auto', padding: '18px 28px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 500, color: 'var(--fg)', letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
+            {/* Plain <a>, not next/link, is intentional: Dashboard's cast
+                chart lives in local client state, and a same-route <Link>
+                navigation is a no-op that wouldn't reset it. A real
+                navigation (full reload) is required to get back to a blank
+                entry form. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/"
+              style={{ fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 500, color: 'var(--fg)', letterSpacing: '0.01em', whiteSpace: 'nowrap', textDecoration: 'none' }}
+              title="Back to birth data entry"
+            >
               Natal Matrix
-            </span>
+            </a>
           </div>
           <AuthHeader initialUser={user} />
         </div>
