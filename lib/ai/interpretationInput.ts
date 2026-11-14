@@ -2,6 +2,16 @@ import type { NatalChart } from '@/lib/astro/types';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
 import { SIGNS } from '@/lib/astro/types';
 
+// Bump this whenever a change to prompt-building logic (chartAnalysis.ts,
+// prompts.ts, or anything they synthesize into context) should force
+// previously-cached interpretations and snapshots to regenerate instead of
+// silently serving stale pre-change text forever. Included in every cache
+// key below, in both localStorage and the Supabase-persisted
+// chart_interpretations cache_key column -- a version bump invalidates
+// both at once; old rows/entries simply become unreachable, no migration
+// or manual purge needed.
+export const PROMPT_VERSION = 'v2';
+
 export type InterpretationProvider = 'claude' | 'openai';
 
 export type ComparisonRatings = {
@@ -23,7 +33,7 @@ export function buildProviderCacheKey(
   const { date, time, lat, lng } = chart.input;
   const chartHash = `${date}|${time}|${lat.toFixed(3)}|${lng.toFixed(3)}`;
   const factorKey = `${section.type}|${section.label}`;
-  return `nc_interp::${chartHash}::${mode}::${factorKey}::${provider}`;
+  return `nc_interp::${PROMPT_VERSION}::${chartHash}::${mode}::${factorKey}::${provider}`;
 }
 
 function lonToSignDeg(lon: number): string {

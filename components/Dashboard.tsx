@@ -35,7 +35,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { ResolvedBirth, NatalChart } from '@/lib/astro/types';
 import type { HdChart } from '@/lib/astro/humandesign-constants';
 import type { InterpretSection, InterpretMode } from '@/lib/ai/prompts';
-import { buildProviderCacheKey, type InterpretationProvider } from '@/lib/ai/interpretationInput';
+import { buildProviderCacheKey, PROMPT_VERSION, type InterpretationProvider } from '@/lib/ai/interpretationInput';
 
 type SavedChart = {
   id: number;
@@ -55,10 +55,18 @@ function lsSet(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* storage full */ }
 }
 
+// Keep in sync with snapshotCacheKey() in ChartSnapshot.tsx -- both must
+// compute the identical key.
 function snapshotLsKey(c: NatalChart): string {
   const { date, time, lat, lng } = c.input;
-  return `snapshot_v1_${date}_${time}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
+  return `snapshot_${PROMPT_VERSION}_${date}_${time}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
 }
+
+// Supabase-persisted chart_interpretations rows for the snapshot use this
+// as their cache_key. Versioned the same way so a prompt-logic change
+// invalidates previously-saved snapshots instead of serving stale text
+// forever -- old rows under a prior version simply go unread.
+const SNAPSHOT_CACHE_KEY = `__snapshot_${PROMPT_VERSION}__`;
 
 type TableTab = 'planets' | 'houses' | 'aspects' | 'dignities';
 type ModalId  = 'transits' | 'progressions' | 'dashas' | 'synastry';
@@ -349,8 +357,8 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
       if (!res.ok) return;
       const data: Record<string, string> = await res.json();
       // Snapshot stored under special key
-      const snap = data['__snapshot__'] ?? null;
-      delete data['__snapshot__'];
+      const snap = data[SNAPSHOT_CACHE_KEY] ?? null;
+      delete data[SNAPSHOT_CACHE_KEY];
       setSavedSnapshot(snap);
       // Merge topic interpretations into cache + localStorage
       const entries = Object.entries(data);
@@ -486,7 +494,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
       // Batch-save any interpretations already generated in this session
       const entries: { cache_key: string; content: string }[] = [];
       const snap = lsGet(snapshotLsKey(chart));
-      if (snap) entries.push({ cache_key: '__snapshot__', content: snap });
+      if (snap) entries.push({ cache_key: SNAPSHOT_CACHE_KEY, content: snap });
       interpCache.forEach((content, cache_key) => entries.push({ cache_key, content }));
       if (entries.length > 0) {
         fetch(`/api/charts/${id}/interpretations`, {
@@ -518,7 +526,7 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
     fetch(`/api/charts/${savedChartId}/interpretations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify([{ cache_key: '__snapshot__', content: text }]),
+      body: JSON.stringify([{ cache_key: SNAPSHOT_CACHE_KEY, content: text }]),
     }).catch(() => {});
   }
 

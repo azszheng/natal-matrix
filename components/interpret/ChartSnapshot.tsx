@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
+import { PROMPT_VERSION } from '@/lib/ai/interpretationInput';
 
 type Props = {
   chart: NatalChart;
@@ -9,9 +10,12 @@ type Props = {
   onPersist?: (text: string) => void;
 };
 
+// Keep in sync with snapshotLsKey() in Dashboard.tsx -- both must compute
+// the identical key, since Dashboard reads back whatever this component
+// writes to localStorage when batch-persisting to Supabase on chart save.
 function snapshotCacheKey(chart: NatalChart): string {
   const { date, time, lat, lng } = chart.input;
-  return `snapshot_v1_${date}_${time}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
+  return `snapshot_${PROMPT_VERSION}_${date}_${time}_${lat.toFixed(4)}_${lng.toFixed(4)}`;
 }
 
 export default function ChartSnapshot({ chart, savedText, onPersist }: Props) {
