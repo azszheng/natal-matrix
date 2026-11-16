@@ -99,13 +99,31 @@ describe('formatChartAnalysis — CHART SECT header block', () => {
 });
 
 describe('buildSnapshotPrompt ("Chart at a Glance") — sect line', () => {
-  it('names the chart sect, sect light, benefic/malefic of sect, and contrary pair', () => {
+  it('names the chart sect, sect light, and benefic of sect', () => {
     const chart = computeNatalChart(einsteinDay);
     const section = buildSnapshotPrompt(chart);
     expect(section.prompt).toMatch(/Chart sect: Day chart/);
     expect(section.prompt).toMatch(/sect light Sun/);
     expect(section.prompt).toMatch(/benefic of sect Jupiter/);
-    expect(section.prompt).toMatch(/malefic of sect Saturn/);
+  });
+
+  it('forces the Mars/Saturn malefic contrast, naming both with their actual placements', () => {
+    const chart = computeNatalChart(einsteinDay);
+    const section = buildSnapshotPrompt(chart);
+    expect(section.prompt).toMatch(/MALEFIC CONTRAST/);
+    expect(section.prompt).toMatch(/Saturn is in sect/);
+    expect(section.prompt).toMatch(/Mars is contrary to sect/);
+    // Both malefics' real sign/house must be present, not just their names.
+    const saturnSign = chart.western.bodies.saturn.sign;
+    const marsSign = chart.western.bodies.mars.sign;
+    expect(section.prompt.toLowerCase()).toContain(saturnSign);
+    expect(section.prompt.toLowerCase()).toContain(marsSign);
+  });
+
+  it('never applies malefic "difficulty" language to a contrary-sect benefic', () => {
+    const chart = computeNatalChart(einsteinDay);
+    const section = buildSnapshotPrompt(chart);
+    expect(section.prompt).toMatch(/still benefic even when contrary to sect/);
   });
 
   it('explicitly bans the day/night cliché oversimplifications', () => {
