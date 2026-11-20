@@ -29,7 +29,10 @@ export default function BirthForm({ onResolved }: Props) {
   const suggestionsRef = useRef<HTMLUListElement>(null);
   const requestSeqRef = useRef(0);
 
-  const canCast = form.date && form.time && selectedGeo && form.region.trim() && form.country.trim();
+  // Region (state/province) is informational only — chart calculation uses
+  // selectedGeo's lat/lng, not the region text — and some cities genuinely
+  // have no region (e.g. Beijing, Singapore), so it isn't required here.
+  const canCast = form.date && form.time && selectedGeo && form.country.trim();
 
   // Debounced geocode lookup
   const fetchSuggestions = useCallback((q: string) => {
