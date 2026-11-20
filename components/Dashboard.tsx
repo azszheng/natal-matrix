@@ -21,7 +21,6 @@ import ProviderSelector, { type ProviderMode } from '@/components/interpret/Prov
 import ModeSelector from '@/components/interpret/ModeSelector';
 import ChartSnapshot from '@/components/interpret/ChartSnapshot';
 import BirthAtmosphereHero from '@/components/BirthAtmosphere';
-import ChartSectCard from '@/components/ChartSectCard';
 import HumanDesignDrawer from '@/components/modals/HumanDesignDrawer';
 import TopicsPanel from '@/components/TopicsPanel';
 import VibrationalPanel from '@/components/VibrationalPanel';
@@ -612,7 +611,6 @@ export default function Dashboard({ initialLoggedIn = false }: { initialLoggedIn
 
                 {/* Chart at a Glance */}
                 <SectionHead title="Your Chart at a Glance" />
-                <ChartSectCard chart={chart} />
                 <ChartSnapshot
                   chart={chart}
                   savedText={savedSnapshot ?? undefined}

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { computeNatalChart } from '@/lib/astro/natal';
 import type { ResolvedBirth } from '@/lib/astro/types';
 import { analyzeChart, bodyContext, aspectContext, formatChartAnalysis } from '../chartAnalysis';
-import { buildSnapshotPrompt } from '../prompts';
 
 const einsteinDay: ResolvedBirth = {
   // 11:30 LMT -- solidly daytime
@@ -95,41 +94,5 @@ describe('formatChartAnalysis — CHART SECT header block', () => {
     const analysis = analyzeChart(chart);
     const text = formatChartAnalysis(chart, analysis);
     expect(text).toMatch(/never a \+\/- score/);
-  });
-});
-
-describe('buildSnapshotPrompt ("Chart at a Glance") — sect line', () => {
-  it('names the chart sect, sect light, and benefic of sect', () => {
-    const chart = computeNatalChart(einsteinDay);
-    const section = buildSnapshotPrompt(chart);
-    expect(section.prompt).toMatch(/Chart sect: Day chart/);
-    expect(section.prompt).toMatch(/sect light Sun/);
-    expect(section.prompt).toMatch(/benefic of sect Jupiter/);
-  });
-
-  it('forces the Mars/Saturn malefic contrast, naming both with their actual placements', () => {
-    const chart = computeNatalChart(einsteinDay);
-    const section = buildSnapshotPrompt(chart);
-    expect(section.prompt).toMatch(/MALEFIC CONTRAST/);
-    expect(section.prompt).toMatch(/Saturn is in sect/);
-    expect(section.prompt).toMatch(/Mars is contrary to sect/);
-    // Both malefics' real sign/house must be present, not just their names.
-    const saturnSign = chart.western.bodies.saturn.sign;
-    const marsSign = chart.western.bodies.mars.sign;
-    expect(section.prompt.toLowerCase()).toContain(saturnSign);
-    expect(section.prompt.toLowerCase()).toContain(marsSign);
-  });
-
-  it('never applies malefic "difficulty" language to a contrary-sect benefic', () => {
-    const chart = computeNatalChart(einsteinDay);
-    const section = buildSnapshotPrompt(chart);
-    expect(section.prompt).toMatch(/still benefic even when contrary to sect/);
-  });
-
-  it('explicitly bans the day/night cliché oversimplifications', () => {
-    const chart = computeNatalChart(einsteinDay);
-    const section = buildSnapshotPrompt(chart);
-    expect(section.prompt.toLowerCase()).toMatch(/night charts are emotional/);
-    expect(section.prompt.toLowerCase()).toMatch(/day charts are rational/);
   });
 });

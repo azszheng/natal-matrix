@@ -633,10 +633,9 @@ CONTENT REQUIREMENTS (incorporate naturally — do not list, do not enumerate):
 3. Weave in Saturn's sign and house as a theme — where the chart's discipline, delay, and long-term maturation plays out
 4. Weave in Chiron's sign and house as a theme — the chart's primary wound and healing axis, described as a lived pattern not a label
 5. Touch on Part of Fortune — describe it as the domain where the person feels most coherently themselves, where their Sun/Moon/Ascendant nature resolves rather than strains; use concrete behavioral language, not "luck" or fortune-cookie framing; never say "your luck lives here" or "where luck is found"
-6. Name the chart's sect plainly (born during the day or at night) and its sect light (Sun for a day chart, Moon for a night chart). Then specifically contrast the two MALEFICS — Mars and Saturn — since they carry the clearest sect difference and are the most illustrative fact sect has to offer: name which of the two is in sect here (its difficulty tends to be more usable, more disciplined, more integrated) and which is contrary to sect (its difficulty tends to produce more friction, escalation, or inhibition) — do not skip this contrast or mention only one of the two. Ground it in this chart's actual sign/house placement for both, not an abstract label. If there is room, you may also note which benefic (Jupiter or Venus) is in sect versus contrary — but NEVER describe a contrary-sect benefic with the same "needs regulation/difficulty" language used for the contrary-sect malefic; a benefic contrary to sect is still benefic, and its risk is excess or overextension, not friction. Never reduce any of this to "night charts are emotional" or "day charts are rational" or any similarly flattened day/night cliché — those are oversimplifications and must never appear.
-7. Main archetypal signature — the 1-2 convergent themes with the highest score
-8. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
-9. End naturally after your main observations — do not write a closing summary sentence or call to action
+6. Main archetypal signature — the 1-2 convergent themes with the highest score
+7. One sentence that feels emotionally specific and psychologically resonant — the "you get me" moment
+8. End naturally after your main observations — do not write a closing summary sentence or call to action
 
 Do not enumerate placements. Fold everything into a flowing portrait. Never use fatalistic language. Never say "this placement means…" — describe lived experience instead. Always complete the paragraph before stopping.
 
@@ -699,7 +698,6 @@ export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
   const sun    = chart.western.bodies.sun;
   const moon   = chart.western.bodies.moon;
   const asc    = chart.western.bodies.asc;
-  const mars   = chart.western.bodies.mars;
   const saturn = chart.western.bodies.saturn;
   const chiron = chart.western.bodies.chiron;
   const pof    = chart.western.bodies.partOfFortune;
@@ -723,14 +721,6 @@ export function buildSnapshotPrompt(chart: NatalChart): InterpretSection {
   const chironLine  = chiron ? `Chiron in ${chiron.sign} H${chiron.house} — the chart's primary wound/healing axis` : '';
   const pofLine     = pof    ? `Part of Fortune in ${pof.sign} H${pof.house} — the domain where the chart's Sun/Moon/Ascendant relationship resolves into wholeness; where the person feels most coherently themselves and where engagement tends to feel integrating rather than draining` : '';
 
-  const sect = chart.western.sect;
-  const inSectMalefic      = sect.maleficOfSect === 'mars' ? mars : saturn;
-  const contrarySectMalefic = sect.maleficOfSect === 'mars' ? saturn : mars;
-  const inSectMaleficLabel      = cap(sect.maleficOfSect);
-  const contrarySectMaleficLabel = cap(sect.maleficContrarySect);
-  const maleficContrastLine = `MALEFIC CONTRAST (the clearest, most required sect fact — both must be named): ${inSectMaleficLabel} is in sect${inSectMalefic ? ` (${inSectMalefic.sign} H${inSectMalefic.house})` : ''} — its difficulty here tends to be more usable, disciplined, and integrated. ${contrarySectMaleficLabel} is contrary to sect${contrarySectMalefic ? ` (${contrarySectMalefic.sign} H${contrarySectMalefic.house})` : ''} — its difficulty here tends to produce more friction, escalation, or inhibition. Neither is simply "weaker" — ground each in its actual sign/house above, not an abstract label.`;
-  const sectLine = `Chart sect: ${cap(sect.chartSect)} chart — sect light ${cap(sect.sectLuminary)}; benefic of sect ${cap(sect.beneficOfSect)} (still benefic even when contrary to sect elsewhere in the chart — its risk is excess/overextension, never "difficulty" or "needing regulation" the way a malefic has); benefic contrary to sect ${cap(sect.beneficContrarySect)} (same rule applies). This is an accessibility/regulation modifier, not a strength score; never flatten it to "night charts are emotional" or "day charts are rational".\n${maleficContrastLine}`;
-
   const prompt = `SNAPSHOT REQUEST
 
 Key chart signature: ${coreLine}
@@ -739,7 +729,6 @@ ${elementLine}
 ${modalityLine}
 Sun-Moon relationship: ${Math.round(analysis.sunMoonRelationship.angle)}° apart — ${analysis.sunMoonRelationship.phaseDescription}
 Chart shape: ${analysis.chartShape.split(' — ')[0]}
-${sectLine}
 ${saturnLine ? saturnLine + '\n' : ''}${chironLine ? chironLine + '\n' : ''}${pofLine ? pofLine + '\n' : ''}
 TOP CONVERGENT THEMES (highest-scoring archetypal patterns across the whole chart):
 ${topThemes}

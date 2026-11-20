@@ -10,7 +10,7 @@ import { SIGNS } from '@/lib/astro/types';
 // chart_interpretations cache_key column -- a version bump invalidates
 // both at once; old rows/entries simply become unreachable, no migration
 // or manual purge needed.
-export const PROMPT_VERSION = 'v3';
+export const PROMPT_VERSION = 'v4';
 
 export type InterpretationProvider = 'claude' | 'openai';
 
