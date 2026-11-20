@@ -35,6 +35,12 @@ function sunAltitudeDeg(lat: number, lon: number, utcMs: number): number {
   return Math.asin(Math.max(-1, Math.min(1, sinAlt))) * (180 / Math.PI);
 }
 
+// Temporarily disabled -- some ERA5/station weather readings have been
+// inaccurate. Flip back to true once the accuracy issue is resolved;
+// nothing else needs to change. BirthAtmosphere.tsx reads this same flag
+// to hide the "Weather" readout while it's off.
+export const WEATHER_ENABLED = false;
+
 type WeatherCat = BirthAtmosphere['weatherCategory'];
 
 // WMO defines "trace" precipitation as an amount too small to reliably
@@ -185,7 +191,9 @@ export async function computeAtmosphere(chart: NatalChart): Promise<BirthAtmosph
   const moonLon = chart.western.bodies.moon?.longitude ?? 0;
   const moonPhase = ((moonLon - sunLon) % 360 + 360) % 360;
 
-  const weatherCategory = await fetchWeatherCategory(lat, lng, utcDateISO, utcHour);
+  const weatherCategory = WEATHER_ENABLED
+    ? await fetchWeatherCategory(lat, lng, utcDateISO, utcHour)
+    : 'unknown';
 
   const theme = selectTheme(isDaytime, sunAlt, moonPhase, weatherCategory);
 

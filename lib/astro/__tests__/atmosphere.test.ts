@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { categorizeWeather, computeAtmosphere } from '../atmosphere';
+import { categorizeWeather, computeAtmosphere, WEATHER_ENABLED } from '../atmosphere';
 import type { NatalChart } from '../types';
 
 describe('categorizeWeather — trace-precipitation false positives', () => {
@@ -66,7 +66,13 @@ describe('categorizeWeather — trace-precipitation false positives', () => {
   });
 });
 
-describe('computeAtmosphere — queries the UTC calendar date, not the local one', () => {
+// Weather is temporarily disabled (WEATHER_ENABLED = false in atmosphere.ts)
+// because some ERA5/station readings were inaccurate -- computeAtmosphere()
+// now short-circuits to 'unknown' without ever calling fetch, so the two
+// tests below (which verify the UTC-vs-local date fetch logic specifically)
+// are skipped until the flag is flipped back on. The UTC-date logic itself
+// is untouched and ready to be re-verified then.
+describe.skip('computeAtmosphere — queries the UTC calendar date, not the local one', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -135,6 +141,32 @@ describe('computeAtmosphere — queries the UTC calendar date, not the local one
 
     return computeAtmosphere(chart).then(atmo => {
       expect(atmo.weatherCategory).toBe('clear'); // from Jan 2 (correct UTC date), not 'rain' from Jan 1
+    });
+  });
+});
+
+describe('computeAtmosphere — weather temporarily disabled', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('never calls fetch and always reports weatherCategory as unknown while WEATHER_ENABLED is false', () => {
+    expect(WEATHER_ENABLED).toBe(false);
+
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const chart = {
+      input: {
+        name: 'Test', date: '2020-06-15', time: '12:00', city: '', region: '', country: '',
+        lat: 40.7128, lng: -74.006, timezone: '', utc: '2020-06-15T16:00:00Z', julianDayUT: 0,
+      },
+      western: { bodies: { sun: { longitude: 0 }, moon: { longitude: 90 } } },
+    } as unknown as NatalChart;
+
+    return computeAtmosphere(chart).then(atmo => {
+      expect(atmo.weatherCategory).toBe('unknown');
+      expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
 });

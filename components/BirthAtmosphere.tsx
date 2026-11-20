@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import type { NatalChart } from '@/lib/astro/types';
-import { computeAtmosphere, type BirthAtmosphere } from '@/lib/astro/atmosphere';
+import { computeAtmosphere, WEATHER_ENABLED, type BirthAtmosphere } from '@/lib/astro/atmosphere';
 import SkyBand from '@/components/charts/SkyBand';
-import MoonFace from '@/components/charts/MoonFace';
+import NatalMoonIcon from '@/components/moon/NatalMoonIcon';
 
 // Celestial Almanac theme tokens
 const NIGHT_VARS: Record<string, string> = {
@@ -23,15 +23,6 @@ const DAY_VARS: Record<string, string> = {
   '--aspect-harmonious': '#3f7a52', '--aspect-dynamic': '#c2542f',
   '--aspect-neutral': '#5f6f82', '--aspect-minor': '#b07d1e', '--retro': '#c2542f',
 };
-
-function MoonSVG({ phase, size = 46 }: { phase: number; size?: number }) {
-  const uid = `hero-moon-${Math.round(phase)}`;
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <MoonFace phase={phase} size={size} uid={uid} />
-    </svg>
-  );
-}
 
 // ── Weather icon ──────────────────────────────────────────────────────────────
 
@@ -183,20 +174,22 @@ export default function BirthAtmosphereHero({ chart }: { chart: NatalChart }) {
 
           {/* Right: weather + moon readout */}
           <div className="am-readout" style={{ display: 'flex', gap: 26, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+            {WEATHER_ENABLED && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="am-readout-icon" style={{ width: 46, height: 46, flexShrink: 0 }}>
+                  <WeatherIcon cat={atmo.weatherCategory} size={46} />
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>Weather</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: textColor, whiteSpace: 'nowrap', fontFamily: 'var(--font-sans)' }}>
+                    {weatherLabel(atmo)}
+                  </p>
+                </div>
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div className="am-readout-icon" style={{ width: 46, height: 46, flexShrink: 0 }}>
-                <WeatherIcon cat={atmo.weatherCategory} size={46} />
-              </div>
-              <div>
-                <p style={{ margin: 0, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>Weather</p>
-                <p style={{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: textColor, whiteSpace: 'nowrap', fontFamily: 'var(--font-sans)' }}>
-                  {weatherLabel(atmo)}
-                </p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div className="am-readout-icon" style={{ width: 46, height: 46, flexShrink: 0 }}>
-                <MoonSVG phase={atmo.moonPhase} size={46} />
+                <NatalMoonIcon chart={chart} size={46} />
               </div>
               <div>
                 <p style={{ margin: 0, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', color: labelColor }}>Moon</p>
